@@ -5,7 +5,7 @@ const cors = require('cors');
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json()); // Für POST-Daten
 
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.DB_NAME || 'wineDB';
@@ -15,14 +15,15 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
+  tls: true,
 });
 
 async function connectDB() {
   try {
     await client.connect();
     console.log(`Connected to ${dbName} at ${new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' })}`);
-    await client.db("admin").command({ ping: 1 }); // Ping zur Verbindungsbestätigung
+    await client.db("admin").command({ ping: 1 });
     return client.db(dbName);
   } catch (err) {
     console.error('MongoDB connection error:', err.message);
@@ -30,17 +31,23 @@ async function connectDB() {
   }
 }
 
-app.get('/', async (req, res) => {
+app.post('/wine', async (req, res) => {
   try {
     const db = await connectDB();
-    const collection = db.collection('test');
-    await collection.insertOne({ message: 'Test erfolgreich!', timestamp: new Date() });
-    const data = await collection.find({}).toArray();
-    res.json(data);
+    const collection = db.collection('wines');
+    const wineData = {
+      name: req.body.name || 'Unbekannter Wein',
+      hersteller: req.body.hersteller || 'Unbekannt',
+      jahrgang: req.body.jahrgang || new Date().getFullYear(),
+      bewertung: req.body.bewertung || 0,
+      timestamp: new Date(),
+    };
+    await collection.insertOne(wineData);
+    res.status(201).json({ message: 'Wein erfolgreich gespeichert', data: wineData });
   } catch (err) {
     res.status(500).send('Fehler: ' + err.message);
   } finally {
-    await client.close(); // Verbindung nach jedem Request schließen
+    await client.close();
   }
 });
 
