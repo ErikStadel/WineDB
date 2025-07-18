@@ -1,21 +1,49 @@
 require('dotenv').config();
 const express = require('express');
-const { MongoClient } = require('mongodb');
+const { MongoClient, ServerApiVersion } = require('mongodb');
+const cors = require('cors');
 const app = express();
 
-const uri = process.env.MONGODB_URI;
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+app.use(cors());
+app.use(express.json());
 
-app.get('/', async (req, res) => {
-  try {
-    await client.connect();
-    const db = client.db('WineDB');
-    const collection = db.collection('test');
-    await collection.insertOne({ message: 'Test erfolgreich!' });
-    res.send('Datenbankverbindung erfolgreich!');
-  } catch (err) {
-    res.status(500).send('Fehler: ' + err.message);
+const uri = process.env.MONGODB_URI;
+const dbName = process.env.DB_NAME || 'wineDB';
+
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
   }
 });
 
-app.listen(3000, () => console.log('Server läuft auf Port 3000'));
+async function connectDB() {
+  try {
+    await client.connect();
+    console.log(`Connected to ${dbName} at ${new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' })}`);
+    await client.db("admin").command({ ping: 1 }); // Ping zur Verbindungsbestätigung
+    return client.db(dbName);
+  } catch (err) {
+    console.error('MongoDB connection error:', err.message);
+    throw err;
+  }
+}
+
+app.get('/', async (req, res) => {
+  try {
+    const db = await connectDB();
+    const collection = db.collection('test');
+    await collection.insertOne({ message: 'Test erfolgreich!', timestamp: new Date() });
+    const data = await collection.find({}).toArray();
+    res.json(data);
+  } catch (err) {
+    res.status(500).send('Fehler: ' + err.message);
+  } finally {
+    await client.close(); // Verbindung nach jedem Request schließen
+  }
+});
+
+app.listen(3000, () => {
+  console.log('Server läuft auf Port 3000');
+});
