@@ -9,6 +9,11 @@ app.use(cors());
 app.use(express.json());
 app.use(serveStatic(__dirname, { index: ['index.html'] }));
 
+// Grundroute
+app.get('/', (req, res) => {
+  res.send('API läuft! 🙌');
+});
+
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.DB_NAME || 'wineDB';
 
@@ -23,14 +28,23 @@ const client = new MongoClient(uri, {
 
 let db;
 
-// **Hier nur EINMAL verbinden und DB merken!**
+// **Verbindung aufbauen und Server starten**
 async function start() {
   try {
     await client.connect();
     db = client.db(dbName);
     console.log(`Connected to ${dbName}`);
-    app.listen(3000, '0.0.0.0', () => {
-      console.log('Listening on port 3000');
+
+    const PORT = process.env.PORT || 3000;
+    const HOST = '0.0.0.0';
+
+    app.listen(PORT, HOST, () => {
+      const csName = process.env.CODESPACE_NAME;
+      if (csName) {
+        console.log(`➡️ Test it here: https://${csName}-${PORT}.app.github.dev/test`);
+      } else {
+        console.log(`Listening on http://${HOST}:${PORT}`);
+      }
     });
   } catch (err) {
     console.error('MongoDB connection error:', err.message);
@@ -39,7 +53,7 @@ async function start() {
 }
 start();
 
-// **Keine neue Verbindung/close mehr pro Route!**
+// API-Endpunkt zum Einfügen eines Weins
 app.post('/wine', async (req, res) => {
   try {
     const collection = db.collection('wines');
@@ -57,9 +71,10 @@ app.post('/wine', async (req, res) => {
   }
 });
 
+// Test-Route
 app.get('/test', (req, res) => res.send('Hallo Test'));
 
-// **Nice To Have: Clean shutdown**
+// **Clean Shutdown**
 process.on('SIGINT', async () => {
   console.log('SIGINT empfangen. MongoClient wird geschlossen.');
   await client.close();
