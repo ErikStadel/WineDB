@@ -3,7 +3,8 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
     "express": "^5.1.0",
-    "mongodb": "^6.17.0"
+    "mongodb": "^6.17.0",
+    "serve-static": "^2.2.0"
   },
   "name": "winedb",
   "version": "1.0.0",
