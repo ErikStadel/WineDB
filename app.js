@@ -5,7 +5,7 @@ const cors = require('cors');
 const app = express();
 
 app.use(cors());
-app.use(express.json()); // Für POST-Daten
+app.use(express.json());
 
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.DB_NAME || 'wineDB';
@@ -51,10 +51,6 @@ app.post('/wine', async (req, res) => {
   }
 });
 
-app.listen(3000, () => {
-  console.log('Server läuft auf Port 3000');
-});
-
 app.get('/wines', async (req, res) => {
   try {
     const db = await connectDB();
@@ -66,4 +62,8 @@ app.get('/wines', async (req, res) => {
   } finally {
     await client.close();
   }
+});
+
+app.listen(4000, () => {
+  console.log('Server läuft auf Port 4000');
 });
