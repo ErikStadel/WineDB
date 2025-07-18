@@ -7,7 +7,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(serveStatic(__dirname, { index: ['index.html'] })); // Serviert index.html, falls vorhanden
+app.use(serveStatic(__dirname, { index: ['index.html'] })); // Serviert index.html
 
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.DB_NAME || 'wineDB';
