@@ -15,8 +15,16 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "devDependencies": {
     "@types/node": "^24.0.14"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ErikStadel/WineDB.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ErikStadel/WineDB/issues"
+  },
+  "homepage": "https://github.com/ErikStadel/WineDB#readme",
+  "description": ""
 }
