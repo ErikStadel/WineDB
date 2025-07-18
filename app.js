@@ -54,3 +54,16 @@ app.post('/wine', async (req, res) => {
 app.listen(3000, () => {
   console.log('Server läuft auf Port 3000');
 });
+
+app.get('/wines', async (req, res) => {
+  try {
+    const db = await connectDB();
+    const collection = db.collection('wines');
+    const wines = await collection.find({}).toArray();
+    res.json(wines);
+  } catch (err) {
+    res.status(500).send('Fehler: ' + err.message);
+  } finally {
+    await client.close();
+  }
+});
