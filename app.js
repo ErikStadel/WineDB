@@ -7,7 +7,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(serveStatic(__dirname, { index: ['index.html'] })); // Serviert index.html
+app.use(serveStatic(__dirname, { index: ['index.html'] }));
 
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.DB_NAME || 'wineDB';
@@ -21,21 +21,27 @@ const client = new MongoClient(uri, {
   tls: true,
 });
 
-async function connectDB() {
+let db;
+
+// **Hier nur EINMAL verbinden und DB merken!**
+async function start() {
   try {
     await client.connect();
-    console.log(`Connected to ${dbName} at ${new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' })}`);
-    await client.db("admin").command({ ping: 1 });
-    return client.db(dbName);
+    db = client.db(dbName);
+    console.log(`Connected to ${dbName}`);
+    app.listen(3000, '0.0.0.0', () => {
+      console.log('Listening on port 3000');
+    });
   } catch (err) {
     console.error('MongoDB connection error:', err.message);
-    throw err;
+    process.exit(1);
   }
 }
+start();
 
+// **Keine neue Verbindung/close mehr pro Route!**
 app.post('/wine', async (req, res) => {
   try {
-    const db = await connectDB();
     const collection = db.collection('wines');
     const wineData = {
       name: req.body.name || 'Unbekannter Wein',
@@ -48,24 +54,14 @@ app.post('/wine', async (req, res) => {
     res.status(201).json({ message: 'Wein erfolgreich gespeichert', data: wineData });
   } catch (err) {
     res.status(500).send('Fehler: ' + err.message);
-  } finally {
-    await client.close();
   }
 });
 
-app.get('/wines', async (req, res) => {
-  try {
-    const db = await connectDB();
-    const collection = db.collection('wines');
-    const wines = await collection.find({}).toArray();
-    res.json(wines);
-  } catch (err) {
-    res.status(500).send('Fehler: ' + err.message);
-  } finally {
-    await client.close();
-  }
-});
+app.get('/test', (req, res) => res.send('Hallo Test'));
 
-app.listen(3000, '0.0.0.0', () => {
-  console.log('Listening on port 3000');
+// **Nice To Have: Clean shutdown**
+process.on('SIGINT', async () => {
+  console.log('SIGINT empfangen. MongoClient wird geschlossen.');
+  await client.close();
+  process.exit(0);
 });
