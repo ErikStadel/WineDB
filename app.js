@@ -9,7 +9,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 app.get('/', async (req, res) => {
   try {
     await client.connect();
-    const db = client.db('wineDB');
+    const db = client.db('WineDB');
     const collection = db.collection('test');
     await collection.insertOne({ message: 'Test erfolgreich!' });
     res.send('Datenbankverbindung erfolgreich!');
