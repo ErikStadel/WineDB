@@ -67,5 +67,5 @@ app.get('/wines', async (req, res) => {
 });
 
 app.listen(3001, '0.0.0.0', () => {
-  console.log('Server läuft auf Port 3000');
+  console.log('Server läuft auf Port 3001');
 });
