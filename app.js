@@ -70,3 +70,7 @@ app.listen(3001, '0.0.0.0', () => {
 app.use((err, req, res, next) => {
   res.status(500).send('Interner Serverfehler: ' + err.message);
 });
+
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://192.168.0.208:3000']
+}));

@@ -16,14 +16,14 @@ const App: React.FC = () => {
   const [form, setForm] = useState({ name: '', hersteller: '', jahrgang: 0, bewertung: 0 });
 
   const handleAddWine = () => {
-    axios.post('http://localhost:3001/wine', form)
-      .then(() => {
-        setForm({ name: '', hersteller: '', jahrgang: 0, bewertung: 0 });
-        return axios.get(`${apiUrl}/wines`);
-      })
-      .then(res => setWines(res.data))
-      .catch(error => console.error('Fehler:', error));
-  };
+  axios.post(`${apiUrl}/wine`, form)
+    .then(() => {
+      setForm({ name: '', hersteller: '', jahrgang: 0, bewertung: 0 });
+      return axios.get(`${apiUrl}/wines`);
+    })
+    .then(res => setWines(res.data))
+    .catch(error => console.error('Fehler:', error));
+};
 
   const apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'http://192.168.0.208:3001';
   useEffect(() => {
