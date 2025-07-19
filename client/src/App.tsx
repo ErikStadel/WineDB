@@ -6,7 +6,7 @@ const App: React.FC = () => {
   const [wines, setWines] = useState<any[]>([]);
 
   useEffect(() => {
-    axios.get('http://localhost:3000/wines')
+    axios.get('http://localhost:3001/wines')
       .then(response => setWines(response.data))
       .catch(error => console.error('Fehler:', error));
   }, []);
