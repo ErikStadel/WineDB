@@ -44,10 +44,16 @@ app.post('/wine', async (req, res) => {
       jahrgang: req.body.jahrgang || new Date().getFullYear(),
       bewertung: req.body.bewertung || 0,
       timestamp: new Date(),
+      imageUrl: req.body.imageUrl || '', // Muss gesetzt werden
+      rebsorte: req.body.rebsorte || '',
+      kauforte: req.body.kauforte || [],
     };
-    await collection.insertOne(wineData);
+    console.log('Eingehende Daten:', wineData); // Debugging
+    const result = await collection.insertOne(wineData);
+    console.log('Eintrag erstellt:', result.insertedId);
     res.status(201).json({ message: 'Wein erfolgreich gespeichert', data: wineData });
   } catch (err) {
+    console.error('MongoDB Fehler:', err.message);
     res.status(500).send('Fehler: ' + err.message);
   }
 });

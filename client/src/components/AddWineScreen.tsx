@@ -9,17 +9,15 @@ interface AddWineScreenProps {
 
 const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
   const [form, setForm] = useState({ name: '', rebsorte: '', imageUrl: '', kauforte: [] as string[] });
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
   const handleImageUpload = async (source: 'camera' | 'gallery') => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
-    if (source === 'camera') input.capture = 'environment'; // Öffnet Kamera
+    if (source === 'camera') input.capture = 'environment'; // Kamera
     input.onchange = async (e: any) => {
       const file = e.target.files[0];
       if (file) {
-        setSelectedImage(file);
         const formData = new FormData();
         formData.append('image', file);
         try {
@@ -29,8 +27,9 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
             },
           });
           setForm({ ...form, imageUrl: response.data.data.url });
-        } catch (error) {
-          console.error('imgbb Upload Fehler:', error);
+          console.log('Imgbb Link:', response.data.data.url);
+        } catch (error: any) {
+          console.error('imgbb Upload Fehler:', error.response?.data || error.message);
         }
       }
     };
@@ -38,8 +37,15 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
   };
 
   const handleSave = async () => {
-    await axios.post(`${apiUrl}/wine`, form);
-    onBack();
+    console.log('Gesendete Daten:', form); // Debugging
+    try {
+      await axios.post(`${apiUrl}/wine`, form, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      onBack();
+    } catch (error: any) {
+      console.error('Speicherfehler:', error.response?.data || error.message);
+    }
   };
 
   return (
@@ -49,6 +55,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
         <div className="card" style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <button className="btn-primary" onClick={() => handleImageUpload('camera')}>+</button>
           <p>Foto</p>
+          <button className="btn-primary" onClick={() => handleImageUpload('gallery')} style={{ marginTop: '1rem' }}>Galerie</button>
         </div>
         <select
           multiple
