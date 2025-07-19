@@ -13,24 +13,25 @@ const uri = process.env.MONGODB_URI;
 const dbName = process.env.DB_NAME || 'wineDB';
 
 const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
+  serverApi: { version: ServerApiVersion.v1, strict: true, deprecationErrors: true },
   tls: true,
 });
 
+let db;
+
 async function connectDB() {
-  try {
-    await client.connect();
-    console.log(`Connected to ${dbName} at ${new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' })}`);
-    await client.db("admin").command({ ping: 1 });
-    return client.db(dbName);
-  } catch (err) {
-    console.error('MongoDB connection error:', err.message);
-    throw err;
+  if (!db) {
+    try {
+      await client.connect();
+      console.log(`Connected to ${dbName} at ${new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' })}`);
+      await client.db("admin").command({ ping: 1 });
+      db = client.db(dbName);
+    } catch (err) {
+      console.error('MongoDB connection error:', err.message);
+      throw err;
+    }
   }
+  return db;
 }
 
 app.post('/wine', async (req, res) => {
@@ -48,8 +49,6 @@ app.post('/wine', async (req, res) => {
     res.status(201).json({ message: 'Wein erfolgreich gespeichert', data: wineData });
   } catch (err) {
     res.status(500).send('Fehler: ' + err.message);
-  } finally {
-    await client.close();
   }
 });
 
@@ -61,11 +60,13 @@ app.get('/wines', async (req, res) => {
     res.json(wines);
   } catch (err) {
     res.status(500).send('Fehler: ' + err.message);
-  } finally {
-    await client.close();
   }
 });
 
 app.listen(3001, '0.0.0.0', () => {
   console.log('Server läuft auf Port 3001');
+});
+
+app.use((err, req, res, next) => {
+  res.status(500).send('Interner Serverfehler: ' + err.message);
 });

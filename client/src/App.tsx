@@ -34,7 +34,7 @@ const App: React.FC = () => {
 
   return (
     <div className="App">
-      <h1>Wein-Bewertungs-App</h1>
+      <h1>Wein-App-Test</h1>
       <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Name" />
       <input value={form.hersteller} onChange={e => setForm({ ...form, hersteller: e.target.value })} placeholder="Hersteller" />
       <input type="number" value={form.jahrgang} onChange={e => setForm({ ...form, jahrgang: parseInt(e.target.value) })} placeholder="Jahrgang" />
