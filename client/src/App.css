@@ -58,6 +58,14 @@ h3 {
   color: #ffffff !important;
 }
 
+/* === Labels === */
+label {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  color: #496580;
+  font-size: 1rem;
+}
+
 /* === Glass Header === */
 .glass-header {
   background: #496580;
@@ -93,6 +101,10 @@ h3 {
   max-width: 600px;
   width: 100%;
   margin-bottom: 1rem;
+}
+
+.glass-card.image-upload {
+  max-width: 640px;
 }
 
 .glass-card::before {
@@ -177,6 +189,17 @@ button {
 .btn-outline:hover {
   background-color: #496580;
   color: #ffffff;
+}
+
+.footer-btn {
+  background-color: #baddff;
+  color: #ffffff;
+  margin-top: 0;
+}
+
+.footer-btn:hover {
+  background-color: #ffffff;
+  color: #496580;
 }
 
 /* === Inputs === */
@@ -265,6 +288,10 @@ input[type="range"] {
   .glass-card {
     padding: 1rem;
     margin-bottom: 0.75rem;
+  }
+
+  .glass-card.image-upload {
+    max-width: 100%;
   }
 
   main {

@@ -31,21 +31,21 @@ const App: React.FC = () => {
   if (showInspiration) return <InspirationScreen onBack={() => setShowInspiration(false)} />;
 
   return (
-    <div className="min-h-screen flex flex-col font-sans bg-[#ffdbbb] text-[#496580]">
-      <header className="glass-header p-4 flex justify-between items-center rounded-b-xl">
-        <h1 className="text-xl md:text-2xl font-semibold text-[#ffffff]">Wein Bewertung</h1>
+    <div className="App">
+      <header className="glass-header">
+        <h1 className="text-xl md:text-2xl font-semibold text-white !text-[#ffffff] text-center">Wein Bewertung</h1>
       </header>
-      <main className="flex-1 p-4">
-        <div className="glass-card p-4 mx-auto max-w-md">
+      <main className="flex-1 p-6 flex flex-col items-center gap-12">
+        <section className="glass-card">
           <h2 className="text-lg md:text-xl font-semibold text-[#baddff] mb-4">Willkommen</h2>
           <div className="space-y-3">
-            <button className="btn-primary text-base font-medium" onClick={() => setShowAddWine(true)}>Wein hinzufügen</button>
-            <button className="btn-secondary text-base font-medium" onClick={() => alert('Datenbank geöffnet')}>Datenbank</button>
-            <button className="btn-outline text-base font-medium" onClick={() => setShowInspiration(true)}>Inspiration</button>
+            <button className="btn-primary text-base font-medium mt-4" onClick={() => setShowAddWine(true)}>Wein hinzufügen</button>
+            <button className="btn-secondary text-base font-medium mt-4" onClick={() => alert('Datenbank geöffnet')}>Datenbank</button>
+            <button className="btn-outline text-base font-medium mt-4" onClick={() => setShowInspiration(true)}>Inspiration</button>
           </div>
-        </div>
+        </section>
       </main>
-      <footer className="bg-[#496580] text-[#ffffff] text-center p-2 rounded-t-xl">
+      <footer className="footer">
         <p className="text-sm">Entwickelt mit Liebe zum Wein</p>
       </footer>
     </div>

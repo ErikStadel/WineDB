@@ -43,19 +43,50 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col font-sans bg-[#ffdbbb] text-[#496580]">
-      <header className="glass-header p-4 flex justify-between items-center rounded-b-xl">
-        <h1 className="text-xl md:text-2xl font-semibold text-[#ffffff]">Wein Hinzufügen</h1>
-        <button className="text-[#ffffff] hover:text-[#baddff] font-medium transition-colors" onClick={onBack}>Zurück</button>
+    <div className="App">
+      <header className="glass-header">
+        <h1 className="text-xl md:text-2xl font-semibold text-white !text-[#ffffff] text-center">Wein Hinzufügen</h1>
+        <span
+          className="text-[#ffffff] !text-[#ffffff] hover:text-[#baddff] font-medium text-xs md:text-sm cursor-pointer transition-colors z-30 px-2"
+          onClick={onBack}
+        >
+          Zurück
+        </span>
       </header>
-      <main className="flex-1 p-4">
-        <div className="glass-card p-4 mx-auto max-w-md space-y-6">
-          <h2 className="text-lg md:text-xl font-semibold mb-2">Neuen Wein hinzufügen</h2>
-          <button className="btn-primary w-full text-base font-medium" onClick={handleImageUpload}>+</button>
-          {form.imageUrl && <img src={form.imageUrl} alt="Vorschau" className="w-full rounded-lg mt-2" />}
-          <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="z.B. Merlot 2020" className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff]" />
-          <input value={form.rebsorte} onChange={(e) => setForm({ ...form, rebsorte: e.target.value })} placeholder="z.B. Cabernet Sauvignon" className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff]" />
-          <select multiple value={form.kauforte} onChange={(e) => setForm({ ...form, kauforte: Array.from(e.target.selectedOptions).map(o => o.value) })} className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff] h-24">
+      <main className="flex-1 p-6 flex flex-col items-center gap-12">
+        <section className="glass-card image-upload">
+          <h2 className="text-lg md:text-xl font-semibold mb-4">Bild hinzufügen</h2>
+          <span
+            className="text-4xl text-[#496580] font-bold cursor-pointer flex justify-center items-center h-24"
+            onClick={handleImageUpload}
+          >
+            +
+          </span>
+          {form.imageUrl && <img src={form.imageUrl} alt="Vorschau" className="w-full rounded-lg mt-4" />}
+        </section>
+        <section className="glass-card">
+          <h2 className="text-lg md:text-xl font-semibold mb-4">Wein Details</h2>
+          <label className="block font-semibold text-[#496580] mb-1">Name</label>
+          <input
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            placeholder="z.B. Merlot 2020"
+            className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff] mt-1"
+          />
+          <label className="block font-semibold text-[#496580] mb-1 mt-4">Rebsorte</label>
+          <input
+            value={form.rebsorte}
+            onChange={(e) => setForm({ ...form, rebsorte: e.target.value })}
+            placeholder="z.B. Cabernet Sauvignon"
+            className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff] mt-1"
+          />
+          <label className="block font-semibold text-[#496580] mb-1 mt-4">Gekauft bei</label>
+          <select
+            multiple
+            value={form.kauforte}
+            onChange={(e) => setForm({ ...form, kauforte: Array.from(e.target.selectedOptions).map(o => o.value) })}
+            className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff] h-24 mt-1"
+          >
             <option value="" disabled>Kaufort auswählen</option>
             <option value="Rewe">Rewe</option>
             <option value="Kaufland">Kaufland</option>
@@ -64,12 +95,11 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
             <option value="Lidl">Lidl</option>
             <option value="Edeka">Edeka</option>
           </select>
-          <button className="btn-primary w-full text-base font-medium" onClick={handleSave}>Speichern</button>
-          {successMessage && <div className="glass-alert p-3 rounded-lg">Wein erfolgreich hinzugefügt!</div>}
-        </div>
+          {successMessage && <div className="glass-alert p-3 rounded-lg mt-4">Wein erfolgreich hinzugefügt!</div>}
+        </section>
       </main>
-      <footer className="bg-[#496580] text-[#ffffff] text-center p-2 rounded-t-xl">
-        <p className="text-sm">Entwickelt mit Liebe zum Wein</p>
+      <footer className="footer">
+        <button className="footer-btn w-full text-base font-medium" onClick={handleSave}>Speichern</button>
       </footer>
     </div>
   );
