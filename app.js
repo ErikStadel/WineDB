@@ -46,13 +46,17 @@ app.post('/wine', async (req, res) => {
     const collection = db.collection('wines');
     const wineData = {
       name: req.body.name || 'Unbekannter Wein',
-      hersteller: req.body.hersteller || 'Unbekannt',
-      jahrgang: req.body.jahrgang || new Date().getFullYear(),
-      bewertung: req.body.bewertung || 0,
-      timestamp: new Date(),
-      imageUrl: req.body.imageUrl || '',
       rebsorte: req.body.rebsorte || '',
+      farbe: req.body.farbe || '',
+      preis: req.body.preis || '',
       kauforte: req.body.kauforte || [],
+      geschmack: req.body.geschmack || [],
+      kategorie: req.body.kategorie || '',
+      unterkategorie: req.body.unterkategorie || '',
+      notizen: req.body.notizen || '',
+      bewertung: req.body.bewertung || 0,
+      imageUrl: req.body.imageUrl || '',
+      timestamp: new Date(),
     };
     console.log('Eingehende Daten:', wineData);
     const result = await collection.insertOne(wineData);

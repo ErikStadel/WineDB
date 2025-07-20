@@ -1,3 +1,5 @@
+/* Bestehende Stile aus der ersten App.css übernommen, nur neue oder geänderte Stile hinzugefügt */
+
 /* === Font Import === */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -299,4 +301,32 @@ input[type="range"] {
     gap: 2rem;
     overflow-y: auto;
   }
+}
+
+/* Neue Stile für Bildvorschau und Kategorien-Kacheln */
+.image-upload img {
+  max-width: 300px;
+  height: auto;
+  object-fit: contain;
+}
+
+.category-tile {
+  background-color: #496580;
+  color: #ffffff;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1 / 1;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.category-tile.selected {
+  background-color: #baddff;
+  color: #496580;
+}
+
+.category-tile:hover {
+  background-color: #baddff;
+  color: #496580;
 }

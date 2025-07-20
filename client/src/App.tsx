@@ -7,13 +7,17 @@ import InspirationScreen from './components/InspirationScreen';
 interface Wine {
   _id: string;
   name: string;
-  hersteller: string;
-  jahrgang: number;
-  bewertung: number;
-  timestamp: string;
-  imageUrl?: string;
   rebsorte?: string;
+  farbe?: string;
+  preis?: string;
   kauforte?: string[];
+  geschmack?: string[];
+  kategorie?: string;
+  unterkategorie?: string;
+  notizen?: string;
+  bewertung?: number;
+  imageUrl?: string;
+  timestamp: string;
 }
 
 const App: React.FC = () => {
