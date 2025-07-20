@@ -11,42 +11,44 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
   const [form, setForm] = useState({ name: '', rebsorte: '', imageUrl: '', kauforte: [] as string[] });
 
   const handleImageUpload = async (source: 'camera' | 'gallery') => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    if (source === 'camera') input.capture = 'environment'; // Kamera
-    input.onchange = async (e: any) => {
-      const file = e.target.files[0];
-      if (file) {
-        const formData = new FormData();
-        formData.append('image', file);
-        try {
-          const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
-            params: {
-              key: process.env.REACT_APP_IMGBB_API_KEY,
-            },
-          });
-          setForm({ ...form, imageUrl: response.data.data.url });
-          console.log('Imgbb Link:', response.data.data.url);
-        } catch (error: any) {
-          console.error('imgbb Upload Fehler:', error.response?.data || error.message);
-        }
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  if (source === 'camera') input.capture = 'environment';
+  input.onchange = async (e: any) => {
+    const file = e.target.files[0];
+    if (file) {
+      const formData = new FormData();
+      formData.append('image', file);
+      console.log('Verwendeter API-Key:', process.env.REACT_APP_IMGBB_API_KEY); // Debugging
+      try {
+        const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
+          params: {
+            key: process.env.REACT_APP_IMGBB_API_KEY,
+            expiration: 600,
+          },
+        });
+        setForm({ ...form, imageUrl: response.data.data.url });
+        console.log('Imgbb Link:', response.data.data.url);
+      } catch (error: any) {
+        console.error('imgbb Upload Fehler:', error.response?.data || error.message);
       }
-    };
-    input.click();
-  };
-
-  const handleSave = async () => {
-    console.log('Gesendete Daten:', form); // Debugging
-    try {
-      await axios.post(`${apiUrl}/wine`, form, {
-        headers: { 'Content-Type': 'application/json' },
-      });
-      onBack();
-    } catch (error: any) {
-      console.error('Speicherfehler:', error.response?.data || error.message);
     }
   };
+  input.click();
+};
+
+  const handleSave = async () => {
+  console.log('Gesendete Daten vor Submit:', form); // Debugging
+  try {
+    await axios.post(`${apiUrl}/wine`, form, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+    onBack();
+  } catch (error: any) {
+    console.error('Speicherfehler:', error.response?.data || error.message);
+  }
+};
 
   return (
     <div className="App">

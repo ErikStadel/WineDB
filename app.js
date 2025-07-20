@@ -5,15 +5,21 @@ const cors = require('cors');
 const serveStatic = require('serve-static');
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://192.168.0.208:3000']
+}));
 app.use(express.json());
-app.use(serveStatic(__dirname, { index: ['index.html'] })); // Serviert index.html
+app.use(serveStatic(__dirname, { index: ['index.html'] }));
 
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.DB_NAME || 'wineDB';
 
 const client = new MongoClient(uri, {
-  serverApi: { version: ServerApiVersion.v1, strict: true, deprecationErrors: true },
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  },
   tls: true,
 });
 
@@ -44,11 +50,11 @@ app.post('/wine', async (req, res) => {
       jahrgang: req.body.jahrgang || new Date().getFullYear(),
       bewertung: req.body.bewertung || 0,
       timestamp: new Date(),
-      imageUrl: req.body.imageUrl || '', // Muss gesetzt werden
+      imageUrl: req.body.imageUrl || '',
       rebsorte: req.body.rebsorte || '',
       kauforte: req.body.kauforte || [],
     };
-    console.log('Eingehende Daten:', wineData); // Debugging
+    console.log('Eingehende Daten:', wineData);
     const result = await collection.insertOne(wineData);
     console.log('Eintrag erstellt:', result.insertedId);
     res.status(201).json({ message: 'Wein erfolgreich gespeichert', data: wineData });
@@ -76,7 +82,3 @@ app.listen(3001, '0.0.0.0', () => {
 app.use((err, req, res, next) => {
   res.status(500).send('Interner Serverfehler: ' + err.message);
 });
-
-app.use(cors({
-  origin: ['http://localhost:3000', 'http://192.168.0.208:3000']
-}));
