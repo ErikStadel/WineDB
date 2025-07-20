@@ -24,28 +24,30 @@ const App: React.FC = () => {
   const apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'http://192.168.0.208:3001';
 
   useEffect(() => {
-    axios.get(`${apiUrl}/wines`)
-      .then(response => setWines(response.data))
-      .catch(error => console.error('Fehler:', error));
+    axios.get(`${apiUrl}/wines`).then((res) => setWines(res.data)).catch((err) => console.error('Fehler:', err));
   }, []);
 
-  if (showAddWine) {
-    return <AddWineScreen onBack={() => setShowAddWine(false)} apiUrl={apiUrl} />;
-  }
-  if (showInspiration) {
-    return <InspirationScreen onBack={() => setShowInspiration(false)} />;
-  }
+  if (showAddWine) return <AddWineScreen onBack={() => setShowAddWine(false)} apiUrl={apiUrl} />;
+  if (showInspiration) return <InspirationScreen onBack={() => setShowInspiration(false)} />;
 
   return (
-    <div className="App">
-      <main className="card">
-        <h2 className="text-accent">Startscreen</h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', margin: '2rem 0', alignItems: 'center' }}>
-          <button className="btn-primary" onClick={() => setShowAddWine(true)}>Wein hinzufügen</button>
-          <button className="btn-primary btn-outline" onClick={() => alert('Datenbank geöffnet')}>Datenbank</button>
-          <button className="btn-primary btn-outline" onClick={() => setShowInspiration(true)}>Inspiration</button>
+    <div className="min-h-screen flex flex-col font-sans bg-[#ffdbbb] text-[#496580]">
+      <header className="glass-header p-4 flex justify-between items-center rounded-b-xl">
+        <h1 className="text-xl md:text-2xl font-semibold text-[#ffffff]">Wein Bewertung</h1>
+      </header>
+      <main className="flex-1 p-4">
+        <div className="glass-card p-4 mx-auto max-w-md">
+          <h2 className="text-lg md:text-xl font-semibold text-[#baddff] mb-4">Willkommen</h2>
+          <div className="space-y-3">
+            <button className="btn-primary text-base font-medium" onClick={() => setShowAddWine(true)}>Wein hinzufügen</button>
+            <button className="btn-secondary text-base font-medium" onClick={() => alert('Datenbank geöffnet')}>Datenbank</button>
+            <button className="btn-outline text-base font-medium" onClick={() => setShowInspiration(true)}>Inspiration</button>
+          </div>
         </div>
       </main>
+      <footer className="bg-[#496580] text-[#ffffff] text-center p-2 rounded-t-xl">
+        <p className="text-sm">Entwickelt mit Liebe zum Wein</p>
+      </footer>
     </div>
   );
 };
