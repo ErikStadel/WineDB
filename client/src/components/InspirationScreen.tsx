@@ -1,51 +1,53 @@
 import React from 'react';
+import '../App.css';
 
 const InspirationScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   return (
-    <div className="min-h-screen flex flex-col font-sans bg-[#ffdbbb] text-[#496580] px-4 py-6">
-      <header className="glass-header rounded-b-xl mb-6 px-6 py-5 flex justify-between items-center">
-        <h1 className="text-xl md:text-2xl font-semibold text-white leading-snug">Wein Inspiration</h1>
+    <div className="min-h-screen flex flex-col font-sans bg-[#ffdbbb] text-[#496580]">
+      <header className="glass-header p-4 flex justify-between items-center rounded-b-xl sticky top-0 z-10">
+        <h1 className="text-xl md:text-2xl font-semibold text-[#ffffff]">Wein Inspiration</h1>
         <button
-          className="text-white hover:text-[#baddff] font-medium transition-colors px-3 py-1 rounded"
+          className="text-[#ffffff] hover:text-[#baddff] font-medium transition-colors"
           onClick={onBack}
-          aria-label="Zurück"
         >
           Zurück
         </button>
       </header>
 
-      <main className="flex-1">
-        <section className="glass-card max-w-md mx-auto p-6 mb-10">
-          <h2 className="text-lg md:text-xl font-semibold mb-4 leading-relaxed">Rotweine</h2>
-          <p className="mb-6 leading-relaxed">Entdecke unsere Auswahl an kräftigen Rotweinen.</p>
-          <button className="btn-primary w-full text-base font-medium py-3">Mehr erfahren</button>
-        </section>
+      <main className="flex-1 p-4 flex flex-col items-center">
+        {/* Wrapper-Divs sorgen für Abstand */}
+        <div className="mb-10 w-full max-w-md">
+          <section className="glass-card p-4">
+            <h2 className="text-lg md:text-xl font-semibold mb-2">Rotweine</h2>
+            <p className="mb-2">Entdecke unsere Auswahl an kräftigen Rotweinen.</p>
+            <button className="btn-primary w-full text-base font-medium">Mehr erfahren</button>
+          </section>
+        </div>
 
-        <section className="glass-card max-w-md mx-auto p-6 mb-10">
-          <h2 className="text-lg md:text-xl font-semibold mb-4 leading-relaxed">Weißweine</h2>
-          <p className="mb-6 leading-relaxed">Frische und elegante Weißweine für jede Gelegenheit.</p>
-          <div className="overflow-x-auto mb-6">
+        <div className="mb-10 w-full max-w-md">
+          <section className="glass-card p-4">
+            <h2 className="text-lg md:text-xl font-semibold mb-2">Weißweine</h2>
+            <p className="mb-2">Frische und elegante Weißweine für jede Gelegenheit.</p>
             <input
               type="range"
               min="0"
               max="100"
-              className="w-full accent-[#baddff] h-2 rounded-lg"
-              aria-label="Weißwein Filter"
+              className="w-full accent-[#baddff] h-2 rounded-lg mb-2"
             />
-          </div>
-          <button className="btn-secondary w-full text-base font-medium py-3">Filter anwenden</button>
-        </section>
+            <button className="btn-secondary w-full text-base font-medium">Filter anwenden</button>
+          </section>
+        </div>
 
-        <section className="glass-card max-w-md mx-auto p-6">
-          <h2 className="text-lg md:text-xl font-semibold mb-4 leading-relaxed">Sonderangebote</h2>
-          <div className="glass-alert p-4 rounded-lg mb-6 text-center font-semibold">
-            🥂 10% Rabatt auf alle Weine!
-          </div>
-          <button className="btn-outline w-full text-base font-medium py-3">Zum Shop</button>
-        </section>
+        <div className="mb-10 w-full max-w-md">
+          <section className="glass-card p-4">
+            <h2 className="text-lg md:text-xl font-semibold mb-2">Sonderangebote</h2>
+            <div className="glass-alert p-3 rounded-lg mb-2">🥂 10% Rabatt auf alle Weine!</div>
+            <button className="btn-outline w-full text-base font-medium">Zum Shop</button>
+          </section>
+        </div>
       </main>
 
-      <footer className="bg-[#496580] text-white text-center py-4 rounded-t-xl mt-6 max-w-md mx-auto">
+      <footer className="bg-[#496580] text-[#ffffff] text-center p-2 rounded-t-xl sticky bottom-0">
         <p className="text-sm">Entwickelt mit Liebe zum Wein</p>
       </footer>
     </div>
