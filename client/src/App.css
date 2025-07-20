@@ -15,6 +15,8 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
+  overflow-x: hidden;
 }
 
 /* === App Container === */
@@ -23,6 +25,8 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* === Headings === */
@@ -44,17 +48,32 @@ h3 {
   font-size: 1.25rem;
 }
 
+/* Ensure h1 and span in header are white */
+.glass-header h1 {
+  color: #ffffff !important;
+  text-align: center;
+}
+
+.glass-header span {
+  color: #ffffff !important;
+}
+
 /* === Glass Header === */
 .glass-header {
   background: #496580;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.3);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 1.5rem;
+  padding: 0.2rem 0.5rem;
   border-radius: 0 0 12px 12px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  width: 100%;
+  max-width: 100%;
+  left: 0;
+  right: 0;
 }
 
 /* === Glass Card === */
@@ -73,6 +92,7 @@ h3 {
   padding: 1.5rem;
   max-width: 600px;
   width: 100%;
+  margin-bottom: 1rem;
 }
 
 .glass-card::before {
@@ -128,6 +148,7 @@ button {
 .btn-primary {
   background-color: #496580;
   color: #ffffff;
+  margin-top: 1rem;
 }
 
 .btn-primary:hover {
@@ -138,6 +159,7 @@ button {
 .btn-secondary {
   background-color: #baddff;
   color: #496580;
+  margin-top: 1rem;
 }
 
 .btn-secondary:hover {
@@ -149,6 +171,7 @@ button {
   background-color: transparent;
   border: 1px solid #496580;
   color: #496580;
+  margin-top: 1rem;
 }
 
 .btn-outline:hover {
@@ -190,13 +213,20 @@ input[type="range"] {
 }
 
 /* === Footer === */
-footer {
+.footer {
   background-color: #496580;
   color: #ffffff;
   text-align: center;
   padding: 1rem;
   font-size: 0.9rem;
   border-radius: 12px 12px 0 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  width: 100%;
+  max-width: 100%;
+  left: 0;
+  right: 0;
 }
 
 /* === Utilities === */
@@ -211,7 +241,7 @@ footer {
 /* === Mobile Responsiveness === */
 @media (max-width: 768px) {
   .App {
-    padding: 1rem;
+    padding: 0;
   }
 
   h1 {
@@ -234,5 +264,12 @@ footer {
 
   .glass-card {
     padding: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  main {
+    padding: 1rem;
+    gap: 2rem;
+    overflow-y: auto;
   }
 }
