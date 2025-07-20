@@ -187,7 +187,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
             <option value="ueber_15">{'>15 €'}</option>
           </select>
         </section>
-        <section className="glass-card">
+        <section className="glass-card geschmack-card">
           <h2 className="text-lg md:text-xl font-semibold mb-4">Geschmack</h2>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
@@ -218,13 +218,13 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
             </div>
           </div>
         </section>
-        <section className="glass-card">
+        <section className="glass-card kategorie-card">
           <h2 className="text-lg md:text-xl font-semibold mb-4">Kategorie</h2>
           <div className="grid grid-cols-2 gap-4">
             {['Evergreen', 'Weinstand', 'Kochwein', 'Seltene Weine'].map(k => (
               <div
                 key={k}
-                className={`category-tile flex items-center justify-center aspect-square rounded-lg cursor-pointer ${
+                className={`category-tile flex items-center justify-center rounded-lg cursor-pointer ${
                   form.kategorie === k ? 'selected' : ''
                 }`}
                 onClick={() => handleKategorieChange(k)}
@@ -265,11 +265,11 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
         </section>
         <section className="glass-card">
           <h2 className="text-lg md:text-xl font-semibold mb-4">Bewertung</h2>
-          <div className="flex gap-2">
+          <div className="flex flex-row gap-2">
             {[1, 2, 3, 4, 5].map(star => (
               <svg
                 key={star}
-                className={`w-6 h-6 cursor-pointer ${star <= form.bewertung ? 'fill-[#baddff]' : 'fill-none stroke-[#496580] stroke-2'}`}
+                className={`w-5 h-5 cursor-pointer ${star <= form.bewertung ? 'fill-[#baddff]' : 'fill-none stroke-[#496580] stroke-2'}`}
                 onClick={() => handleBewertungChange(star)}
                 viewBox="0 0 24 24"
                 xmlns="http://www.w3.org/2000/svg"
