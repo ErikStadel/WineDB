@@ -110,6 +110,16 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
     'Seltene Weine': ['Geschenk', 'Geheimtipp', 'Anlass'],
   };
 
+  const geschmackOptions = [
+    'spritzig',
+    'fruchtig',
+    'dünn',
+    'extraordinär',
+    'kräftig',
+    'intensiv',
+    'gefällig',
+  ];
+
   return (
     <div className="App">
       <header className="glass-header">
@@ -190,29 +200,29 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
         <section className="glass-card geschmack-card">
           <h2 className="text-lg md:text-xl font-semibold mb-4">Geschmack</h2>
           <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              {['spritzig', 'fruchtig', 'dünn', 'extraordinär'].map(g => (
-                <label key={g} className="inline-flex items-center gap-2">
+            <div className="flex flex-col gap-4">
+              {geschmackOptions.slice(0, 4).map(g => (
+                <label key={g} className="unterkategorie-label text-[#496580]">
                   <input
                     type="checkbox"
                     checked={form.geschmack.includes(g)}
                     onChange={() => handleGeschmackChange(g)}
-                    className="w-5 h-5 rounded-full accent-[#baddff]"
+                    className="w-4 h-4 rounded-full accent-[#baddff]"
                   />
-                  <span className="text-[#496580]">{g}</span>
+                  <span className="text-base">{g}</span>
                 </label>
               ))}
             </div>
-            <div className="flex flex-col gap-2">
-              {['kräftig', 'intensiv', 'gefällig'].map(g => (
-                <label key={g} className="inline-flex items-center gap-2">
+            <div className="flex flex-col gap-4">
+              {geschmackOptions.slice(4).map(g => (
+                <label key={g} className="unterkategorie-label text-[#496580]">
                   <input
                     type="checkbox"
                     checked={form.geschmack.includes(g)}
                     onChange={() => handleGeschmackChange(g)}
-                    className="w-5 h-5 rounded-full accent-[#baddff]"
+                    className="w-4 h-4 rounded-full accent-[#baddff]"
                   />
-                  <span className="text-[#496580]">{g}</span>
+                  <span className="text-base">{g}</span>
                 </label>
               ))}
             </div>
@@ -224,9 +234,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
             {['Evergreen', 'Weinstand', 'Kochwein', 'Seltene Weine'].map(k => (
               <div
                 key={k}
-                className={`category-tile flex items-center justify-center rounded-lg cursor-pointer ${
-                  form.kategorie === k ? 'selected' : ''
-                }`}
+                className={`category-tile flex items-center justify-center rounded-lg cursor-pointer ${form.kategorie === k ? 'selected' : ''}`}
                 onClick={() => handleKategorieChange(k)}
               >
                 <span className="text-base font-medium text-center">{k}</span>
@@ -236,20 +244,17 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
           {form.kategorie && (
             <div className="mt-6">
               <h3 className="text-base font-semibold text-[#496580] mb-2">Unterkategorie</h3>
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-4">
                 {unterkategorieOptions[form.kategorie].map((u: string) => (
-                  <label
-                    key={u}
-                    className="grid grid-cols-[auto_1fr] items-start gap-2 text-[#496580]"
-                  >
+                  <label key={u} className="unterkategorie-label text-[#496580]">
                     <input
                       type="radio"
                       name="unterkategorie"
                       checked={form.unterkategorie === u}
                       onChange={() => handleUnterkategorieChange(u)}
-                      className="mt-1 w-4 h-4 accent-[#baddff]"
+                      className="w-4 h-4 rounded-full accent-[#baddff]"
                     />
-                    <span className="leading-tight">{u}</span>
+                    <span className="text-base">{u}</span>
                   </label>
                 ))}
               </div>

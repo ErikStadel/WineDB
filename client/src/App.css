@@ -62,6 +62,15 @@ h3 {
   width: 100%;
 }
 
+.glass-header h1 {
+  color: #ffffff;
+  text-align: center;
+}
+
+.glass-header span {
+  color: #ffffff;
+}
+
 /* Glass Card */
 .glass-card {
   background: rgba(255, 255, 255, 0.25);
@@ -239,11 +248,12 @@ input[type="range"] {
   gap: 1rem;
 }
 
-/* Checkbox Alignment */
-.geschmack-card label {
-  display: inline-flex;
-  align-items: center;
+/* Unterkategorie Label */
+.unterkategorie-label {
+  display: grid;
+  grid-template-columns: auto 1fr;
   gap: 0.5rem;
+  align-items: center;
 }
 
 /* Star Rating */
