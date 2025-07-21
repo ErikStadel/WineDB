@@ -192,7 +192,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               {['spritzig', 'fruchtig', 'dünn', 'extraordinär'].map(g => (
-                <label key={g} className="flex items-center gap-2">
+                <label key={g} className="inline-flex items-center gap-2">
                   <input
                     type="checkbox"
                     checked={form.geschmack.includes(g)}
@@ -205,7 +205,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
             </div>
             <div className="flex flex-col gap-2">
               {['kräftig', 'intensiv', 'gefällig'].map(g => (
-                <label key={g} className="flex items-center gap-2">
+                <label key={g} className="inline-flex items-center gap-2">
                   <input
                     type="checkbox"
                     checked={form.geschmack.includes(g)}
@@ -220,7 +220,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
         </section>
         <section className="glass-card kategorie-card">
           <h2 className="text-lg md:text-xl font-semibold mb-4">Kategorie</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-auto-fit gap-4">
             {['Evergreen', 'Weinstand', 'Kochwein', 'Seltene Weine'].map(k => (
               <div
                 key={k}
@@ -234,42 +234,33 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
             ))}
           </div>
           {form.kategorie && (
-            <div className="mt-4">
+            <div className="mt-6">
               <h3 className="text-base font-semibold text-[#496580] mb-2">Unterkategorie</h3>
-              <div className="flex flex-col gap-2">
-                {unterkategorieOptions[form.kategorie].map((u: string) => (
-                  <label key={u} className="flex items-center gap-2">
+                <div className="flex flex-col gap-1">
+                  {unterkategorieOptions[form.kategorie].map((u: string) => (
+                    <label key={u} className="flex items-start gap-2 text-[#496580]">
                     <input
                       type="radio"
                       name="unterkategorie"
                       checked={form.unterkategorie === u}
                       onChange={() => handleUnterkategorieChange(u)}
-                      className="w-5 h-5 accent-[#baddff]"
+                      className="mt-1 w-4 h-4 accent-[#baddff] shrink-0"
                     />
-                    <span className="text-[#496580]">{u}</span>
+                    <span className="leading-tight">{u}</span>
                   </label>
                 ))}
               </div>
             </div>
           )}
         </section>
-        <section className="glass-card">
-          <h2 className="text-lg md:text-xl font-semibold mb-4">Notizen</h2>
-          <textarea
-            value={form.notizen}
-            onChange={(e) => setForm({ ...form, notizen: e.target.value })}
-            placeholder="z.B. Fruchtig mit Noten von Beeren"
-            className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff] mt-1"
-            rows={4}
-          />
-        </section>
-        <section className="glass-card">
+        <section className="glass-card bewertung-card">
           <h2 className="text-lg md:text-xl font-semibold mb-4">Bewertung</h2>
-          <div className="flex flex-row gap-2">
+          <div className="flex flex-row gap-2 flex-nowrap">
             {[1, 2, 3, 4, 5].map(star => (
               <svg
                 key={star}
-                className={`w-5 h-5 cursor-pointer ${star <= form.bewertung ? 'fill-[#baddff]' : 'fill-none stroke-[#496580] stroke-2'}`}
+                className={`w-4 h-4 cursor-pointer flex-shrink-0`}
+                style={{ fill: star <= form.bewertung ? '#baddff' : 'none', stroke: star <= form.bewertung ? '#baddff' : '#496580', strokeWidth: 2 }}
                 onClick={() => handleBewertungChange(star)}
                 viewBox="0 0 24 24"
                 xmlns="http://www.w3.org/2000/svg"
