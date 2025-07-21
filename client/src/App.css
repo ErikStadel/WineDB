@@ -353,20 +353,6 @@ input[type="range"] {
   gap: 0.5rem;
 }
 
-/* Inline-Ausrichtung für Radio-Buttons in Unterkategorie */
-.kategorie-card label {
-  display: inline-flex;
-  align-items: center; /* statt 'left' */
-  gap: 0.25rem; /* ggf. etwas kleiner als 0.5rem probieren */
-}
-
-/* Vertikale Anordnung für Unterkategorien */
-.kategorie-card .flex-col {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  align-items: flex-start; /* ebenfalls 'left' ersetzen */
-}
 
 /* Horizontale Anordnung und visuelles Feedback für Sterne */
 .bewertung-card .flex {

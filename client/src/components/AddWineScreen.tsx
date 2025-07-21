@@ -218,7 +218,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
             </div>
           </div>
         </section>
-        <section className="glass-card kategorie-card">
+        <section className="glass-card">
           <h2 className="text-lg md:text-xl font-semibold mb-4">Kategorie</h2>
           <div className="grid grid-cols-auto-fit gap-4">
             {['Evergreen', 'Weinstand', 'Kochwein', 'Seltene Weine'].map(k => (
@@ -236,15 +236,18 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
           {form.kategorie && (
             <div className="mt-6">
               <h3 className="text-base font-semibold text-[#496580] mb-2">Unterkategorie</h3>
-                <div className="flex flex-col gap-1">
-                  {unterkategorieOptions[form.kategorie].map((u: string) => (
-                    <label key={u} className="flex items-start gap-2 text-[#496580]">
+              <div className="flex flex-col gap-1">
+                {unterkategorieOptions[form.kategorie].map((u: string) => (
+                  <label
+                    key={u}
+                    className="grid grid-cols-[auto_1fr] items-start gap-2 text-[#496580]"
+                  >
                     <input
                       type="radio"
                       name="unterkategorie"
                       checked={form.unterkategorie === u}
                       onChange={() => handleUnterkategorieChange(u)}
-                      className="mt-1 w-4 h-4 accent-[#baddff] shrink-0"
+                      className="mt-1 w-4 h-4 accent-[#baddff]"
                     />
                     <span className="leading-tight">{u}</span>
                   </label>
