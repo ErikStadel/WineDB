@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../App.css';
 
@@ -34,33 +34,39 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
     imageUrl: '',
   });
   const [successMessage, setSuccessMessage] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(false);
+
+  useEffect(() => {
+    const savedForm = localStorage.getItem('wineForm');
+    if (savedForm) {
+      setForm(JSON.parse(savedForm));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('wineForm', JSON.stringify(form));
+  }, [form]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = async (e: any) => {
-      const file = e.target.files[0];
-      if (file) {
-        const formData = new FormData();
-        formData.append('image', file);
-        try {
-          const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
-            params: { key: process.env.REACT_APP_IMGBB_API_KEY, expiration: 600 },
-          });
-          setForm({ ...form, imageUrl: response.data.data.url });
-        } catch (error: any) {
-          console.error('imgbb Upload Fehler:', error.response?.data || error.message);
-        }
+    const file = e.target.files?.[0];
+    if (file) {
+      const formData = new FormData();
+      formData.append('image', file);
+      try {
+        const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
+          params: { key: process.env.REACT_APP_IMGBB_API_KEY, expiration: 600 },
+        });
+        setForm({ ...form, imageUrl: response.data.data.url });
+      } catch (error: any) {
+        console.error('imgbb Upload Fehler:', error.response?.data || error.message);
       }
-    };
-    input.click();
+    }
   };
 
   const handleGeschmackChange = (value: string) => {
     if (form.geschmack.includes(value)) {
       setForm({ ...form, geschmack: form.geschmack.filter(g => g !== value) });
-    } else if (form.geschmack.length < 2) {
+    } else if (form.geschmack.length < 3) {
       setForm({ ...form, geschmack: [...form.geschmack, value] });
     }
   };
@@ -78,6 +84,11 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
   };
 
   const handleSave = async () => {
+    if (!isFormValid()) {
+      setErrorMessage(true);
+      setTimeout(() => setErrorMessage(false), 2000);
+      return;
+    }
     const wineData = {
       ...form,
       timestamp: new Date().toISOString(),
@@ -88,11 +99,29 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
       setSuccessMessage(true);
       setTimeout(() => {
         setSuccessMessage(false);
-        onBack();
       }, 2000);
     } catch (error: any) {
       console.error('Speicherfehler:', error.response?.data || error.message);
     }
+  };
+
+  const handleDeleteImage = () => {
+    setForm({ ...form, imageUrl: '' });
+  };
+
+  const isFormValid = () => {
+    return (
+      form.name.trim() !== '' &&
+      form.rebsorte.trim() !== '' &&
+      form.farbe.trim() !== '' &&
+      form.preis.trim() !== '' &&
+      form.kauforte.length > 0 &&
+      form.kategorie.trim() !== '' &&
+      form.unterkategorie.trim() !== '' &&
+      form.geschmack.length > 0 &&
+      form.geschmack.length <= 3 &&
+      form.bewertung > 0
+    );
   };
 
   interface UnterkategorieOptions {
@@ -129,33 +158,35 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
       <main className="flex-1 p-6 flex flex-col items-center gap-12">
         <section className="glass-card image-upload">
           <h2 className="text-lg md:text-xl font-semibold mb-4">Bild hinzufügen</h2>
-
-          <label
-            htmlFor="file-input"
-            className="upload-plus"
-          >
+          <label className="upload-plus">
             <span className="plus-symbol">+</span>
             <input
-              id="file-input"
+              id="library-input"
               type="file"
               accept="image/*"
               className="hidden-input"
               onChange={handleImageUpload}
-              style={{ display: 'none' }}
             />
           </label>
-
           {form.imageUrl && (
-            <img
-              src={form.imageUrl}
-              alt="Vorschau"
-              className="image-preview"
-            />
+            <div className="relative">
+              <img
+                src={form.imageUrl}
+                alt="Vorschau"
+                className="image-preview"
+              />
+              <button
+                onClick={handleDeleteImage}
+                className="absolute bottom-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs"
+              >
+                🗑
+              </button>
+            </div>
           )}
         </section>
         <section className="glass-card">
           <h2 className="text-lg md:text-xl font-semibold mb-4">Wein Details</h2>
-          <label className="block font-semibold text-[#496580] mb-1">Gekauft bei</label>
+          <label className="block font-semibold text-[#496580] mb-1">Gekauft bei <span className="text-red-500">*</span></label>
           <select
             value={form.kauforte[0] || ''}
             onChange={(e) => setForm({ ...form, kauforte: [e.target.value] })}
@@ -169,21 +200,21 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
             <option value="Lidl">Lidl</option>
             <option value="Edeka">Edeka</option>
           </select>
-          <label className="block font-semibold text-[#496580] mb-1 mt-4">Name</label>
+          <label className="block font-semibold text-[#496580] mb-1 mt-4">Name <span className="text-red-500">*</span></label>
           <input
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             placeholder="z.B. Merlot 2020"
             className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff] mt-1"
           />
-          <label className="block font-semibold text-[#496580] mb-1 mt-4">Sorte</label>
+          <label className="block font-semibold text-[#496580] mb-1 mt-4">Sorte <span className="text-red-500">*</span></label>
           <input
             value={form.rebsorte}
             onChange={(e) => setForm({ ...form, rebsorte: e.target.value })}
             placeholder="z.B. Cabernet Sauvignon"
             className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff] mt-1"
           />
-          <label className="block font-semibold text-[#496580] mb-1 mt-4">Farbe</label>
+          <label className="block font-semibold text-[#496580] mb-1 mt-4">Farbe <span className="text-red-500">*</span></label>
           <select
             value={form.farbe}
             onChange={(e) => setForm({ ...form, farbe: e.target.value })}
@@ -194,7 +225,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
             <option value="Weiß">Weiß</option>
             <option value="Rosé">Rosé</option>
           </select>
-          <label className="block font-semibold text-[#496580] mb-1 mt-4">Preis</label>
+          <label className="block font-semibold text-[#496580] mb-1 mt-4">Preis <span className="text-red-500">*</span></label>
           <select
             value={form.preis}
             onChange={(e) => setForm({ ...form, preis: e.target.value })}
@@ -209,7 +240,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
           </select>
         </section>
         <section className="glass-card geschmack-card">
-          <h2 className="text-lg md:text-xl font-semibold mb-4">Geschmack</h2>
+          <h2 className="text-lg md:text-xl font-semibold mb-4">Geschmack <span className="text-red-500">*</span></h2>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-4">
               {geschmackOptions.slice(0, 4).map(g => (
@@ -240,7 +271,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
           </div>
         </section>
         <section className="glass-card">
-          <h2 className="text-lg md:text-xl font-semibold mb-4">Kategorie</h2>
+          <h2 className="text-lg md:text-xl font-semibold mb-4">Kategorie <span className="text-red-500">*</span></h2>
           <div className="grid grid-cols-auto-fit gap-4">
             {['Evergreen', 'Weinstand', 'Kochwein', 'Seltene Weine'].map(k => (
               <div
@@ -254,7 +285,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
           </div>
           {form.kategorie && (
             <div className="mt-6">
-              <h3 className="text-base font-semibold text-[#496580] mb-2">Unterkategorie</h3>
+              <h3 className="text-base font-semibold text-[#496580] mb-2">Unterkategorie <span className="text-red-500">*</span></h3>
               <div className="flex flex-col gap-4">
                 {unterkategorieOptions[form.kategorie].map((u: string) => (
                   <label key={u} className="unterkategorie-label text-[#496580]">
@@ -273,7 +304,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
           )}
         </section>
         <section className="glass-card bewertung-card">
-          <h2 className="text-lg md:text-xl font-semibold mb-4">Bewertung</h2>
+          <h2 className="text-lg md:text-xl font-semibold mb-4">Bewertung <span className="text-red-500">*</span></h2>
           <div className="flex flex-row gap-2 flex-nowrap">
             {[1, 2, 3, 4, 5].map(star => (
               <svg
@@ -291,11 +322,35 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
             ))}
           </div>
         </section>
-        {successMessage && <div className="glass-alert p-3 rounded-lg mt-4">Wein erfolgreich hinzugefügt!</div>}
+        <section className="glass-card">
+          <h2 className="text-lg md:text-xl font-semibold mb-4">Notizen</h2>
+          <textarea
+            value={form.notizen}
+            onChange={(e) => setForm({ ...form, notizen: e.target.value })}
+            placeholder="Freitext für Notizen..."
+            className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff] mt-1 h-24"
+          />
+        </section>
       </main>
       <footer className="footer">
-        <button className="footer-btn w-full text-base font-medium" onClick={handleSave}>Speichern</button>
+        <button
+          className="footer-btn w-full text-base font-medium"
+          onClick={handleSave}
+         
+        >
+          Speichern
+        </button>
       </footer>
+      {successMessage && (
+        <div className="snackbar success">
+          Wein erfolgreich hinzugefügt!
+        </div>
+      )}
+      {errorMessage && (
+        <div className="snackbar error">
+          Bitte fülle alle Pflichtfelder aus!
+        </div>
+      )}
     </div>
   );
 };

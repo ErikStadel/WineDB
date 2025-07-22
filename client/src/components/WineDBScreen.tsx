@@ -98,8 +98,8 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
               className="glass-card p-4 flex flex-col md:flex-row items-start md:items-center justify-between cursor-pointer wine-entry"
               onClick={() => {}}
             >
-              <div className="w-24 h-24 bg-gray-200 rounded-lg flex-shrink-0 mr-4">
-                {wine.imageUrl && <img src={wine.imageUrl} alt={wine.name} className="w-full h-full object-cover rounded-lg" />}
+              <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-200 rounded-lg flex-shrink-0 mr-4">
+                {wine.imageUrl && <img src={wine.imageUrl} alt={wine.name} className="w-full h-full object-contain rounded-lg" />}
               </div>
               <div className="flex-1">
                 <div className="flex flex-col md:flex-row justify-between">
