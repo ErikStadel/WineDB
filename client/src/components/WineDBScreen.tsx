@@ -60,7 +60,7 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
                 onChange={(e) => setFilters({ ...filters, farbe: e.target.value })}
                 className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff]"
               >
-                <option value="">Farbe auswählen</option>
+                <option value="">Alle Farben</option>
                 <option value="Rot">Rot</option>
                 <option value="Weiß">Weiß</option>
                 <option value="Rosé">Rosé</option>
@@ -70,19 +70,19 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
                 onChange={(e) => setFilters({ ...filters, preis: e.target.value })}
                 className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff]"
               >
-                <option value="">Preis auswählen</option>
-                <option value="unter_5">{'<5 €'}</option>
-                <option value="5_8">5-8 €</option>
-                <option value="8_12">8-12 €</option>
-                <option value="12_15">12-15 €</option>
-                <option value="ueber_15">{'>15 €'}</option>
+                <option value="">Alle Preise</option>
+                <option value="unter 5 €">{'<5 €'}</option>
+                <option value="5-8 €">5-8 €</option>
+                <option value="8-12 €">8-12 €</option>
+                <option value="12-15 €">12-15 €</option>
+                <option value="ueber 15 €">{'>15 €'}</option>
               </select>
               <select
                 value={filters.kategorie}
                 onChange={(e) => setFilters({ ...filters, kategorie: e.target.value })}
                 className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff]"
               >
-                <option value="">Kategorie auswählen</option>
+                <option value="">Alle Kategorien</option>
                 <option value="Evergreen">Evergreen</option>
                 <option value="Kochwein">Kochwein</option>
                 <option value="Seltene Weine">Seltene Weine</option>
@@ -105,7 +105,7 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
                 <div className="flex flex-col md:flex-row justify-between">
                   <div>
                     <h3 className="text-lg font-semibold">{wine.name}</h3>
-                    <p className="text-muted">Sorte: {wine.rebsorte || 'N/A'}</p>
+                    <p className="text-right">Sorte: {wine.rebsorte || 'N/A'}</p>
                   </div>
                   <div className="text-right">
                     <p>Kategorie: {wine.kategorie || 'N/A'}</p>

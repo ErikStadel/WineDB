@@ -201,11 +201,11 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
             className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff] mt-1"
           >
             <option value="" disabled>Preis auswählen</option>
-            <option value="unter_5">{'<5 €'}</option>
-            <option value="5_8">5-8 €</option>
-            <option value="8_12">8-12 €</option>
-            <option value="12_15">12-15 €</option>
-            <option value="ueber_15">{'>15 €'}</option>
+            <option value="unter 5 €">{'<5 €'}</option>
+            <option value="5-8 €">5-8 €</option>
+            <option value="8-12 €">8-12 €</option>
+            <option value="12-15 €">12-15 €</option>
+            <option value="ueber 15 €">{'>15 €'}</option>
           </select>
         </section>
         <section className="glass-card geschmack-card">
