@@ -149,20 +149,21 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
 
       {/* Das Overlay-Element wird nun in ein Portal gerendert */}
       {selectedImage &&
-        ReactDOM.createPortal(
-          <div
-            className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"
-            onClick={() => setSelectedImage(null)}
-          >
-            <img
-              src={selectedImage}
-              alt="Vergrößerte Ansicht"
-              className="max-w-[95%] max-h-[95%] rounded-lg shadow-lg"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>,
-          document.getElementById('image-portal-root') as HTMLElement // Verwende das neu erstellte DOM-Element
-        )}
+  ReactDOM.createPortal(
+    <div
+      className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center"
+      style={{ zIndex: 999999 }} // Setze einen extrem hohen z-index
+      onClick={() => setSelectedImage(null)}
+    >
+      <img
+        src={selectedImage}
+        alt="Vergrößerte Ansicht"
+        className="max-w-[95%] max-h-[95%] rounded-lg shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      />
+    </div>,
+    document.getElementById('image-portal-root') as HTMLElement
+  )}
     </div>
   );
 };
