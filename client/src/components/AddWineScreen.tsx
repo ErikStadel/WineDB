@@ -35,7 +35,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
   });
   const [successMessage, setSuccessMessage] = useState(false);
 
-  const handleImageUpload = async (e: React.MouseEvent) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
@@ -123,24 +123,35 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
   return (
     <div className="App">
       <header className="glass-header">
-        <h1 className="text-xl md:text-2xl font-semibold text-white !text-[#ffffff] text-center">Wein Hinzufügen</h1>
-        <span
-          className="text-[#ffffff] !text-[#ffffff] hover:text-[#baddff] font-medium text-xs md:text-sm cursor-pointer transition-colors z-30 px-2"
-          onClick={onBack}
-        >
-          Zurück
-        </span>
+        <h1 className="header-title">Wein Hinzufügen</h1>
+        <span className="header-back" onClick={onBack}>Zurück</span>
       </header>
       <main className="flex-1 p-6 flex flex-col items-center gap-12">
         <section className="glass-card image-upload">
           <h2 className="text-lg md:text-xl font-semibold mb-4">Bild hinzufügen</h2>
-          <span
-            className="text-4xl text-[#496580] font-bold cursor-pointer flex justify-center items-center h-24"
-            onClick={handleImageUpload}
+
+          <label
+            htmlFor="file-input"
+            className="upload-plus"
           >
-            +
-          </span>
-          {form.imageUrl && <img src={form.imageUrl} alt="Vorschau" className="w-full max-w-[300px] object-contain rounded-lg mt-4" />}
+            <span className="plus-symbol">+</span>
+            <input
+              id="file-input"
+              type="file"
+              accept="image/*"
+              className="hidden-input"
+              onChange={handleImageUpload}
+              style={{ display: 'none' }}
+            />
+          </label>
+
+          {form.imageUrl && (
+            <img
+              src={form.imageUrl}
+              alt="Vorschau"
+              className="image-preview"
+            />
+          )}
         </section>
         <section className="glass-card">
           <h2 className="text-lg md:text-xl font-semibold mb-4">Wein Details</h2>

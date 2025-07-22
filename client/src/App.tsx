@@ -37,15 +37,15 @@ const App: React.FC = () => {
   return (
     <div className="App">
       <header className="glass-header">
-        <h1 className="text-xl md:text-2xl font-semibold text-white !text-[#ffffff] text-center">Wein Bewertung</h1>
+        <h1 className="header-title">Wein Bewertung</h1>
       </header>
       <main className="flex-1 p-6 flex flex-col items-center gap-12">
         <section className="glass-card">
           <h2 className="text-lg md:text-xl font-semibold text-[#baddff] mb-4">Willkommen</h2>
-          <div className="space-y-3">
-            <button className="btn-primary text-base font-medium mt-4" onClick={() => setShowAddWine(true)}>Wein hinzufügen</button>
-            <button className="btn-secondary text-base font-medium mt-4" onClick={() => alert('Datenbank geöffnet')}>Datenbank</button>
-            <button className="btn-outline text-base font-medium mt-4" onClick={() => setShowInspiration(true)}>Inspiration</button>
+          <div className="flex flex-col gap-4 w-full max-w-xs mx-auto">
+            <button className="btn-primary text-base font-medium w-full" onClick={() => setShowAddWine(true)}>Wein hinzufügen</button>
+            <button className="btn-primary text-base font-medium w-full" onClick={() => alert('Datenbank geöffnet')}>Datenbank</button>
+            <button className="btn-outline text-base font-medium w-full" onClick={() => setShowInspiration(true)}>Inspiration</button>
           </div>
         </section>
       </main>

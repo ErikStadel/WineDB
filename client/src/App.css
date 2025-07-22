@@ -17,6 +17,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior: none;
   overflow-x: hidden;
+  background-image: url('data:image/svg+xml;utf8,<svg width="600" height="400" viewBox="0 0 1280 800" xmlns="http://www.w3.org/2000/svg"><path d="M937.3 85.5C895.6 88.2 875.8 107.5 853.7 129.2C832.8 155.1 814.6 187.1 797.2 227.5C769.8 295.7 753.2 383.3 716.1 452.4C708.6 476.3 689.5 487.2 675.5 499.2C646.6 523.5 586.5 556.7 526.3 532.3C461.9 505.1 429.1 395.8 434.8 333C432.9 277.4 419.5 239.8 396.5 211C356.4 162 261.2 123.3 170 142.6C112.8 167.4 88.7 213.6 84.6 238.8C70.7 326.2 123.3 422.3 203.7 516.7C296.3 625.7 457.6 710.4 605 757.8C676 780.9 776.1 798.4 871 795C1003.7 790.3 1129.8 732.3 1196.2 637.8C1249.2 567.3 1269.5 484.6 1279.8 405.3C1286 366.2 1280.6 323.6 1270.7 283C1253.9 217.2 1227.1 157.8 1151.6 121.9C1057.8 75.1 968.9 83.5 937.3 85.5Z" fill="%23496580" fill-opacity="0.10"/></svg>');
+  background-size: 600px 400px; /* Macht das Muster kleiner und sich wiederholend */
+  background-repeat: repeat;
+  background-position: bottom;
+  background-attachment: fixed;
 }
 
 /* App Container */
@@ -49,26 +54,39 @@ h3 {
 
 /* Glass Header */
 .glass-header {
-  background: #496580;
+  background: rgba(41, 80, 118, 0.85);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 6px 16px rgba(73, 101, 128, 0.2);
   border-bottom: 1px solid rgba(255, 255, 255, 0.3);
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   padding: 0.75rem;
   border-radius: 0 0 12px 12px;
   position: sticky;
   top: 0;
-  z-index: 0;
+  z-index: 100;
   width: 100%;
+  margin: 0;
+  height: 60px;
 }
 
-.glass-header h1 {
-  color: #ffffff;
+
+.header-title {
   text-align: center;
+  position: relative;
+  color:#ffffff;
+  margin: 0;
+  line-height: 1.2;
 }
 
-.glass-header span {
-  color: #ffffff;
+.header-back {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color:#ffffff;
 }
 
 /* Glass Card */
@@ -87,6 +105,9 @@ h3 {
 
 .glass-card.image-upload {
   max-width: 640px;
+  width: 100%;
+  margin-bottom: 1rem;
+  padding: 1.5rem;
 }
 
 /* Glass Alert */
@@ -113,11 +134,19 @@ button {
   transition: background-color 0.3s ease, color 0.3s ease;
   width: 100%;
   max-width: 200px;
+  margin-bottom: 1rem;
+}
+
+button:last-child {
+  margin-bottom: 0;
 }
 
 .btn-primary {
   background-color: #496580;
   color: #ffffff;
+  display: flex;
+flex-direction: column;
+gap: 20px;
 }
 
 .btn-primary:hover {
@@ -128,6 +157,9 @@ button {
 .btn-secondary {
   background-color: #baddff;
   color: #496580;
+  display: flex;
+flex-direction: column;
+gap: 20px;
 }
 
 .btn-secondary:hover {
@@ -139,6 +171,9 @@ button {
   background-color: transparent;
   border: 1px solid #496580;
   color: #496580;
+  display: flex;
+flex-direction: column;
+gap: 20px;
 }
 
 .btn-outline:hover {
@@ -206,11 +241,49 @@ input[type="range"] {
   color: #bafff5;
 }
 
-/* Image Upload */
-.image-upload img {
+/* Bildvorschau */
+.image-upload img,
+.image-preview {
   max-width: 300px;
-  height: auto;
+  width: 100%;
+  margin: 0 auto;
+  display: block;
+  border-radius: 1rem;
   object-fit: contain;
+  margin-top: 1rem;
+  box-shadow: 0 2px 10px rgba(73,101,128,0.12);
+}
+
+/* Upload-Button zentral, groß, klickbar */
+.upload-plus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 96px;     /* h-24 (24*4=96px) */
+  cursor: pointer;
+  border: 2px dashed #baddff;
+  border-radius: 1rem;
+  transition: border-color 0.2s, background 0.2s;
+  margin: 0 auto 1rem auto;
+  background: rgba(255,255,255,0.20);
+}
+.upload-plus:hover {
+  border-color: #496580;
+  background: rgba(186,221,255,0.25);
+}
+
+.plus-symbol {
+  font-size: 3rem;     /* deutlich größer als vorher */
+  color: #496580;
+  user-select: none;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Das echte Upload-Feld verstecken */
+.hidden-input {
+  display: none;
 }
 
 /* Category Tiles */
@@ -297,8 +370,9 @@ input[type="range"] {
   }
 
   .glass-card.image-upload {
-    max-width: 100%;
+    padding: 1rem;
   }
+
 
   main {
     padding: 1rem;
