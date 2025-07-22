@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import ReactDOM from 'react-dom'; // Importiere ReactDOM
 
 interface Wine {
   _id: string;
@@ -23,24 +24,38 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
     preis: '',
     kategorie: '',
   });
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     axios.get(`${apiUrl}/wines`).then((res) => setWines(res.data)).catch((err) => console.error('Fehler:', err));
   }, [apiUrl]);
 
-  const filteredWines = wines.filter(wine => 
-    (wine.name.toLowerCase().includes(filters.search.toLowerCase()) || 
-     (wine.rebsorte && wine.rebsorte.toLowerCase().includes(filters.search.toLowerCase()))) &&
-    (!filters.farbe || wine.farbe === filters.farbe) &&
-    (!filters.preis || wine.preis === filters.preis) &&
-    (!filters.kategorie || wine.kategorie === filters.kategorie)
-  );
+  const filteredWines = wines.filter((wine) => {
+    const searchLower = filters.search.toLowerCase();
+    const matchesSearch =
+      wine.name.toLowerCase().includes(searchLower) ||
+      (wine.rebsorte && wine.rebsorte.toLowerCase().includes(searchLower)) ||
+      (wine.farbe && wine.farbe.toLowerCase().includes(searchLower)) ||
+      (wine.preis && wine.preis.toLowerCase().includes(searchLower)) ||
+      (wine.kategorie && wine.kategorie.toLowerCase().includes(searchLower)) ||
+      (wine.unterkategorie && wine.unterkategorie.toLowerCase().includes(searchLower)) ||
+      (wine.bewertung && wine.bewertung.toString().includes(searchLower));
+
+    return (
+      matchesSearch &&
+      (!filters.farbe || wine.farbe === filters.farbe) &&
+      (!filters.preis || wine.preis === filters.preis) &&
+      (!filters.kategorie || wine.kategorie === filters.kategorie)
+    );
+  });
 
   return (
-    <div className="App">
+    <div className="App relative">
       <header className="glass-header">
         <h1 className="header-title">Wein Datenbank</h1>
-        <span className="header-back" onClick={onBack}>Zurück</span>
+        <span className="header-back" onClick={onBack}>
+          Zurück
+        </span>
       </header>
       <main className="flex-1 p-6 flex flex-col items-center gap-6 overflow-y-auto">
         <section className="glass-card w-full max-w-3xl">
@@ -92,14 +107,20 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
           )}
         </section>
         <section className="flex flex-col gap-4 w-full max-w-3xl">
-          {filteredWines.map(wine => (
+          {filteredWines.map((wine) => (
             <div
               key={wine._id}
               className="glass-card p-4 flex flex-col md:flex-row items-start md:items-center justify-between cursor-pointer wine-entry"
-              onClick={() => {}}
             >
               <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-200 rounded-lg flex-shrink-0 mr-4">
-                {wine.imageUrl && <img src={wine.imageUrl} alt={wine.name} className="w-full h-full object-contain rounded-lg" />}
+                {wine.imageUrl && (
+                  <img
+                    src={wine.imageUrl}
+                    alt={wine.name}
+                    className="w-full h-full object-contain rounded-lg cursor-pointer"
+                    onClick={() => setSelectedImage(prev => (prev === wine.imageUrl ? null : wine.imageUrl || null))}
+                  />
+                )}
               </div>
               <div className="flex-1">
                 <div className="flex flex-col md:flex-row justify-between">
@@ -122,9 +143,26 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
           ))}
         </section>
       </main>
-      <footer className="footer">
+      <footer className="footer relative z-10">
         <p className="text-sm">Entwickelt mit Liebe zum Wein</p>
       </footer>
+
+      {/* Das Overlay-Element wird nun in ein Portal gerendert */}
+      {selectedImage &&
+        ReactDOM.createPortal(
+          <div
+            className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"
+            onClick={() => setSelectedImage(null)}
+          >
+            <img
+              src={selectedImage}
+              alt="Vergrößerte Ansicht"
+              className="max-w-[95%] max-h-[95%] rounded-lg shadow-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>,
+          document.getElementById('image-portal-root') as HTMLElement // Verwende das neu erstellte DOM-Element
+        )}
     </div>
   );
 };

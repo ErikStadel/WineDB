@@ -35,6 +35,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
   });
   const [successMessage, setSuccessMessage] = useState(false);
   const [errorMessage, setErrorMessage] = useState(false);
+  const [isSaving, setIsSaving] = useState(false); // Neuer Zustand, um Button zu deaktivieren
 
   useEffect(() => {
     const savedForm = localStorage.getItem('wineForm');
@@ -56,10 +57,30 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
         const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
           params: { key: process.env.REACT_APP_IMGBB_API_KEY, expiration: 600 },
         });
-        setForm({ ...form, imageUrl: response.data.data.url });
+        const imageUrl = response.data.data.url;
+        // Validierung der URL durch einen HEAD-Request
+        const isValid = await checkImageUrl(imageUrl);
+        if (isValid) {
+          setForm({ ...form, imageUrl });
+        } else {
+          setErrorMessage(true);
+          setTimeout(() => setErrorMessage(false), 2000);
+          console.error('Ungültige Bild-URL von imgbb:', imageUrl);
+        }
       } catch (error: any) {
         console.error('imgbb Upload Fehler:', error.response?.data || error.message);
+        setErrorMessage(true);
+        setTimeout(() => setErrorMessage(false), 2000);
       }
+    }
+  };
+
+  const checkImageUrl = async (url: string): Promise<boolean> => {
+    try {
+      const response = await axios.head(url);
+      return response.status === 200;
+    } catch (error) {
+      return false;
     }
   };
 
@@ -83,12 +104,18 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
     setForm({ ...form, bewertung });
   };
 
+  const handleKauforteChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+    setForm({ ...form, kauforte: selectedOptions });
+  };
+
   const handleSave = async () => {
     if (!isFormValid()) {
       setErrorMessage(true);
       setTimeout(() => setErrorMessage(false), 2000);
       return;
     }
+    setIsSaving(true); // Button deaktivieren
     const wineData = {
       ...form,
       timestamp: new Date().toISOString(),
@@ -99,9 +126,14 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
       setSuccessMessage(true);
       setTimeout(() => {
         setSuccessMessage(false);
+        setIsSaving(false); // Button wieder aktivieren (falls nötig)
+        onBack(); // Zurück zum StartScreen
       }, 2000);
     } catch (error: any) {
       console.error('Speicherfehler:', error.response?.data || error.message);
+      setErrorMessage(true);
+      setTimeout(() => setErrorMessage(false), 2000);
+      setIsSaving(false); // Button wieder aktivieren bei Fehler
     }
   };
 
@@ -188,17 +220,19 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
           <h2 className="text-lg md:text-xl font-semibold mb-4">Wein Details</h2>
           <label className="block font-semibold text-[#496580] mb-1">Gekauft bei <span className="text-red-500">*</span></label>
           <select
-            value={form.kauforte[0] || ''}
-            onChange={(e) => setForm({ ...form, kauforte: [e.target.value] })}
+            multiple
+            value={form.kauforte}
+            onChange={handleKauforteChange}
             className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff] mt-1"
           >
-            <option value="" disabled>Kaufort auswählen</option>
             <option value="Rewe">Rewe</option>
             <option value="Kaufland">Kaufland</option>
             <option value="Hit">Hit</option>
             <option value="Aldi">Aldi</option>
             <option value="Lidl">Lidl</option>
             <option value="Edeka">Edeka</option>
+            <option value="Henkell">Henkell</option>
+            <option value="Wo anders">Wo anders</option>
           </select>
           <label className="block font-semibold text-[#496580] mb-1 mt-4">Name <span className="text-red-500">*</span></label>
           <input
@@ -336,7 +370,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
         <button
           className="footer-btn w-full text-base font-medium"
           onClick={handleSave}
-         
+          disabled={isSaving || successMessage} // Button deaktiviert während Speichern oder Erfolgsmeldung
         >
           Speichern
         </button>
