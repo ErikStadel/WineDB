@@ -344,6 +344,26 @@ input[type="range"] {
   transition: fill 0.3s ease, stroke 0.3s ease;
 }
 
+.filter-toggle {
+  cursor: pointer;
+  user-select: none;
+}
+
+.filter-section {
+  transition: max-height 0.3s ease-in-out;
+  max-height: 0;
+  overflow: hidden;
+}
+
+.filter-section.open {
+  max-height: 300px; /* Adjust based on content */
+}
+
+.wine-entry {
+  touch-action: manipulation; /* Prevent accidental clicks on mobile */
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
   h1 {

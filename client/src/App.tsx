@@ -3,6 +3,7 @@ import axios from 'axios';
 import './App.css';
 import AddWineScreen from './components/AddWineScreen';
 import InspirationScreen from './components/InspirationScreen';
+import WineDBScreen from './components/WineDBScreen';
 
 interface Wine {
   _id: string;
