@@ -28,7 +28,6 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
-    // Prüfen Sie auf eine Umgebungsvariable oder einen Props-Parameter
     const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
     
     if (useMockData) {
@@ -38,11 +37,15 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
         .then((res) => setWines(res.data))
         .catch((err) => {
           console.error('Fehler:', err);
-          // Fallback zu Mockdaten bei Fehler
           setWines(mockWines);
         });
     }
   }, [apiUrl]);
+
+  const handleEdit = (wineId: string) => {
+    // Platzhalter für Bearbeitungslogik
+    console.log(`Bearbeite Wein mit ID: ${wineId}`);
+  };
 
   const filteredWines = wines.filter((wine) => {
     const searchLower = filters.search.toLowerCase();
@@ -124,7 +127,7 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
           {filteredWines.map((wine) => (
             <div
               key={wine._id}
-              className="glass-card p-4 flex flex-col md:flex-row items-start md:items-center justify-between cursor-pointer wine-entry"
+              className="glass-card p-4 flex flex-col md:flex-row items-start md:items-center justify-between cursor-pointer wine-entry wine-entry-editable"
             >
               <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-200 rounded-lg flex-shrink-0 mr-4">
                 {wine.imageUrl && (
@@ -153,6 +156,21 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
                   <p>Bewertung: {wine.bewertung || 0}/5</p>
                 </div>
               </div>
+              <svg
+                onClick={() => handleEdit(wine._id)}
+                className="edit-icon"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#496580"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
             </div>
           ))}
         </section>
@@ -160,24 +178,22 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
       <footer className="footer relative z-10">
         <p className="text-sm">Entwickelt mit Liebe zum Wein</p>
       </footer>
-
-      {/* Das Overlay-Element wird nun in ein Portal gerendert */}
       {selectedImage &&
-  ReactDOM.createPortal(
-    <div
-      className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center"
-      style={{ zIndex: 999999 }} // Setze einen extrem hohen z-index
-      onClick={() => setSelectedImage(null)}
-    >
-      <img
-        src={selectedImage}
-        alt="Vergrößerte Ansicht"
-        className="max-w-[95%] max-h-[95%] rounded-lg shadow-lg"
-        onClick={(e) => e.stopPropagation()}
-      />
-    </div>,
-    document.getElementById('image-portal-root') as HTMLElement
-  )}
+        ReactDOM.createPortal(
+          <div
+            className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center"
+            style={{ zIndex: 999999 }}
+            onClick={() => setSelectedImage(null)}
+          >
+            <img
+              src={selectedImage}
+              alt="Vergrößerte Ansicht"
+              className="max-w-[95%] max-h-[95%] rounded-lg shadow-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>,
+          document.getElementById('image-portal-root') as HTMLElement
+        )}
     </div>
   );
 };

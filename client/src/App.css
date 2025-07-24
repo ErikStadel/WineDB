@@ -104,11 +104,29 @@ h3 {
   margin-bottom: 1rem;
 }
 
+.glass-card.wine-entry-editable {
+  position: relative;
+}
+
 .glass-card.image-upload {
   max-width: 640px;
   width: 100%;
   margin-bottom: 1rem;
   padding: 1.5rem;
+}
+
+/*Wine DB Edit Icon */
+.edit-icon {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.edit-icon:hover {
+  transform: scale(1.2);
+  opacity: 0.8;
 }
 
 /* Glass Alert */
