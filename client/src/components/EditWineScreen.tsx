@@ -44,7 +44,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
   const [successMessage, setSuccessMessage] = useState(false);
 
   useEffect(() => {
-    const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
+    const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'false';
     
     if (useMockData) {
       const mockWine = mockWines.find((w: Wine) => w._id.$oid === wineId);
