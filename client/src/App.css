@@ -368,6 +368,25 @@ input[type="range"] {
   line-height: 1;
 }
 
+/* Animierter Ladekreis */
+.loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(186, 221, 255, 0.3); /* #baddff mit Transparenz */
+  border-top: 4px solid #baddff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 1rem auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 /* Das echte Upload-Feld verstecken */
 .hidden-input {
   display: none;

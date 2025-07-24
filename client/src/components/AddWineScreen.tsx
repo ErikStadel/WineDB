@@ -35,7 +35,8 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
   });
   const [successMessage, setSuccessMessage] = useState(false);
   const [errorMessage, setErrorMessage] = useState(false);
-  const [isSaving, setIsSaving] = useState(false); // Neuer Zustand, um Button zu deaktivieren
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false); // Neuer Zustand für Ladeanimation
 
   useEffect(() => {
     const savedForm = localStorage.getItem('wineForm');
@@ -51,6 +52,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setIsUploading(true); // Ladeanimation starten
       const formData = new FormData();
       formData.append('image', file);
       try {
@@ -70,6 +72,8 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
         console.error('imgbb Upload Fehler:', error.response?.data || error.message);
         setErrorMessage(true);
         setTimeout(() => setErrorMessage(false), 2000);
+      } finally {
+        setIsUploading(false); // Ladeanimation beenden
       }
     }
   };
@@ -114,7 +118,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
       setTimeout(() => setErrorMessage(false), 2000);
       return;
     }
-    setIsSaving(true); // Button deaktivieren
+    setIsSaving(true);
     const wineData = {
       ...form,
       timestamp: new Date().toISOString(),
@@ -125,14 +129,14 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
       setSuccessMessage(true);
       setTimeout(() => {
         setSuccessMessage(false);
-        setIsSaving(false); // Button wieder aktivieren (falls nötig)
-        onBack(); // Zurück zum StartScreen
+        setIsSaving(false);
+        onBack();
       }, 2000);
     } catch (error: any) {
       console.error('Speicherfehler:', error.response?.data || error.message);
       setErrorMessage(true);
       setTimeout(() => setErrorMessage(false), 2000);
-      setIsSaving(false); // Button wieder aktivieren bei Fehler
+      setIsSaving(false);
     }
   };
 
@@ -189,7 +193,9 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
       <main className="flex-1 p-6 flex flex-col items-center gap-12">
         <section className="glass-card image-upload">
           <h2 className="text-lg md:text-xl font-semibold mb-4">Bild hinzufügen</h2>
-          {!form.imageUrl && (
+          {isUploading ? (
+            <div className="loader" />
+          ) : !form.imageUrl ? (
             <label className="upload-plus">
               <span className="plus-symbol">+</span>
               <input
@@ -200,8 +206,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
                 onChange={handleImageUpload}
               />
             </label>
-          )}
-          {form.imageUrl && (
+          ) : (
             <div className="relative">
               <img
                 src={form.imageUrl}
@@ -371,7 +376,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
         <button
           className="footer-btn w-full text-base font-medium"
           onClick={handleSave}
-          disabled={isSaving || successMessage} // Button deaktiviert während Speichern oder Erfolgsmeldung
+          disabled={isSaving || successMessage}
         >
           Speichern
         </button>
