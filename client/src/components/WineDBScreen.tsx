@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import ReactDOM from 'react-dom'; // Importiere ReactDOM
+import ReactDOM from 'react-dom';
+import { mockWines } from '../mocks/mockWines';
 
 interface Wine {
   _id: string;
@@ -27,7 +28,20 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
-    axios.get(`${apiUrl}/wines`).then((res) => setWines(res.data)).catch((err) => console.error('Fehler:', err));
+    // Prüfen Sie auf eine Umgebungsvariable oder einen Props-Parameter
+    const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
+    
+    if (useMockData) {
+      setWines(mockWines);
+    } else {
+      axios.get(`${apiUrl}/wines`)
+        .then((res) => setWines(res.data))
+        .catch((err) => {
+          console.error('Fehler:', err);
+          // Fallback zu Mockdaten bei Fehler
+          setWines(mockWines);
+        });
+    }
   }, [apiUrl]);
 
   const filteredWines = wines.filter((wine) => {

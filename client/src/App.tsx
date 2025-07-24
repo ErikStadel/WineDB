@@ -1,37 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
 import './App.css';
 import AddWineScreen from './components/AddWineScreen';
 import InspirationScreen from './components/InspirationScreen';
 import WineDBScreen from './components/WineDBScreen';
 
-interface Wine {
-  _id: string;
-  name: string;
-  rebsorte?: string;
-  farbe?: string;
-  preis?: string;
-  kauforte?: string[];
-  geschmack?: string[];
-  kategorie?: string;
-  unterkategorie?: string;
-  notizen?: string;
-  bewertung?: number;
-  imageUrl?: string;
-  timestamp: string;
-}
-
 const App: React.FC = () => {
-  const [wines, setWines] = useState<Wine[]>([]);
   const [showAddWine, setShowAddWine] = useState(false);
   const [showInspiration, setShowInspiration] = useState(false);
   const [showWineDB, setShowWineDB] = useState(false);
 
   const apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'http://192.168.0.208:3001';
-
-  useEffect(() => {
-    axios.get(`${apiUrl}/wines`).then((res) => setWines(res.data)).catch((err) => console.error('Fehler:', err));
-  }, []);
 
   if (showAddWine) return <AddWineScreen onBack={() => setShowAddWine(false)} apiUrl={apiUrl} />;
   if (showInspiration) return <InspirationScreen onBack={() => setShowInspiration(false)} />;
