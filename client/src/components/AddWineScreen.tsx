@@ -58,7 +58,6 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
           params: { key: process.env.REACT_APP_IMGBB_API_KEY, expiration: 600 },
         });
         const imageUrl = response.data.data.url;
-        // Validierung der URL durch einen HEAD-Request
         const isValid = await checkImageUrl(imageUrl);
         if (isValid) {
           setForm({ ...form, imageUrl });

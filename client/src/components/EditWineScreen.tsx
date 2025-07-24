@@ -62,6 +62,8 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
           bewertung: mockWine.bewertung || 0,
           imageUrl: mockWine.imageUrl || '',
         });
+      } else {
+        setError('Wein nicht gefunden');
       }
       setLoading(false);
     } else {
@@ -167,6 +169,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
         mockWines[mockIndex] = {
           ...mockWines[mockIndex],
           ...form,
+          _id: { $oid: wineId },
           timestamp: { $date: new Date().toISOString() }
         };
       }
@@ -177,7 +180,10 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
       }, 1500);
     } else {
       try {
-        await axios.put(`${apiUrl}/wine/${wineId}`, form);
+        await axios.put(`${apiUrl}/wine/${wineId}`, {
+          ...form,
+          _id: { $oid: wineId }
+        });
         setSuccessMessage(true);
         setTimeout(() => {
           setSuccessMessage(false);
@@ -261,16 +267,18 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
       <main className="flex-1 p-6 flex flex-col items-center gap-12">
         <section className="glass-card image-upload">
           <h2 className="text-lg md:text-xl font-semibold mb-4">Bild hinzufügen</h2>
-          <label className="upload-plus">
-            <span className="plus-symbol">+</span>
-            <input
-              id="library-input"
-              type="file"
-              accept="image/*"
-              className="hidden-input"
-              onChange={handleImageUpload}
-            />
-          </label>
+          {!form.imageUrl && (
+            <label className="upload-plus">
+              <span className="plus-symbol">+</span>
+              <input
+                id="library-input"
+                type="file"
+                accept="image/*"
+                className="hidden-input"
+                onChange={handleImageUpload}
+              />
+            </label>
+          )}
           {form.imageUrl && (
             <div className="relative">
               <img
