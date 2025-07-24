@@ -450,11 +450,12 @@ input[type="range"] {
 
 /*Snackbars */
 .snackbar.success {
-  background-color: #4caf50; /* grün */
+  background-color: #BAFFF5;
+  color:#496580;
 }
 
 .snackbar.error {
-  background-color: #f44336; /* rot */
+  background-color: #f44336;
 }
 
 @keyframes fadeInOut {

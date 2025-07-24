@@ -36,7 +36,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
   const [successMessage, setSuccessMessage] = useState(false);
   const [errorMessage, setErrorMessage] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isUploading, setIsUploading] = useState(false); // Neuer Zustand für Ladeanimation
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     const savedForm = localStorage.getItem('wineForm');
@@ -46,70 +46,113 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('wineForm', JSON.stringify(form));
+    // Verzögerte Speicherung in localStorage, um zu viele Updates zu vermeiden
+    const timeout = setTimeout(() => {
+      localStorage.setItem('wineForm', JSON.stringify(form));
+    }, 100);
+    return () => clearTimeout(timeout);
   }, [form]);
+
+  const compressImage = (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        img.src = e.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d')!;
+          const maxSize = 1024;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxSize) {
+              height = Math.round((height * maxSize) / width);
+              width = maxSize;
+            }
+          } else {
+            if (height > maxSize) {
+              width = Math.round((width * maxSize) / height);
+              height = maxSize;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const compressedFile = new File([blob], file.name, {
+                  type: 'image/jpeg',
+                  lastModified: Date.now(),
+                });
+                resolve(compressedFile);
+              } else {
+                resolve(file);
+              }
+            },
+            'image/jpeg',
+            0.8
+          );
+        };
+      };
+      reader.readAsDataURL(file);
+    });
+  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setIsUploading(true); // Ladeanimation starten
-      const formData = new FormData();
-      formData.append('image', file);
+      setIsUploading(true);
       try {
+        const compressedFile = await compressImage(file);
+        const formData = new FormData();
+        formData.append('image', compressedFile);
         const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
           params: { key: process.env.REACT_APP_IMGBB_API_KEY, expiration: 600 },
         });
         const imageUrl = response.data.data.url;
-        const isValid = await checkImageUrl(imageUrl);
-        if (isValid) {
-          setForm({ ...form, imageUrl });
-        } else {
-          setErrorMessage(true);
-          setTimeout(() => setErrorMessage(false), 2000);
-          console.error('Ungültige Bild-URL von imgbb:', imageUrl);
-        }
+        // Funktionale Zustandsaktualisierung, um den neuesten Zustand zu verwenden
+        setForm((prevForm) => ({ ...prevForm, imageUrl }));
       } catch (error: any) {
         console.error('imgbb Upload Fehler:', error.response?.data || error.message);
         setErrorMessage(true);
         setTimeout(() => setErrorMessage(false), 2000);
       } finally {
-        setIsUploading(false); // Ladeanimation beenden
+        setIsUploading(false);
       }
     }
   };
 
-  const checkImageUrl = async (url: string): Promise<boolean> => {
-    try {
-      const response = await axios.head(url);
-      return response.status === 200;
-    } catch (error) {
-      return false;
-    }
-  };
-
   const handleGeschmackChange = (value: string) => {
-    if (form.geschmack.includes(value)) {
-      setForm({ ...form, geschmack: form.geschmack.filter(g => g !== value) });
-    } else if (form.geschmack.length < 3) {
-      setForm({ ...form, geschmack: [...form.geschmack, value] });
-    }
+    setForm((prevForm) => {
+      if (prevForm.geschmack.includes(value)) {
+        return { ...prevForm, geschmack: prevForm.geschmack.filter(g => g !== value) };
+      } else if (prevForm.geschmack.length < 3) {
+        return { ...prevForm, geschmack: [...prevForm.geschmack, value] };
+      }
+      return prevForm;
+    });
   };
 
   const handleKategorieChange = (kategorie: string) => {
-    setForm({ ...form, kategorie, unterkategorie: '' });
+    setForm((prevForm) => ({ ...prevForm, kategorie, unterkategorie: '' }));
   };
 
   const handleUnterkategorieChange = (unterkategorie: string) => {
-    setForm({ ...form, unterkategorie });
+    setForm((prevForm) => ({ ...prevForm, unterkategorie }));
   };
 
   const handleBewertungChange = (bewertung: number) => {
-    setForm({ ...form, bewertung });
+    setForm((prevForm) => ({ ...prevForm, bewertung }));
   };
 
   const handleKauforteChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
-    setForm({ ...form, kauforte: selectedOptions });
+    setForm((prevForm) => ({ ...prevForm, kauforte: selectedOptions }));
   };
 
   const handleSave = async () => {
@@ -123,10 +166,10 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
       ...form,
       timestamp: new Date().toISOString(),
     };
-    console.log('Gesendete Daten:', wineData);
     try {
       await axios.post(`${apiUrl}/wine`, wineData, { headers: { 'Content-Type': 'application/json' } });
       setSuccessMessage(true);
+      localStorage.removeItem('wineForm');
       setTimeout(() => {
         setSuccessMessage(false);
         setIsSaving(false);
@@ -141,7 +184,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
   };
 
   const handleDeleteImage = () => {
-    setForm({ ...form, imageUrl: '' });
+    setForm((prevForm) => ({ ...prevForm, imageUrl: '' }));
   };
 
   const isFormValid = () => {
@@ -243,21 +286,21 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
           <label className="block font-semibold text-[#496580] mb-1 mt-4">Name <span className="text-red-500">*</span></label>
           <input
             value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
             placeholder="z.B. Merlot 2020"
             className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff] mt-1"
           />
           <label className="block font-semibold text-[#496580] mb-1 mt-4">Sorte <span className="text-red-500">*</span></label>
           <input
             value={form.rebsorte}
-            onChange={(e) => setForm({ ...form, rebsorte: e.target.value })}
+            onChange={(e) => setForm((prev) => ({ ...prev, rebsorte: e.target.value }))}
             placeholder="z.B. Cabernet Sauvignon"
             className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff] mt-1"
           />
           <label className="block font-semibold text-[#496580] mb-1 mt-4">Farbe <span className="text-red-500">*</span></label>
           <select
             value={form.farbe}
-            onChange={(e) => setForm({ ...form, farbe: e.target.value })}
+            onChange={(e) => setForm((prev) => ({ ...prev, farbe: e.target.value }))}
             className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff] mt-1"
           >
             <option value="" disabled>Farbe auswählen</option>
@@ -268,7 +311,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
           <label className="block font-semibold text-[#496580] mb-1 mt-4">Preis <span className="text-red-500">*</span></label>
           <select
             value={form.preis}
-            onChange={(e) => setForm({ ...form, preis: e.target.value })}
+            onChange={(e) => setForm((prev) => ({ ...prev, preis: e.target.value }))}
             className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff] mt-1"
           >
             <option value="" disabled>Preis auswählen</option>
@@ -345,7 +388,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
         </section>
         <section className="glass-card bewertung-card">
           <h2 className="text-lg md:text-xl font-semibold mb-4">Bewertung <span className="text-red-500">*</span></h2>
-          <div className="flex flex-row gap-2 flex-nowrap">
+          <div className="flex flexivérow gap-2 flex-nowrap">
             {[1, 2, 3, 4, 5].map(star => (
               <svg
                 key={star}
@@ -366,7 +409,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
           <h2 className="text-lg md:text-xl font-semibold mb-4">Notizen</h2>
           <textarea
             value={form.notizen}
-            onChange={(e) => setForm({ ...form, notizen: e.target.value })}
+            onChange={(e) => setForm((prev) => ({ ...prev, notizen: e.target.value }))}
             placeholder="Freitext für Notizen..."
             className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff] mt-1 h-24"
           />
