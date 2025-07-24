@@ -10,7 +10,6 @@ interface EditWineScreenProps {
   apiUrl: string;
 }
 
-// Typ für Formular, der optionale Felder als erforderlich definiert
 interface FormWine extends Omit<Wine, '_id' | 'timestamp'> {
   name: string;
   rebsorte: string;
@@ -42,6 +41,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState(false);
+  const [isUploading, setIsUploading] = useState(false); // Neuer Zustand für Ladekreis
 
   useEffect(() => {
     const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'false';
@@ -92,70 +92,115 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
     }
   }, [wineId, apiUrl]);
 
+  const compressImage = (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        img.src = e.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d')!;
+          const maxSize = 1024;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxSize) {
+              height = Math.round((height * maxSize) / width);
+              width = maxSize;
+            }
+          } else {
+            if (height > maxSize) {
+              width = Math.round((width * maxSize) / height);
+              height = maxSize;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const compressedFile = new File([blob], file.name, {
+                  type: 'image/jpeg',
+                  lastModified: Date.now(),
+                });
+                resolve(compressedFile);
+              } else {
+                resolve(file);
+              }
+            },
+            'image/jpeg',
+            0.8
+          );
+        };
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const formData = new FormData();
-      formData.append('image', file);
+      setIsUploading(true);
       try {
+        const compressedFile = await compressImage(file);
+        const formData = new FormData();
+        formData.append('image', compressedFile);
         const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
           params: { key: process.env.REACT_APP_IMGBB_API_KEY, expiration: 600 },
         });
         const imageUrl = response.data.data.url;
-        const isValid = await checkImageUrl(imageUrl);
-        if (isValid) {
-          setForm({ ...form, imageUrl });
-        } else {
-          setError('Ungültige Bild-URL');
-        }
+        setForm((prevForm) => ({ ...prevForm, imageUrl }));
       } catch (error: any) {
         setError('Fehler beim Bildupload');
+        setTimeout(() => setError(null), 2000);
+      } finally {
+        setIsUploading(false);
       }
     }
   };
 
-  const checkImageUrl = async (url: string): Promise<boolean> => {
-    try {
-      const response = await axios.head(url);
-      return response.status === 200;
-    } catch (error) {
-      return false;
-    }
-  };
-
   const handleDeleteImage = () => {
-    setForm({ ...form, imageUrl: '' });
+    setForm((prevForm) => ({ ...prevForm, imageUrl: '' }));
   };
 
   const handleGeschmackChange = (value: string) => {
-    if (form.geschmack.includes(value)) {
-      setForm({ ...form, geschmack: form.geschmack.filter(g => g !== value) });
-    } else if (form.geschmack.length < 3) {
-      setForm({ ...form, geschmack: [...form.geschmack, value] });
-    }
+    setForm((prevForm) => {
+      if (prevForm.geschmack.includes(value)) {
+        return { ...prevForm, geschmack: prevForm.geschmack.filter(g => g !== value) };
+      } else if (prevForm.geschmack.length < 3) {
+        return { ...prevForm, geschmack: [...prevForm.geschmack, value] };
+      }
+      return prevForm;
+    });
   };
 
   const handleKategorieChange = (kategorie: string) => {
-    setForm({ ...form, kategorie, unterkategorie: '' });
+    setForm((prevForm) => ({ ...prevForm, kategorie, unterkategorie: '' }));
   };
 
   const handleUnterkategorieChange = (unterkategorie: string) => {
-    setForm({ ...form, unterkategorie });
+    setForm((prevForm) => ({ ...prevForm, unterkategorie }));
   };
 
   const handleBewertungChange = (bewertung: number) => {
-    setForm({ ...form, bewertung });
+    setForm((prevForm) => ({ ...prevForm, bewertung }));
   };
 
   const handleKauforteChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
-    setForm({ ...form, kauforte: selectedOptions });
+    setForm((prevForm) => ({ ...prevForm, kauforte: selectedOptions }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isFormValid()) {
       setError('Bitte fülle alle Pflichtfelder aus!');
+      setTimeout(() => setError(null), 2000);
       return;
     }
     setLoading(true);
@@ -191,6 +236,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
         }, 1500);
       } catch (err) {
         setError('Fehler beim Speichern der Änderungen');
+        setTimeout(() => setError(null), 2000);
       }
     }
     setLoading(false);
@@ -218,6 +264,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
         onBack();
       } catch (err) {
         setError('Fehler beim Löschen des Weins');
+        setTimeout(() => setError(null), 2000);
         setLoading(false);
       }
     }
@@ -256,7 +303,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
   ];
 
   if (loading) return <div>Laden...</div>;
-  if (error) return <div className="error-message">{error}</div>;
+  if (error && !isUploading) return <div className="snackbar error">{error}</div>;
 
   return (
     <div className="App">
@@ -267,7 +314,9 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
       <main className="flex-1 p-6 flex flex-col items-center gap-12">
         <section className="glass-card image-upload">
           <h2 className="text-lg md:text-xl font-semibold mb-4">Bild hinzufügen</h2>
-          {!form.imageUrl && (
+          {isUploading ? (
+            <div className="loader" />
+          ) : !form.imageUrl ? (
             <label className="upload-plus">
               <span className="plus-symbol">+</span>
               <input
@@ -278,8 +327,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
                 onChange={handleImageUpload}
               />
             </label>
-          )}
-          {form.imageUrl && (
+          ) : (
             <div className="relative">
               <img
                 src={form.imageUrl}
@@ -316,21 +364,21 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
           <label className="block font-semibold text-[#496580] mb-1 mt-4">Name <span className="text-red-500">*</span></label>
           <input
             value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
             placeholder="z.B. Merlot 2020"
             className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff] mt-1"
           />
           <label className="block font-semibold text-[#496580] mb-1 mt-4">Sorte <span className="text-red-500">*</span></label>
           <input
             value={form.rebsorte}
-            onChange={(e) => setForm({ ...form, rebsorte: e.target.value })}
+            onChange={(e) => setForm((prev) => ({ ...prev, rebsorte: e.target.value }))}
             placeholder="z.B. Cabernet Sauvignon"
             className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff] mt-1"
           />
           <label className="block font-semibold text-[#496580] mb-1 mt-4">Farbe <span className="text-red-500">*</span></label>
           <select
             value={form.farbe}
-            onChange={(e) => setForm({ ...form, farbe: e.target.value })}
+            onChange={(e) => setForm((prev) => ({ ...prev, farbe: e.target.value }))}
             className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff] mt-1"
           >
             <option value="" disabled>Farbe auswählen</option>
@@ -341,7 +389,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
           <label className="block font-semibold text-[#496580] mb-1 mt-4">Preis <span className="text-red-500">*</span></label>
           <select
             value={form.preis}
-            onChange={(e) => setForm({ ...form, preis: e.target.value })}
+            onChange={(e) => setForm((prev) => ({ ...prev, preis: e.target.value }))}
             className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff] mt-1"
           >
             <option value="" disabled>Preis auswählen</option>
@@ -439,7 +487,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
           <h2 className="text-lg md:text-xl font-semibold mb-4">Notizen</h2>
           <textarea
             value={form.notizen}
-            onChange={(e) => setForm({ ...form, notizen: e.target.value })}
+            onChange={(e) => setForm((prev) => ({ ...prev, notizen: e.target.value }))}
             placeholder="Freitext für Notizen..."
             className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff] mt-1 h-24"
           />
@@ -450,14 +498,14 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
           <button
             className="footer-btn bg-red-500 hover:bg-red-600"
             onClick={handleDelete}
-            disabled={loading}
+            disabled={loading || isUploading}
           >
             Löschen
           </button>
           <button
             className="footer-btn"
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={loading || isUploading}
           >
             Speichern
           </button>
