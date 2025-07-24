@@ -189,16 +189,18 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
       <main className="flex-1 p-6 flex flex-col items-center gap-12">
         <section className="glass-card image-upload">
           <h2 className="text-lg md:text-xl font-semibold mb-4">Bild hinzufügen</h2>
-          <label className="upload-plus">
-            <span className="plus-symbol">+</span>
-            <input
-              id="library-input"
-              type="file"
-              accept="image/*"
-              className="hidden-input"
-              onChange={handleImageUpload}
-            />
-          </label>
+          {!form.imageUrl && (
+            <label className="upload-plus">
+              <span className="plus-symbol">+</span>
+              <input
+                id="library-input"
+                type="file"
+                accept="image/*"
+                className="hidden-input"
+                onChange={handleImageUpload}
+              />
+            </label>
+          )}
           {form.imageUrl && (
             <div className="relative">
               <img
