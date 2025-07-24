@@ -8,11 +8,11 @@ export const mockWines = [
     kategorie: "Evergreen",
     unterkategorie: "Premium",
     bewertung: 5,
-    imageUrl: "https://pixabay.com/de/photos/stillleben-weintrauben-weinflasche-1703929/", // Platzhalter-Bild
+    imageUrl: "https://cdn.pixabay.com/photo/2016/09/29/21/52/still-life-1703929_1280.jpg",
     timestamp: "2025-07-24"
   },
   {
-    _id: "2",
+    _id: "2", 
     name: "Weißer Burgunder",
     rebsorte: "Burgunder",
     farbe: "Weiß",
@@ -20,7 +20,7 @@ export const mockWines = [
     kategorie: "Weinstand",
     unterkategorie: "Standard",
     bewertung: 4,
-    imageUrl: "https://pixabay.com/de/photos/wein-weintrauben-essen-flasche-1562157/",
+    imageUrl: "https://cdn.pixabay.com/photo/2014/09/13/15/38/bottles-444170_1280.jpg",
     timestamp: "2025-07-24"
   },
   {
@@ -32,7 +32,7 @@ export const mockWines = [
     kategorie: "Kochwein",
     unterkategorie: "Basis",
     bewertung: 3,
-    imageUrl: "https://pixabay.com/de/photos/wein-weintrauben-essen-flasche-1562157/",
+    imageUrl: "https://cdn.pixabay.com/photo/2020/06/21/02/31/wine-5323009_1280.jpg",
     timestamp: "2025-07-24"
   }
 ];
