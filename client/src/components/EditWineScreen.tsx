@@ -41,10 +41,10 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState(false);
-  const [isUploading, setIsUploading] = useState(false); // Neuer Zustand für Ladekreis
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
-    const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'false';
+    const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
     
     if (useMockData) {
       const mockWine = mockWines.find((w: Wine) => w._id.$oid === wineId);
@@ -254,15 +254,34 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
     
     if (useMockData) {
       const mockIndex = mockWines.findIndex((w: Wine) => w._id.$oid === wineId);
-      if (mockIndex !== -1) {
-        mockWines.splice(mockIndex, 1);
+      if (mockIndex === -1) {
+        setError('Wein nicht gefunden');
+        setLoading(false);
+        setTimeout(() => setError(null), 2000);
+        return;
       }
-      onBack();
+      mockWines.splice(mockIndex, 1);
+      setSuccessMessage(true);
+      setTimeout(() => {
+        setSuccessMessage(false);
+        onBack();
+      }, 1500);
+      setLoading(false);
     } else {
       try {
-        await axios.delete(`${apiUrl}/wine/${wineId}`);
-        onBack();
-      } catch (err) {
+        // Sende DELETE-Request mit expliziter ObjectId
+        await axios.delete(`${apiUrl}/wine/${wineId}`, {
+          headers: { 'Content-Type': 'application/json' },
+          data: { _id: { $oid: wineId } } // MongoDB Data API erwartet oft die ID im Body
+        });
+        setSuccessMessage(true);
+        setTimeout(() => {
+          setSuccessMessage(false);
+          onBack();
+        }, 1500);
+        setLoading(false);
+      } catch (err: any) {
+        console.error('Löschfehler:', err.response?.data || err.message);
         setError('Fehler beim Löschen des Weins');
         setTimeout(() => setError(null), 2000);
         setLoading(false);
