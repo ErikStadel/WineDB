@@ -1,6 +1,10 @@
-export const mockWines = [
+import { Wine } from '../types/Wine';
+
+export const mockWines: Wine[] = [
   {
-    _id: "1",
+    _id: {
+      $oid: "507f1f77bcf86cd799439011"
+    },
     name: "Château Margaux 2018",
     rebsorte: "Cabernet Sauvignon",
     farbe: "Rot",
@@ -9,10 +13,14 @@ export const mockWines = [
     unterkategorie: "Premium",
     bewertung: 5,
     imageUrl: "https://cdn.pixabay.com/photo/2016/09/29/21/52/still-life-1703929_1280.jpg",
-    timestamp: "2025-07-24"
+    timestamp: {
+      $date: "2025-07-24T10:00:00.000Z"
+    }
   },
   {
-    _id: "2", 
+    _id: {
+      $oid: "507f1f77bcf86cd799439012"
+    }, 
     name: "Weißer Burgunder",
     rebsorte: "Burgunder",
     farbe: "Weiß",
@@ -21,10 +29,14 @@ export const mockWines = [
     unterkategorie: "Standard",
     bewertung: 4,
     imageUrl: "https://cdn.pixabay.com/photo/2014/09/13/15/38/bottles-444170_1280.jpg",
-    timestamp: "2025-07-24"
+    timestamp: {
+      $date: "2025-07-24T10:00:00.000Z"
+    }
   },
   {
-    _id: "3",
+    _id: {
+      $oid: "507f1f77bcf86cd799439013"
+    }, 
     name: "Rosé de Provence",
     rebsorte: "Grenache",
     farbe: "Rosé",
@@ -33,6 +45,8 @@ export const mockWines = [
     unterkategorie: "Basis",
     bewertung: 3,
     imageUrl: "https://cdn.pixabay.com/photo/2020/06/21/02/31/wine-5323009_1280.jpg",
-    timestamp: "2025-07-24"
+    timestamp: {
+      $date: "2025-07-24T10:00:00.000Z"
+    }
   }
 ];

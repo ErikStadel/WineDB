@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ObjectId, ServerApiVersion } = require('mongodb');
 const cors = require('cors');
 const serveStatic = require('serve-static');
 const app = express();
@@ -74,6 +74,54 @@ app.get('/wines', async (req, res) => {
     const collection = db.collection('wines');
     const wines = await collection.find({}).toArray();
     res.json(wines);
+  } catch (err) {
+    res.status(500).send('Fehler: ' + err.message);
+  }
+});
+
+// Neue Route zum Abrufen eines einzelnen Weins
+app.get('/wine/:id', async (req, res) => {
+  try {
+    const db = await connectDB();
+    const collection = db.collection('wines');
+    const wine = await collection.findOne({ 
+      _id: new ObjectId(req.params.id) 
+    });
+    
+    if (!wine) {
+      return res.status(404).json({ message: 'Wein nicht gefunden' });
+    }
+    
+    res.json(wine);
+  } catch (err) {
+    res.status(500).send('Fehler: ' + err.message);
+  }
+});
+
+// Update Route
+app.put('/wine/:id', async (req, res) => {
+  try {
+    const db = await connectDB();
+    const collection = db.collection('wines');
+    const wineData = {
+      ...req.body,
+      timestamp: new Date() // Aktualisiere Timestamp bei Änderung
+    };
+    delete wineData._id; // ID darf nicht geändert werden
+    
+    const result = await collection.updateOne(
+      { _id: new ObjectId(req.params.id) },
+      { $set: wineData }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ message: 'Wein nicht gefunden' });
+    }
+
+    res.json({ 
+      message: 'Wein erfolgreich aktualisiert',
+      modifiedCount: result.modifiedCount 
+    });
   } catch (err) {
     res.status(500).send('Fehler: ' + err.message);
   }

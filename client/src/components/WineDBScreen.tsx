@@ -2,18 +2,26 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ReactDOM from 'react-dom';
 import { mockWines } from '../mocks/mockWines';
+import EditWineScreen from './EditWineScreen';
 
 interface Wine {
-  _id: string;
+  _id: {
+    $oid: string;
+  };
   name: string;
   rebsorte?: string;
   farbe?: string;
   preis?: string;
+  kauforte?: string[];
+  geschmack?: string[];
   kategorie?: string;
   unterkategorie?: string;
+  notizen?: string;
   bewertung?: number;
   imageUrl?: string;
-  timestamp: string;
+  timestamp: {
+    $date: string;
+  };
 }
 
 const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack, apiUrl }) => {
@@ -26,6 +34,7 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
     kategorie: '',
   });
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [editingWineId, setEditingWineId] = useState<string | null>(null);
 
   useEffect(() => {
     const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
@@ -34,7 +43,19 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
       setWines(mockWines);
     } else {
       axios.get(`${apiUrl}/wines`)
-        .then((res) => setWines(res.data))
+        .then((res) => {
+          // Stelle sicher, dass die Daten das richtige Format haben
+          const formattedWines = res.data.map((wine: any) => ({
+            ...wine,
+            _id: typeof wine._id === 'string' 
+              ? { $oid: wine._id }
+              : wine._id,
+            timestamp: typeof wine.timestamp === 'string'
+              ? { $date: wine.timestamp }
+              : wine.timestamp
+          }));
+          setWines(formattedWines);
+        })
         .catch((err) => {
           console.error('Fehler:', err);
           setWines(mockWines);
@@ -42,9 +63,9 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
     }
   }, [apiUrl]);
 
-  const handleEdit = (wineId: string) => {
-    // Platzhalter für Bearbeitungslogik
-    console.log(`Bearbeite Wein mit ID: ${wineId}`);
+  const handleEdit = (wineId: Wine['_id']) => {
+    console.log('Edit clicked with ID:', wineId.$oid); // Debug-Ausgabe
+    setEditingWineId(wineId.$oid);
   };
 
   const filteredWines = wines.filter((wine) => {
@@ -65,6 +86,16 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
       (!filters.kategorie || wine.kategorie === filters.kategorie)
     );
   });
+
+  if (editingWineId) {
+    return (
+      <EditWineScreen 
+        wineId={editingWineId} 
+        onBack={() => setEditingWineId(null)}
+        apiUrl={apiUrl}
+      />
+    );
+  }
 
   return (
     <div className="App relative">
@@ -126,7 +157,7 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
         <section className="flex flex-col gap-4 w-full max-w-3xl">
           {filteredWines.map((wine) => (
             <div
-              key={wine._id}
+              key={wine._id.$oid}
               className="glass-card p-4 flex flex-col md:flex-row items-start md:items-center justify-between cursor-pointer wine-entry wine-entry-editable"
             >
               <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-200 rounded-lg flex-shrink-0 mr-4">
