@@ -212,16 +212,20 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
       {selectedImage &&
         ReactDOM.createPortal(
           <div
-            className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center"
-            style={{ zIndex: 999999 }}
+            className="image-overlay"
             onClick={() => setSelectedImage(null)}
           >
             <img
               src={selectedImage}
               alt="Vergrößerte Ansicht"
-              className="max-w-[95%] max-h-[95%] rounded-lg shadow-lg"
               onClick={(e) => e.stopPropagation()}
             />
+            <span
+              className="close-button"
+              onClick={() => setSelectedImage(null)}
+            >
+              ×
+            </span>
           </div>,
           document.getElementById('image-portal-root') as HTMLElement
         )}
