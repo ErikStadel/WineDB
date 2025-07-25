@@ -3,6 +3,7 @@ import axios from 'axios';
 import ReactDOM from 'react-dom';
 import { mockWines } from '../mocks/mockWines';
 import EditWineScreen from './EditWineScreen';
+import WineDetailScreen from './WineDetailScreen';
 
 interface Wine {
   _id: {
@@ -35,6 +36,7 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
   });
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [editingWineId, setEditingWineId] = useState<string | null>(null);
+  const [selectedWineId, setSelectedWineId] = useState<string | null>(null);
 
   useEffect(() => {
     const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
@@ -63,13 +65,11 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
   }, [apiUrl]);
 
   const handleEdit = (wineId: Wine['_id']) => {
-    console.log('Edit clicked with ID:', wineId.$oid);
     setEditingWineId(wineId.$oid);
   };
 
   const handleViewDetails = (wineId: Wine['_id']) => {
-    console.log('View details clicked with ID:', wineId.$oid);
-    // Hier kann später eine Detailansicht implementiert werden
+    setSelectedWineId(wineId.$oid);
   };
 
   const filteredWines = wines.filter((wine) => {
@@ -96,6 +96,16 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
       <EditWineScreen 
         wineId={editingWineId} 
         onBack={() => setEditingWineId(null)}
+        apiUrl={apiUrl}
+      />
+    );
+  }
+
+  if (selectedWineId) {
+    return (
+      <WineDetailScreen 
+        wineId={selectedWineId} 
+        onBack={() => setSelectedWineId(null)}
         apiUrl={apiUrl}
       />
     );
