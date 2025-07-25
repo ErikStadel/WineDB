@@ -37,6 +37,7 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [editingWineId, setEditingWineId] = useState<string | null>(null);
   const [selectedWineId, setSelectedWineId] = useState<string | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
@@ -62,7 +63,7 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
           setWines(mockWines);
         });
     }
-  }, [apiUrl]);
+  }, [apiUrl, refreshTrigger]);
 
   const handleEdit = (wineId: Wine['_id']) => {
     setEditingWineId(wineId.$oid);
@@ -70,6 +71,13 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
 
   const handleViewDetails = (wineId: Wine['_id']) => {
     setSelectedWineId(wineId.$oid);
+  };
+
+  const handleEditBack = (refresh: boolean = false) => {
+    setEditingWineId(null);
+    if (refresh) {
+      setRefreshTrigger(prev => prev + 1);
+    }
   };
 
   const filteredWines = wines.filter((wine) => {
@@ -95,7 +103,7 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
     return (
       <EditWineScreen 
         wineId={editingWineId} 
-        onBack={() => setEditingWineId(null)}
+        onBack={handleEditBack}
         apiUrl={apiUrl}
       />
     );

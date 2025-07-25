@@ -6,7 +6,7 @@ import '../App.css';
 
 interface EditWineScreenProps {
   wineId: string;
-  onBack: () => void;
+  onBack: (refresh?: boolean) => void;
   apiUrl: string;
 }
 
@@ -221,7 +221,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
       setSuccessMessage(true);
       setTimeout(() => {
         setSuccessMessage(false);
-        onBack();
+        onBack(true); // Trigger refresh
       }, 1500);
     } else {
       try {
@@ -232,7 +232,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
         setSuccessMessage(true);
         setTimeout(() => {
           setSuccessMessage(false);
-          onBack();
+          onBack(true); // Trigger refresh
         }, 1500);
       } catch (err) {
         setError('Fehler beim Speichern der Änderungen');
@@ -264,20 +264,19 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
       setSuccessMessage(true);
       setTimeout(() => {
         setSuccessMessage(false);
-        onBack();
+        onBack(true); // Trigger refresh
       }, 1500);
       setLoading(false);
     } else {
       try {
-        // Sende DELETE-Request mit expliziter ObjectId
         await axios.delete(`${apiUrl}/wine/${wineId}`, {
           headers: { 'Content-Type': 'application/json' },
-          data: { _id: { $oid: wineId } } // MongoDB Data API erwartet oft die ID im Body
+          data: { _id: { $oid: wineId } }
         });
         setSuccessMessage(true);
         setTimeout(() => {
           setSuccessMessage(false);
-          onBack();
+          onBack(true); // Trigger refresh
         }, 1500);
         setLoading(false);
       } catch (err: any) {
@@ -328,7 +327,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
     <div className="App">
       <header className="glass-header">
         <h1 className="header-title">Wein bearbeiten</h1>
-        <span className="header-back" onClick={onBack}>Zurück</span>
+        <span className="header-back" onClick={() => onBack(false)}>Zurück</span>
       </header>
       <main className="flex-1 p-6 flex flex-col items-center gap-12">
         <section className="glass-card image-upload">
