@@ -115,16 +115,23 @@ h3 {
   padding: 1.5rem;
 }
 
-/*Wine DB Edit Icon */
-.edit-icon {
+/* Wine DB Edit and View Icons */
+.edit-icon, .view-icon {
   position: absolute;
-  top: 1rem;
   right: 1rem;
   cursor: pointer;
   transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
-.edit-icon:hover {
+.edit-icon {
+  top: 1rem;
+}
+
+.view-icon {
+  top: 3rem; /* Abstand von 0.5rem unter edit-icon (1rem + 1.5rem + 0.5rem) */
+}
+
+.edit-icon:hover, .view-icon:hover {
   transform: scale(1.2);
   opacity: 0.8;
 }

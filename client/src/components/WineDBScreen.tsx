@@ -44,7 +44,6 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
     } else {
       axios.get(`${apiUrl}/wines`)
         .then((res) => {
-          // Stelle sicher, dass die Daten das richtige Format haben
           const formattedWines = res.data.map((wine: any) => ({
             ...wine,
             _id: typeof wine._id === 'string' 
@@ -64,8 +63,13 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
   }, [apiUrl]);
 
   const handleEdit = (wineId: Wine['_id']) => {
-    console.log('Edit clicked with ID:', wineId.$oid); // Debug-Ausgabe
+    console.log('Edit clicked with ID:', wineId.$oid);
     setEditingWineId(wineId.$oid);
+  };
+
+  const handleViewDetails = (wineId: Wine['_id']) => {
+    console.log('View details clicked with ID:', wineId.$oid);
+    // Hier kann später eine Detailansicht implementiert werden
   };
 
   const filteredWines = wines.filter((wine) => {
@@ -201,6 +205,21 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
               >
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+              <svg
+                onClick={() => handleViewDetails(wine._id)}
+                className="view-icon"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#496580"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
               </svg>
             </div>
           ))}
