@@ -87,15 +87,15 @@ const WineDetailScreen: React.FC<WineDetailScreenProps> = ({ wineId, onBack, api
         </section>
         <section className="glass-card">
           <h2 className="text-lg md:text-xl font-semibold mb-4">Geschmack</h2>
-          <div className="flex flex-wrap gap-2">
-            {wine.geschmack?.length ? (
-              wine.geschmack.map((g) => (
-                <span key={g} className="category-tile px-3 py-1 text-sm">{g}</span>
-              ))
-            ) : (
-              <span className="text-muted">Keine Geschmacksmerkmale</span>
-            )}
-          </div>
+          {wine.geschmack?.length ? (
+            <ul className="list-disc list-inside gap-2 text-[#496580]">
+              {wine.geschmack.map((g) => (
+                <li key={g} className="text-sm">{g}</li>
+              ))}
+            </ul>
+          ) : (
+            <span className="text-muted">Keine Geschmacksmerkmale</span>
+          )}
         </section>
         <section className="glass-card bewertung-card">
           <h2 className="text-lg md:text-xl font-semibold mb-4">Bewertung</h2>

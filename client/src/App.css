@@ -136,6 +136,11 @@ h3 {
   opacity: 0.8;
 }
 
+.list-disc {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+}
+
 /* Glass Alert */
 .glass-alert {
   background: rgba(255, 255, 255, 0.9);
