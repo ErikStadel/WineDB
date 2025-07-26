@@ -6,9 +6,7 @@ import EditWineScreen from './EditWineScreen';
 import WineDetailScreen from './WineDetailScreen';
 
 interface Wine {
-  _id: {
-    $oid: string;
-  };
+  _id: { $oid: string };
   name: string;
   rebsorte?: string;
   farbe?: string;
@@ -20,9 +18,7 @@ interface Wine {
   notizen?: string;
   bewertung?: number;
   imageUrl?: string;
-  timestamp: {
-    $date: string;
-  };
+  timestamp: { $date: string };
 }
 
 const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack, apiUrl }) => {
@@ -38,29 +34,32 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
   const [editingWineId, setEditingWineId] = useState<string | null>(null);
   const [selectedWineId, setSelectedWineId] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
-    
+    console.log('API URL:', apiUrl); // Debugging
     if (useMockData) {
       setWines(mockWines);
     } else {
-      axios.get(`${apiUrl}/wines`)
+      axios.get(`${apiUrl}/wines`, {
+        headers: { 'Origin': 'https://wine-db.vercel.app' }
+      })
         .then((res) => {
           const formattedWines = res.data.map((wine: any) => ({
             ...wine,
-            _id: typeof wine._id === 'string' 
-              ? { $oid: wine._id }
-              : wine._id,
+            _id: typeof wine._id === 'string' ? { $oid: wine._id } : wine._id,
             timestamp: typeof wine.timestamp === 'string'
               ? { $date: wine.timestamp }
               : wine.timestamp
           }));
           setWines(formattedWines);
+          setError(null); // Fehler zurücksetzen
         })
         .catch((err) => {
-          console.error('Fehler:', err);
-          setWines(mockWines);
+          console.error('Fehler:', err.response ? err.response.data : err.message);
+          setError(err.response ? err.response.data.message : err.message);
+          setWines(mockWines); // Fallback
         });
     }
   }, [apiUrl, refreshTrigger]);
@@ -99,20 +98,20 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
     );
   });
 
+  if (error) return <div className="p-4 text-red-500">Fehler: {error}</div>;
   if (editingWineId) {
     return (
-      <EditWineScreen 
-        wineId={editingWineId} 
+      <EditWineScreen
+        wineId={editingWineId}
         onBack={handleEditBack}
         apiUrl={apiUrl}
       />
     );
   }
-
   if (selectedWineId) {
     return (
-      <WineDetailScreen 
-        wineId={selectedWineId} 
+      <WineDetailScreen
+        wineId={selectedWineId}
         onBack={() => setSelectedWineId(null)}
         apiUrl={apiUrl}
       />
