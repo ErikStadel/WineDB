@@ -6,10 +6,9 @@ const serveStatic = require('serve-static');
 const app = express();
 
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://192.168.0.208:3000']
+  origin: ['http://localhost:3000', 'http://192.168.0.208:3000', 'https://wine-db.vercel.app/']
 }));
 app.use(express.json());
-app.use(serveStatic(__dirname, { index: ['index.html'] }));
 
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.DB_NAME || 'wineDB';
@@ -127,10 +126,17 @@ app.put('/wine/:id', async (req, res) => {
   }
 });
 
-app.listen(3001, '0.0.0.0', () => {
-  console.log('Server läuft auf Port 3001');
+app.listen(process.env.PORT || 3001, '0.0.0.0', () => {
+  console.log(`Server läuft auf Port ${process.env.PORT || 3001}`);
+});
+
+process.on('SIGTERM', async () => {
+  await client.close();
+  console.log('MongoDB-Verbindung geschlossen');
+  process.exit(0);
 });
 
 app.use((err, req, res, next) => {
-  res.status(500).send('Interner Serverfehler: ' + err.message);
+  console.error('Interner Serverfehler:', err.message);
+  res.status(500).json({ error: 'Interner Serverfehler', message: err.message });
 });
