@@ -42,25 +42,23 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
     if (useMockData) {
       setWines(mockWines);
     } else {
-      axios.get(`${apiUrl}/wines`, {
-        headers: { 'Origin': 'https://wine-db.vercel.app' }
-      })
-        .then((res) => {
-          const formattedWines = res.data.map((wine: any) => ({
-            ...wine,
-            _id: typeof wine._id === 'string' ? { $oid: wine._id } : wine._id,
-            timestamp: typeof wine.timestamp === 'string'
-              ? { $date: wine.timestamp }
-              : wine.timestamp
-          }));
-          setWines(formattedWines);
-          setError(null); // Fehler zurücksetzen
-        })
-        .catch((err) => {
-          console.error('Fehler:', err.response ? err.response.data : err.message);
-          setError(err.response ? err.response.data.message : err.message);
-          setWines(mockWines); // Fallback
-        });
+      axios.get(`${apiUrl}/wines`)
+  .then((res) => {
+    const formattedWines = res.data.map((wine: any) => ({
+      ...wine,
+      _id: typeof wine._id === 'string' ? { $oid: wine._id } : wine._id,
+      timestamp: typeof wine.timestamp === 'string'
+        ? { $date: wine.timestamp }
+        : wine.timestamp
+    }));
+    setWines(formattedWines);
+    setError(null);
+  })
+  .catch((err) => {
+    console.error('Fehler:', err.response ? err.response.data : err.message);
+    setError(err.response ? err.response.data.message : err.message);
+    setWines(mockWines);
+  });
     }
   }, [apiUrl, refreshTrigger]);
 
