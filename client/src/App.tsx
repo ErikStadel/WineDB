@@ -9,7 +9,9 @@ const App: React.FC = () => {
   const [showInspiration, setShowInspiration] = useState(false);
   const [showWineDB, setShowWineDB] = useState(false);
 
-  const apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'http://192.168.0.208:3001';
+  // API-URL basierend auf Umgebungsvariable oder Fallback für lokale Tests
+  const apiUrl = process.env.REACT_APP_API_URL || 
+    (window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'http://192.168.0.208:3001');
 
   if (showAddWine) return <AddWineScreen onBack={() => setShowAddWine(false)} apiUrl={apiUrl} />;
   if (showInspiration) return <InspirationScreen onBack={() => setShowInspiration(false)} />;
