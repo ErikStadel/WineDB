@@ -8,6 +8,16 @@ const app = express();
 app.use(cors({
   origin: ['http://localhost:3000', 'http://192.168.0.208:3000', 'https://wine-db.vercel.app']
 }));
+
+// Health Check Endpoint - sehr lightweight
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    message: 'Server is awake and ready' 
+  });
+});
+
 app.use(express.json());
 
 const uri = process.env.MONGODB_URI;

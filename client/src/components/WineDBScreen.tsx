@@ -41,7 +41,7 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
   const [selectedWineId, setSelectedWineId] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [error, setError] = useState<string | null>(null);
-
+  
   const hasRestoredRef = useRef<boolean>(false);
   const isMainScreenRef = useRef<boolean>(true);
 
@@ -56,6 +56,7 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
   const restoreScrollPosition = () => {
     if (scrollPosition.current > 0 && !hasRestoredRef.current) {
       hasRestoredRef.current = true;
+      // Kleine Verzögerung für iOS Safari
       setTimeout(() => {
         window.scrollTo({
           top: scrollPosition.current,
@@ -68,12 +69,17 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
   useEffect(() => {
     const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
     console.log('API URL:', apiUrl);
-
+    
     if (useMockData) {
       setWines(mockWines);
+      // Nach dem Laden der Daten Scroll-Position wiederherstellen
       setTimeout(restoreScrollPosition, 100);
     } else {
-      axios.get(`${apiUrl}/wines`)
+      // Längeres Timeout für ersten Request (Server könnte aufwachen)
+      const isFirstLoad = wines.length === 0;
+      const timeout = isFirstLoad ? 45000 : 10000; // 45s für ersten Load, 10s für Updates
+      
+      axios.get(`${apiUrl}/wines`, { timeout })
         .then((res) => {
           const formattedWines = res.data.map((wine: any) => ({
             ...wine,
@@ -84,17 +90,27 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
           }));
           setWines(formattedWines);
           setError(null);
+          // Nach dem Laden der Daten Scroll-Position wiederherstellen
           setTimeout(restoreScrollPosition, 100);
         })
         .catch((err) => {
           console.error('Fehler:', err.response ? err.response.data : err.message);
-          setError(err.response ? err.response.data.message : err.message);
+          let errorMessage = 'Fehler beim Laden der Weine';
+          
+          if (err.code === 'ECONNABORTED') {
+            errorMessage = 'Server braucht länger zum Starten. Bitte warten...';
+          } else if (err.response) {
+            errorMessage = err.response.data.message || errorMessage;
+          }
+          
+          setError(errorMessage);
           setWines(mockWines);
           setTimeout(restoreScrollPosition, 100);
         });
     }
   }, [apiUrl, refreshTrigger]);
 
+  // Scroll-Listener nur auf Hauptscreen
   useEffect(() => {
     if (!selectedWineId && !editingWineId) {
       isMainScreenRef.current = true;
@@ -108,28 +124,29 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
   }, [selectedWineId, editingWineId]);
 
   const handleEdit = (wineId: Wine['_id']) => {
-    saveScrollPosition();
+    saveScrollPosition(); // Aktuelle Position vor Navigation speichern
     setEditingWineId(wineId.$oid);
   };
 
   const handleViewDetails = (wineId: Wine['_id']) => {
-    saveScrollPosition();
+    saveScrollPosition(); // Aktuelle Position vor Navigation speichern
     setSelectedWineId(wineId.$oid);
   };
 
   const handleEditBack = (refresh: boolean = false) => {
     setEditingWineId(null);
-    hasRestoredRef.current = false;
+    hasRestoredRef.current = false; // Reset für Wiederherstellung
     if (refresh) {
       setRefreshTrigger(prev => prev + 1);
     } else {
+      // Sofortige Wiederherstellung wenn keine Datenaktualisierung
       setTimeout(restoreScrollPosition, 50);
     }
   };
 
   const handleDetailBack = () => {
     setSelectedWineId(null);
-    hasRestoredRef.current = false;
+    hasRestoredRef.current = false; // Reset für Wiederherstellung
     setTimeout(restoreScrollPosition, 50);
   };
 
@@ -139,21 +156,25 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
       wine.name.toLowerCase().includes(searchLower) ||
       (wine.rebsorte && wine.rebsorte.toLowerCase().includes(searchLower)) ||
       (wine.farbe && wine.farbe.toLowerCase().includes(searchLower)) ||
+      (wine.preis && wine.preis.toLowerCase().includes(searchLower)) ||
       (wine.kategorie && wine.kategorie.toLowerCase().includes(searchLower)) ||
       (wine.unterkategorie && wine.unterkategorie.toLowerCase().includes(searchLower)) ||
       (wine.bewertung && wine.bewertung.toString().includes(searchLower)) ||
-      (wine.kauforte && wine.kauforte.some(k => k.toLowerCase().includes(searchLower)));
+      (wine.kauforte && wine.kauforte.some(ort => ort.toLowerCase().includes(searchLower)));
+
+    const matchesKauforte = !filters.kauforte || 
+      (wine.kauforte && wine.kauforte.includes(filters.kauforte));
 
     return (
       matchesSearch &&
       (!filters.farbe || wine.farbe === filters.farbe) &&
-      (!filters.kauforte || (wine.kauforte && wine.kauforte.includes(filters.kauforte))) &&
+      matchesKauforte &&
       (!filters.kategorie || wine.kategorie === filters.kategorie)
     );
   });
 
   if (error) return <div className="p-4 text-red-500">Fehler: {error}</div>;
-
+  
   if (editingWineId) {
     return (
       <EditWineScreen
@@ -163,7 +184,7 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
       />
     );
   }
-
+  
   if (selectedWineId) {
     return (
       <WineDetailScreen
@@ -173,18 +194,6 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
       />
     );
   }
-
-  // Kauforte-Optionen aus AddWineScreen
-  const kauforteOptions = [
-    'Rewe',
-    'Kaufland',
-    'Hit',
-    'Aldi',
-    'Lidl',
-    'Edeka',
-    'Henkell',
-    'Wo anders'
-  ];
 
   return (
     <div className="App relative">
@@ -223,9 +232,14 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
                 className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff]"
               >
                 <option value="">Alle Kauforte</option>
-                {kauforteOptions.map((ort) => (
-                  <option key={ort} value={ort}>{ort}</option>
-                ))}
+                <option value="Rewe">Rewe</option>
+                <option value="Kaufland">Kaufland</option>
+                <option value="Hit">Hit</option>
+                <option value="Aldi">Aldi</option>
+                <option value="Lidl">Lidl</option>
+                <option value="Edeka">Edeka</option>
+                <option value="Henkell">Henkell</option>
+                <option value="Wo anders">Wo anders</option>
               </select>
               <select
                 value={filters.kategorie}
