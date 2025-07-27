@@ -78,7 +78,7 @@ app.get('/wines', async (req, res) => {
   }
 });
 
-// Neue Route zum Abrufen eines einzelnen Weins
+// Route zum Abrufen eines einzelnen Weins
 app.get('/wine/:id', async (req, res) => {
   try {
     const db = await connectDB();
@@ -93,6 +93,7 @@ app.get('/wine/:id', async (req, res) => {
     
     res.json(wine);
   } catch (err) {
+    console.error('Fehler beim Abrufen des Weins:', err.message);
     res.status(500).send('Fehler: ' + err.message);
   }
 });
@@ -117,12 +118,47 @@ app.put('/wine/:id', async (req, res) => {
       return res.status(404).json({ message: 'Wein nicht gefunden' });
     }
 
+    console.log('Wein aktualisiert:', req.params.id);
     res.json({ 
       message: 'Wein erfolgreich aktualisiert',
       modifiedCount: result.modifiedCount 
     });
   } catch (err) {
+    console.error('Fehler beim Aktualisieren:', err.message);
     res.status(500).send('Fehler: ' + err.message);
+  }
+});
+
+// DELETE Route - NEU HINZUGEFÜGT
+app.delete('/wine/:id', async (req, res) => {
+  try {
+    const db = await connectDB();
+    const collection = db.collection('wines');
+    
+    // Validiere ObjectId Format
+    if (!ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: 'Ungültige Wein-ID' });
+    }
+    
+    const result = await collection.deleteOne({
+      _id: new ObjectId(req.params.id)
+    });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: 'Wein nicht gefunden' });
+    }
+
+    console.log('Wein gelöscht:', req.params.id);
+    res.json({ 
+      message: 'Wein erfolgreich gelöscht',
+      deletedCount: result.deletedCount 
+    });
+  } catch (err) {
+    console.error('Fehler beim Löschen:', err.message);
+    res.status(500).json({ 
+      error: 'Fehler beim Löschen des Weins', 
+      message: err.message 
+    });
   }
 });
 

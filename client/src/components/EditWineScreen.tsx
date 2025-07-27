@@ -40,7 +40,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
@@ -197,96 +197,120 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isFormValid()) {
-      setError('Bitte fülle alle Pflichtfelder aus!');
+  e.preventDefault();
+  if (!isFormValid()) {
+    setError('Bitte fülle alle Pflichtfelder aus!');
+    setTimeout(() => setError(null), 2000);
+    return;
+  }
+  setLoading(true);
+  setError(null);
+
+  const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
+  
+  if (useMockData) {
+    const mockIndex = mockWines.findIndex((w: Wine) => w._id.$oid === wineId);
+    if (mockIndex !== -1) {
+      mockWines[mockIndex] = {
+        ...mockWines[mockIndex],
+        ...form,
+        _id: { $oid: wineId },
+        timestamp: { $date: new Date().toISOString() }
+      };
+    }
+    setSuccessMessage('Änderungen erfolgreich gespeichert!');
+    setTimeout(() => {
+      setSuccessMessage('');
+      onBack(true); // Trigger refresh
+    }, 1500);
+  } else {
+    try {
+      await axios.put(`${apiUrl}/wine/${wineId}`, {
+        ...form,
+        _id: { $oid: wineId }
+      });
+      setSuccessMessage('Änderungen erfolgreich gespeichert!');
+      setTimeout(() => {
+        setSuccessMessage('');
+        onBack(true); // Trigger refresh
+      }, 1500);
+    } catch (err) {
+      setError('Fehler beim Speichern der Änderungen');
+      setTimeout(() => setError(null), 2000);
+    }
+  }
+  setLoading(false);
+};
+
+
+  const handleDelete = async () => {
+  if (!window.confirm('Möchten Sie diesen Wein wirklich löschen?')) {
+    return;
+  }
+
+  setLoading(true);
+  setError(null);
+
+  const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
+  
+  if (useMockData) {
+    const mockIndex = mockWines.findIndex((w: Wine) => w._id.$oid === wineId);
+    if (mockIndex === -1) {
+      setError('Wein nicht gefunden');
+      setLoading(false);
       setTimeout(() => setError(null), 2000);
       return;
     }
-    setLoading(true);
-    setError(null);
-
-    const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
-    
-    if (useMockData) {
-      const mockIndex = mockWines.findIndex((w: Wine) => w._id.$oid === wineId);
-      if (mockIndex !== -1) {
-        mockWines[mockIndex] = {
-          ...mockWines[mockIndex],
-          ...form,
-          _id: { $oid: wineId },
-          timestamp: { $date: new Date().toISOString() }
-        };
-      }
-      setSuccessMessage(true);
-      setTimeout(() => {
-        setSuccessMessage(false);
-        onBack(true); // Trigger refresh
-      }, 1500);
-    } else {
-      try {
-        await axios.put(`${apiUrl}/wine/${wineId}`, {
-          ...form,
-          _id: { $oid: wineId }
-        });
-        setSuccessMessage(true);
-        setTimeout(() => {
-          setSuccessMessage(false);
-          onBack(true); // Trigger refresh
-        }, 1500);
-      } catch (err) {
-        setError('Fehler beim Speichern der Änderungen');
-        setTimeout(() => setError(null), 2000);
-      }
-    }
+    mockWines.splice(mockIndex, 1);
+    setSuccessMessage('Wein erfolgreich gelöscht!');
+    setTimeout(() => {
+      setSuccessMessage('');
+      onBack(true); // Trigger refresh
+    }, 1500);
     setLoading(false);
-  };
-
-  const handleDelete = async () => {
-    if (!window.confirm('Möchten Sie diesen Wein wirklich löschen?')) {
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
-    
-    if (useMockData) {
-      const mockIndex = mockWines.findIndex((w: Wine) => w._id.$oid === wineId);
-      if (mockIndex === -1) {
-        setError('Wein nicht gefunden');
-        setLoading(false);
-        setTimeout(() => setError(null), 2000);
-        return;
-      }
-      mockWines.splice(mockIndex, 1);
-      setSuccessMessage(true);
+  } else {
+    try {
+      console.log('Lösche Wein mit ID:', wineId);
+      
+      const response = await axios.delete(`${apiUrl}/wine/${wineId}`, {
+        headers: { 
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('Lösch-Response:', response.data);
+      setSuccessMessage('Wein erfolgreich gelöscht!');
+      
       setTimeout(() => {
-        setSuccessMessage(false);
+        setSuccessMessage('');
         onBack(true); // Trigger refresh
       }, 1500);
-      setLoading(false);
-    } else {
-      try {
-        await axios.delete(`${apiUrl}/wine/${wineId}`, {
-          headers: { 'Content-Type': 'application/json' },
-          data: { _id: { $oid: wineId } }
-        });
-        setSuccessMessage(true);
-        setTimeout(() => {
-          setSuccessMessage(false);
-          onBack(true); // Trigger refresh
-        }, 1500);
-        setLoading(false);
-      } catch (err: any) {
-        console.error('Löschfehler:', err.response?.data || err.message);
-        setError('Fehler beim Löschen des Weins');
-        setTimeout(() => setError(null), 2000);
-        setLoading(false);
+      
+    } catch (err: any) {
+      console.error('Löschfehler Details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        config: err.config
+      });
+      
+      let errorMessage = 'Fehler beim Löschen des Weins';
+      
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.response?.status === 404) {
+        errorMessage = 'Wein nicht gefunden';
+      } else if (err.response?.status === 400) {
+        errorMessage = 'Ungültige Wein-ID';
       }
+      
+      setError(errorMessage);
+      setTimeout(() => setError(null), 3000);
+    } finally {
+      setLoading(false);
     }
-  };
+  }
+};
 
   const isFormValid = () => {
     return (
@@ -530,10 +554,10 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
         </div>
       </footer>
       {successMessage && (
-        <div className="snackbar success">
-          Änderungen erfolgreich gespeichert!
-        </div>
-      )}
+  <div className="snackbar success">
+    {successMessage}
+  </div>
+)}
       {error && (
         <div className="snackbar error">
           {error}
