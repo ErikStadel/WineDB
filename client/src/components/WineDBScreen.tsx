@@ -33,7 +33,7 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
   const [filters, setFilters] = useState({
     search: '',
     farbe: '',
-    preis: '',
+    kauforte: '',
     kategorie: '',
   });
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -41,7 +41,7 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
   const [selectedWineId, setSelectedWineId] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  
+
   const hasRestoredRef = useRef<boolean>(false);
   const isMainScreenRef = useRef<boolean>(true);
 
@@ -56,7 +56,6 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
   const restoreScrollPosition = () => {
     if (scrollPosition.current > 0 && !hasRestoredRef.current) {
       hasRestoredRef.current = true;
-      // Kleine Verzögerung für iOS Safari
       setTimeout(() => {
         window.scrollTo({
           top: scrollPosition.current,
@@ -69,10 +68,9 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
   useEffect(() => {
     const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
     console.log('API URL:', apiUrl);
-    
+
     if (useMockData) {
       setWines(mockWines);
-      // Nach dem Laden der Daten Scroll-Position wiederherstellen
       setTimeout(restoreScrollPosition, 100);
     } else {
       axios.get(`${apiUrl}/wines`)
@@ -86,7 +84,6 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
           }));
           setWines(formattedWines);
           setError(null);
-          // Nach dem Laden der Daten Scroll-Position wiederherstellen
           setTimeout(restoreScrollPosition, 100);
         })
         .catch((err) => {
@@ -98,7 +95,6 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
     }
   }, [apiUrl, refreshTrigger]);
 
-  // Scroll-Listener nur auf Hauptscreen
   useEffect(() => {
     if (!selectedWineId && !editingWineId) {
       isMainScreenRef.current = true;
@@ -112,29 +108,28 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
   }, [selectedWineId, editingWineId]);
 
   const handleEdit = (wineId: Wine['_id']) => {
-    saveScrollPosition(); // Aktuelle Position vor Navigation speichern
+    saveScrollPosition();
     setEditingWineId(wineId.$oid);
   };
 
   const handleViewDetails = (wineId: Wine['_id']) => {
-    saveScrollPosition(); // Aktuelle Position vor Navigation speichern
+    saveScrollPosition();
     setSelectedWineId(wineId.$oid);
   };
 
   const handleEditBack = (refresh: boolean = false) => {
     setEditingWineId(null);
-    hasRestoredRef.current = false; // Reset für Wiederherstellung
+    hasRestoredRef.current = false;
     if (refresh) {
       setRefreshTrigger(prev => prev + 1);
     } else {
-      // Sofortige Wiederherstellung wenn keine Datenaktualisierung
       setTimeout(restoreScrollPosition, 50);
     }
   };
 
   const handleDetailBack = () => {
     setSelectedWineId(null);
-    hasRestoredRef.current = false; // Reset für Wiederherstellung
+    hasRestoredRef.current = false;
     setTimeout(restoreScrollPosition, 50);
   };
 
@@ -144,21 +139,21 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
       wine.name.toLowerCase().includes(searchLower) ||
       (wine.rebsorte && wine.rebsorte.toLowerCase().includes(searchLower)) ||
       (wine.farbe && wine.farbe.toLowerCase().includes(searchLower)) ||
-      (wine.preis && wine.preis.toLowerCase().includes(searchLower)) ||
       (wine.kategorie && wine.kategorie.toLowerCase().includes(searchLower)) ||
       (wine.unterkategorie && wine.unterkategorie.toLowerCase().includes(searchLower)) ||
-      (wine.bewertung && wine.bewertung.toString().includes(searchLower));
+      (wine.bewertung && wine.bewertung.toString().includes(searchLower)) ||
+      (wine.kauforte && wine.kauforte.some(k => k.toLowerCase().includes(searchLower)));
 
     return (
       matchesSearch &&
       (!filters.farbe || wine.farbe === filters.farbe) &&
-      (!filters.preis || wine.preis === filters.preis) &&
+      (!filters.kauforte || (wine.kauforte && wine.kauforte.includes(filters.kauforte))) &&
       (!filters.kategorie || wine.kategorie === filters.kategorie)
     );
   });
 
   if (error) return <div className="p-4 text-red-500">Fehler: {error}</div>;
-  
+
   if (editingWineId) {
     return (
       <EditWineScreen
@@ -168,7 +163,7 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
       />
     );
   }
-  
+
   if (selectedWineId) {
     return (
       <WineDetailScreen
@@ -178,6 +173,18 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
       />
     );
   }
+
+  // Kauforte-Optionen aus AddWineScreen
+  const kauforteOptions = [
+    'Rewe',
+    'Kaufland',
+    'Hit',
+    'Aldi',
+    'Lidl',
+    'Edeka',
+    'Henkell',
+    'Wo anders'
+  ];
 
   return (
     <div className="App relative">
@@ -211,16 +218,14 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
                 <option value="Rosé">Rosé</option>
               </select>
               <select
-                value={filters.preis}
-                onChange={(e) => setFilters({ ...filters, preis: e.target.value })}
+                value={filters.kauforte}
+                onChange={(e) => setFilters({ ...filters, kauforte: e.target.value })}
                 className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff]"
               >
-                <option value="">Alle Preise</option>
-                <option value="unter 5 €">{'<5 €'}</option>
-                <option value="5-8 €">5-8 €</option>
-                <option value="8-12 €">8-12 €</option>
-                <option value="12-15 €">12-15 €</option>
-                <option value="ueber 15 €">{'>15 €'}</option>
+                <option value="">Alle Kauforte</option>
+                {kauforteOptions.map((ort) => (
+                  <option key={ort} value={ort}>{ort}</option>
+                ))}
               </select>
               <select
                 value={filters.kategorie}
