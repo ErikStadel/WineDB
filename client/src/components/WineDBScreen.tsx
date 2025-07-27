@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, MutableRefObject } from 'react';
 import axios from 'axios';
 import ReactDOM from 'react-dom';
 import { mockWines } from '../mocks/mockWines';
@@ -21,7 +21,13 @@ interface Wine {
   timestamp: { $date: string };
 }
 
-const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack, apiUrl }) => {
+interface WineDBScreenProps {
+  onBack: () => void;
+  apiUrl: string;
+  scrollPosition: MutableRefObject<number>;
+}
+
+const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosition }) => {
   const [wines, setWines] = useState<Wine[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [filters, setFilters] = useState({
@@ -35,46 +41,101 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
   const [selectedWineId, setSelectedWineId] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  
+  const hasRestoredRef = useRef<boolean>(false);
+  const isMainScreenRef = useRef<boolean>(true);
+
+  // Scroll-Position speichern
+  const saveScrollPosition = () => {
+    if (isMainScreenRef.current) {
+      scrollPosition.current = window.scrollY;
+    }
+  };
+
+  // Scroll-Position wiederherstellen
+  const restoreScrollPosition = () => {
+    if (scrollPosition.current > 0 && !hasRestoredRef.current) {
+      hasRestoredRef.current = true;
+      // Kleine Verzögerung für iOS Safari
+      setTimeout(() => {
+        window.scrollTo({
+          top: scrollPosition.current,
+          behavior: 'auto'
+        });
+      }, 50);
+    }
+  };
 
   useEffect(() => {
     const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
-    console.log('API URL:', apiUrl); // Debugging
+    console.log('API URL:', apiUrl);
+    
     if (useMockData) {
       setWines(mockWines);
+      // Nach dem Laden der Daten Scroll-Position wiederherstellen
+      setTimeout(restoreScrollPosition, 100);
     } else {
       axios.get(`${apiUrl}/wines`)
-  .then((res) => {
-    const formattedWines = res.data.map((wine: any) => ({
-      ...wine,
-      _id: typeof wine._id === 'string' ? { $oid: wine._id } : wine._id,
-      timestamp: typeof wine.timestamp === 'string'
-        ? { $date: wine.timestamp }
-        : wine.timestamp
-    }));
-    setWines(formattedWines);
-    setError(null);
-  })
-  .catch((err) => {
-    console.error('Fehler:', err.response ? err.response.data : err.message);
-    setError(err.response ? err.response.data.message : err.message);
-    setWines(mockWines);
-  });
+        .then((res) => {
+          const formattedWines = res.data.map((wine: any) => ({
+            ...wine,
+            _id: typeof wine._id === 'string' ? { $oid: wine._id } : wine._id,
+            timestamp: typeof wine.timestamp === 'string'
+              ? { $date: wine.timestamp }
+              : wine.timestamp
+          }));
+          setWines(formattedWines);
+          setError(null);
+          // Nach dem Laden der Daten Scroll-Position wiederherstellen
+          setTimeout(restoreScrollPosition, 100);
+        })
+        .catch((err) => {
+          console.error('Fehler:', err.response ? err.response.data : err.message);
+          setError(err.response ? err.response.data.message : err.message);
+          setWines(mockWines);
+          setTimeout(restoreScrollPosition, 100);
+        });
     }
   }, [apiUrl, refreshTrigger]);
 
+  // Scroll-Listener nur auf Hauptscreen
+  useEffect(() => {
+    if (!selectedWineId && !editingWineId) {
+      isMainScreenRef.current = true;
+      window.addEventListener('scroll', saveScrollPosition, { passive: true });
+      return () => {
+        window.removeEventListener('scroll', saveScrollPosition);
+      };
+    } else {
+      isMainScreenRef.current = false;
+    }
+  }, [selectedWineId, editingWineId]);
+
   const handleEdit = (wineId: Wine['_id']) => {
+    saveScrollPosition(); // Aktuelle Position vor Navigation speichern
     setEditingWineId(wineId.$oid);
   };
 
   const handleViewDetails = (wineId: Wine['_id']) => {
+    saveScrollPosition(); // Aktuelle Position vor Navigation speichern
     setSelectedWineId(wineId.$oid);
   };
 
   const handleEditBack = (refresh: boolean = false) => {
     setEditingWineId(null);
+    hasRestoredRef.current = false; // Reset für Wiederherstellung
     if (refresh) {
       setRefreshTrigger(prev => prev + 1);
+    } else {
+      // Sofortige Wiederherstellung wenn keine Datenaktualisierung
+      setTimeout(restoreScrollPosition, 50);
     }
+  };
+
+  const handleDetailBack = () => {
+    setSelectedWineId(null);
+    hasRestoredRef.current = false; // Reset für Wiederherstellung
+    setTimeout(restoreScrollPosition, 50);
   };
 
   const filteredWines = wines.filter((wine) => {
@@ -97,6 +158,7 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
   });
 
   if (error) return <div className="p-4 text-red-500">Fehler: {error}</div>;
+  
   if (editingWineId) {
     return (
       <EditWineScreen
@@ -106,11 +168,12 @@ const WineDBScreen: React.FC<{ onBack: () => void; apiUrl: string }> = ({ onBack
       />
     );
   }
+  
   if (selectedWineId) {
     return (
       <WineDetailScreen
         wineId={selectedWineId}
-        onBack={() => setSelectedWineId(null)}
+        onBack={handleDetailBack}
         apiUrl={apiUrl}
       />
     );

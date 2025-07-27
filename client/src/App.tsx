@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import './App.css';
 import AddWineScreen from './components/AddWineScreen';
 import InspirationScreen from './components/InspirationScreen';
@@ -8,14 +8,29 @@ const App: React.FC = () => {
   const [showAddWine, setShowAddWine] = useState(false);
   const [showInspiration, setShowInspiration] = useState(false);
   const [showWineDB, setShowWineDB] = useState(false);
+  
+  // Scroll-Position für WineDBScreen speichern
+  const wineDBScrollPosition = useRef<number>(0);
 
   // API-URL basierend auf Umgebungsvariable oder Fallback für lokale Tests
   const apiUrl = process.env.REACT_APP_API_URL || 
     (window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'http://192.168.0.208:3001');
 
+  const handleWineDBBack = () => {
+    // Scroll-Position zurücksetzen beim Verlassen
+    wineDBScrollPosition.current = 0;
+    setShowWineDB(false);
+  };
+
   if (showAddWine) return <AddWineScreen onBack={() => setShowAddWine(false)} apiUrl={apiUrl} />;
   if (showInspiration) return <InspirationScreen onBack={() => setShowInspiration(false)} />;
-  if (showWineDB) return <WineDBScreen onBack={() => setShowWineDB(false)} apiUrl={apiUrl} />;
+  if (showWineDB) return (
+    <WineDBScreen 
+      onBack={handleWineDBBack} 
+      apiUrl={apiUrl}
+      scrollPosition={wineDBScrollPosition}
+    />
+  );
 
   return (
     <div className="App">
