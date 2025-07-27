@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, MutableRefObject } from 'react';
+import React, { useState, useEffect, useRef, MutableRefObject, useCallback } from 'react';
 import axios from 'axios';
 import ReactDOM from 'react-dom';
 import { mockWines } from '../mocks/mockWines';
@@ -19,6 +19,7 @@ interface Wine {
   bewertung?: number;
   imageUrl?: string;
   timestamp: { $date: string };
+  score?: number;
 }
 
 interface WineDBScreenProps {
@@ -41,74 +42,144 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
   const [selectedWineId, setSelectedWineId] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  
+  const [isSearching, setIsSearching] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+
   const hasRestoredRef = useRef<boolean>(false);
   const isMainScreenRef = useRef<boolean>(true);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Scroll-Position speichern
-  const saveScrollPosition = () => {
+  const saveScrollPosition = useCallback(() => {
     if (isMainScreenRef.current) {
       scrollPosition.current = window.scrollY;
     }
-  };
+  }, []);
 
   // Scroll-Position wiederherstellen
-  const restoreScrollPosition = () => {
+  const restoreScrollPosition = useCallback(() => {
     if (scrollPosition.current > 0 && !hasRestoredRef.current) {
       hasRestoredRef.current = true;
-      // Kleine Verzögerung für iOS Safari
       setTimeout(() => {
         window.scrollTo({
           top: scrollPosition.current,
-          behavior: 'auto'
+          behavior: 'auto',
         });
       }, 50);
     }
-  };
+  }, []);
 
-  useEffect(() => {
-    const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
-    console.log('API URL:', apiUrl);
-    
-    if (useMockData) {
-      setWines(mockWines);
-      // Nach dem Laden der Daten Scroll-Position wiederherstellen
-      setTimeout(restoreScrollPosition, 100);
-    } else {
-      // Längeres Timeout für ersten Request (Server könnte aufwachen)
-      const isFirstLoad = wines.length === 0;
-      const timeout = isFirstLoad ? 45000 : 10000; // 45s für ersten Load, 10s für Updates
-      
-      axios.get(`${apiUrl}/wines`, { timeout })
-        .then((res) => {
-          const formattedWines = res.data.map((wine: any) => ({
+  // Atlas Search Function
+  const performSearch = useCallback(
+    async (searchParams: typeof filters) => {
+      const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
+
+      if (useMockData) {
+        const filteredMockWines = mockWines.filter((wine: Wine) => {
+          const searchLower = searchParams.search.toLowerCase();
+          const matchesSearch =
+            !searchParams.search ||
+            wine.name.toLowerCase().includes(searchLower) ||
+            (wine.rebsorte && wine.rebsorte.toLowerCase().includes(searchLower)) ||
+            (wine.notizen && wine.notizen.toLowerCase().includes(searchLower));
+
+          const matchesFilters =
+            (!searchParams.farbe || wine.farbe === searchParams.farbe) &&
+            (!searchParams.kauforte || (wine.kauforte && wine.kauforte.includes(searchParams.kauforte))) &&
+            (!searchParams.kategorie || wine.kategorie === searchParams.kategorie);
+
+          return matchesSearch && matchesFilters;
+        });
+
+        setWines(filteredMockWines);
+        setHasMore(false);
+        setTimeout(restoreScrollPosition, 100);
+        return;
+      }
+
+      setIsSearching(true);
+      setError(null);
+
+      try {
+        const params = new URLSearchParams();
+        if (searchParams.search) params.append('q', searchParams.search);
+        if (searchParams.farbe) params.append('farbe', searchParams.farbe);
+        if (searchParams.kauforte) params.append('kauforte', searchParams.kauforte);
+        if (searchParams.kategorie) params.append('kategorie', searchParams.kategorie);
+        params.append('limit', '50');
+
+        const response = await axios.get(`${apiUrl}/wines/search?${params.toString()}`, {
+          timeout: 10000,
+        });
+
+        const { wines: searchResults, hasMore: moreResults } = response.data;
+
+        const formattedWines = searchResults.map((wine: any) => ({
+          ...wine,
+          _id: typeof wine._id === 'string' ? { $oid: wine._id } : wine._id,
+          timestamp: typeof wine.timestamp === 'string' ? { $date: wine.timestamp } : wine.timestamp,
+        }));
+
+        setWines(formattedWines);
+        setHasMore(moreResults);
+
+        // Nur bei neuer Suche Scroll-Position zurücksetzen
+        if (searchParams.search && wines.length !== formattedWines.length) {
+          window.scrollTo(0, 0);
+          hasRestoredRef.current = true;
+        } else {
+          setTimeout(restoreScrollPosition, 100);
+        }
+      } catch (err: any) {
+        console.error('Atlas Search Fehler:', err);
+
+        try {
+          const response = await axios.get(`${apiUrl}/wines/search-fallback`, {
+            params: searchParams,
+            timeout: 15000,
+          });
+
+          const formattedWines = response.data.wines.map((wine: any) => ({
             ...wine,
             _id: typeof wine._id === 'string' ? { $oid: wine._id } : wine._id,
-            timestamp: typeof wine.timestamp === 'string'
-              ? { $date: wine.timestamp }
-              : wine.timestamp
+            timestamp: typeof wine.timestamp === 'string' ? { $date: wine.timestamp } : wine.timestamp,
           }));
+
           setWines(formattedWines);
-          setError(null);
-          // Nach dem Laden der Daten Scroll-Position wiederherstellen
-          setTimeout(restoreScrollPosition, 100);
-        })
-        .catch((err) => {
-          console.error('Fehler:', err.response ? err.response.data : err.message);
-          let errorMessage = 'Fehler beim Laden der Weine';
-          
-          if (err.code === 'ECONNABORTED') {
-            errorMessage = 'Server braucht länger zum Starten. Bitte warten...';
-          } else if (err.response) {
-            errorMessage = err.response.data.message || errorMessage;
-          }
-          
-          setError(errorMessage);
+          setHasMore(false);
+          console.log('Fallback search successful');
+        } catch (fallbackErr) {
+          console.error('Fallback search failed:', fallbackErr);
+          setError('Fehler bei der Suche. Versuche es erneut.');
           setWines(mockWines);
-          setTimeout(restoreScrollPosition, 100);
-        });
-    }
-  }, [apiUrl, refreshTrigger]);
+        }
+
+        setTimeout(restoreScrollPosition, 100);
+      } finally {
+        setIsSearching(false);
+      }
+    },
+    [apiUrl, restoreScrollPosition]
+  );
+
+  // Debounced search function
+  const debouncedSearch = useCallback(
+    (searchParams: typeof filters) => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+
+      searchTimeoutRef.current = setTimeout(() => {
+        performSearch(searchParams);
+      }, 300);
+    },
+    [performSearch]
+  );
+
+  // Initial load and filter changes
+  useEffect(() => {
+    debouncedSearch(filters);
+  }, [filters, refreshTrigger, debouncedSearch]);
 
   // Scroll-Listener nur auf Hauptscreen
   useEffect(() => {
@@ -121,60 +192,49 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
     } else {
       isMainScreenRef.current = false;
     }
-  }, [selectedWineId, editingWineId]);
+  }, [selectedWineId, editingWineId, saveScrollPosition]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleEdit = (wineId: Wine['_id']) => {
-    saveScrollPosition(); // Aktuelle Position vor Navigation speichern
+    saveScrollPosition();
     setEditingWineId(wineId.$oid);
   };
 
   const handleViewDetails = (wineId: Wine['_id']) => {
-    saveScrollPosition(); // Aktuelle Position vor Navigation speichern
+    saveScrollPosition();
     setSelectedWineId(wineId.$oid);
   };
 
   const handleEditBack = (refresh: boolean = false) => {
     setEditingWineId(null);
-    hasRestoredRef.current = false; // Reset für Wiederherstellung
+    hasRestoredRef.current = false;
     if (refresh) {
       setRefreshTrigger(prev => prev + 1);
     } else {
-      // Sofortige Wiederherstellung wenn keine Datenaktualisierung
       setTimeout(restoreScrollPosition, 50);
     }
   };
 
   const handleDetailBack = () => {
     setSelectedWineId(null);
-    hasRestoredRef.current = false; // Reset für Wiederherstellung
+    hasRestoredRef.current = false;
     setTimeout(restoreScrollPosition, 50);
   };
 
-  const filteredWines = wines.filter((wine) => {
-    const searchLower = filters.search.toLowerCase();
-    const matchesSearch =
-      wine.name.toLowerCase().includes(searchLower) ||
-      (wine.rebsorte && wine.rebsorte.toLowerCase().includes(searchLower)) ||
-      (wine.farbe && wine.farbe.toLowerCase().includes(searchLower)) ||
-      (wine.preis && wine.preis.toLowerCase().includes(searchLower)) ||
-      (wine.kategorie && wine.kategorie.toLowerCase().includes(searchLower)) ||
-      (wine.unterkategorie && wine.unterkategorie.toLowerCase().includes(searchLower)) ||
-      (wine.bewertung && wine.bewertung.toString().includes(searchLower)) ||
-      (wine.kauforte && wine.kauforte.some(ort => ort.toLowerCase().includes(searchLower)));
-
-    const matchesKauforte = !filters.kauforte || 
-      (wine.kauforte && wine.kauforte.includes(filters.kauforte));
-
-    return (
-      matchesSearch &&
-      (!filters.farbe || wine.farbe === filters.farbe) &&
-      matchesKauforte &&
-      (!filters.kategorie || wine.kategorie === filters.kategorie)
-    );
-  });
+  const handleFilterChange = (key: keyof typeof filters, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
 
   if (error) return <div className="p-4 text-red-500">Fehler: {error}</div>;
-  
+
   if (editingWineId) {
     return (
       <EditWineScreen
@@ -184,7 +244,7 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
       />
     );
   }
-  
+
   if (selectedWineId) {
     return (
       <WineDetailScreen
@@ -206,19 +266,26 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
       <main className="flex-1 p-6 flex flex-col items-center gap-6 overflow-y-auto">
         <section className="glass-card w-full max-w-3xl">
           <h2 className="text-lg md:text-xl font-semibold mb-4" onClick={() => setFilterOpen(!filterOpen)}>
-            Filter {filterOpen ? '▲' : '▼'}
+            Filter & Suche {filterOpen ? '▲' : '▼'}
           </h2>
           {filterOpen && (
             <div className="flex flex-col gap-4 mb-4">
-              <input
-                value={filters.search}
-                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                placeholder="Suche..."
-                className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff]"
-              />
+              <div className="relative">
+                <input
+                  value={filters.search}
+                  onChange={(e) => handleFilterChange('search', e.target.value)}
+                  placeholder="Suche nach Namen, Rebsorte, Notizen... (z.B. 'Vina' findet auch 'Viña')"
+                  className="w-full p-2 pr-8 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff]"
+                />
+                {isSearching && (
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                    <div className="w-4 h-4 border-2 border-[#baddff] border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
+              </div>
               <select
                 value={filters.farbe}
-                onChange={(e) => setFilters({ ...filters, farbe: e.target.value })}
+                onChange={(e) => handleFilterChange('farbe', e.target.value)}
                 className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff]"
               >
                 <option value="">Alle Farben</option>
@@ -228,7 +295,7 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
               </select>
               <select
                 value={filters.kauforte}
-                onChange={(e) => setFilters({ ...filters, kauforte: e.target.value })}
+                onChange={(e) => handleFilterChange('kauforte', e.target.value)}
                 className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff]"
               >
                 <option value="">Alle Kauforte</option>
@@ -243,7 +310,7 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
               </select>
               <select
                 value={filters.kategorie}
-                onChange={(e) => setFilters({ ...filters, kategorie: e.target.value })}
+                onChange={(e) => handleFilterChange('kategorie', e.target.value)}
                 className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff]"
               >
                 <option value="">Alle Kategorien</option>
@@ -255,8 +322,17 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
             </div>
           )}
         </section>
+
         <section className="flex flex-col gap-4 w-full max-w-3xl">
-          {filteredWines.map((wine) => (
+          {wines.length === 0 && !isSearching && (
+            <div className="glass-card p-4 text-center">
+              <p className="text-[#496580]">
+                {filters.search ? 'Keine Ergebnisse gefunden.' : 'Keine Weine in der Datenbank.'}
+              </p>
+            </div>
+          )}
+
+          {wines.map((wine) => (
             <div
               key={wine._id.$oid}
               className="glass-card p-4 flex flex-col md:flex-row items-start md:items-center justify-between cursor-pointer wine-entry wine-entry-editable"
@@ -274,7 +350,14 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
               <div className="flex-1">
                 <div className="flex flex-col md:flex-row justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold">{wine.name}</h3>
+                    <h3 className="text-lg font-semibold">
+                      {wine.name}
+                      {wine.score && (
+                        <span className="text-xs text-[#baddff] ml-2">
+                          ({Math.round(wine.score * 100) / 100})
+                        </span>
+                      )}
+                    </h3>
                     <p className="text-right">Sorte: {wine.rebsorte || 'N/A'}</p>
                   </div>
                   <div className="text-right">
@@ -320,6 +403,14 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
               </svg>
             </div>
           ))}
+
+          {hasMore && (
+            <div className="glass-card p-4 text-center">
+              <p className="text-[#496580] text-sm">
+                Weitere Ergebnisse verfügbar. Verfeinere deine Suche für präzisere Ergebnisse.
+              </p>
+            </div>
+          )}
         </section>
       </main>
       <footer className="footer relative z-10">
