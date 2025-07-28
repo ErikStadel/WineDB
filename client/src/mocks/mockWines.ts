@@ -45,5 +45,51 @@ export const mockWines: Wine[] = [
     bewertung: 3,
     imageUrl: "https://cdn.pixabay.com/photo/2020/06/21/02/31/wine-5323009_1280.jpg",
     timestamp: { $date: "2025-07-24T10:00:00.000Z" }
+  },
+  // Neue Weine:
+  {
+    _id: { $oid: "507f1f77bcf86cd799439014" },
+    name: "Bordeaux Supérieur",
+    rebsorte: "Merlot",
+    farbe: "Rot",
+    preis: "10-14 €",
+    kauforte: ["Aldi", "Edeka"],
+    geschmack: ["weich", "beerig"],
+    kategorie: "Allrounder",
+    unterkategorie: "mittel",
+    notizen: "Passt gut zu Pasta-Gerichten.",
+    bewertung: 4,
+    imageUrl: "https://cdn.pixabay.com/photo/2017/02/16/02/54/coming-soon-2070393_960_720.jpg",
+    timestamp: { $date: "2025-07-24T10:00:00.000Z" }
+  },
+  {
+    _id: { $oid: "507f1f77bcf86cd799439015" },
+    name: "Grüner Veltliner Classic",
+    rebsorte: "Grüner Veltliner",
+    farbe: "Weiß",
+    preis: "7-10 €",
+    kauforte: ["Marktkauf"],
+    geschmack: ["würzig", "frisch"],
+    kategorie: "Sommerwein",
+    unterkategorie: "leicht",
+    notizen: "Österreichischer Klassiker – sehr frisch.",
+    bewertung: 4,
+    imageUrl: "https://cdn.pixabay.com/photo/2017/02/16/02/54/coming-soon-2070393_960_720.jpg",
+    timestamp: { $date: "2025-07-24T10:00:00.000Z" }
+  },
+  {
+    _id: { $oid: "507f1f77bcf86cd799439016" },
+    name: "Primitivo di Manduria",
+    rebsorte: "Primitivo",
+    farbe: "Rot",
+    preis: "9-13 €",
+    kauforte: ["Netto"],
+    geschmack: ["samtig", "vollmundig", "leicht süßlich"],
+    kategorie: "Partywein",
+    unterkategorie: "kräftig",
+    notizen: "Süditalienischer Rotwein, ideal für Grillabende.",
+    bewertung: 5,
+    imageUrl: "https://cdn.pixabay.com/photo/2017/02/16/02/54/coming-soon-2070393_960_720.jpg",
+    timestamp: { $date: "2025-07-24T10:00:00.000Z" }
   }
 ];
