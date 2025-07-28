@@ -22,6 +22,7 @@ const App: React.FC = () => {
   // Server beim App-Start "aufwecken"
   useEffect(() => {
     const wakeUpServer = async () => {
+      
       // Nur wenn nicht localhost (d.h. in Produktion)
       if (window.location.hostname === 'localhost') {
         setServerReady(true);
@@ -87,18 +88,7 @@ const App: React.FC = () => {
       </header>
       <main className="flex-1 p-6 flex flex-col items-center gap-12">
         <section className="glass-card">
-          <h2 className="text-lg md:text-xl font-semibold text-[#baddff] mb-4">Willkommen</h2>
-          
-          {/* Loading State während Server aufwacht */}
-          {isWakingUp && (
-            <div className="glass-alert mb-4">
-              <div className="flex items-center gap-3">
-                <div className="loader"></div>
-                <span>Server wird gestartet...</span>
-              </div>
-            </div>
-          )}
-          
+          <h2 className="text-lg md:text-xl font-semibold text-[#baddff] mb-4">Willkommen</h2>  
           <div className="flex flex-col gap-4 w-full max-w-xs mx-auto">
             <button 
               className="btn-primary text-base font-medium w-full" 
@@ -125,6 +115,15 @@ const App: React.FC = () => {
             </button>
           </div>
         </section>
+        {/* Loading State während Server aufwacht */}
+          {isWakingUp && (
+            <div className="glass-alert mb-4 mt-6 p-4 flex items-center gap-3">
+              <div className="flex items-center gap-3">
+                <div className="loader"></div>
+                <span>Server wird gestartet...</span>
+              </div>
+            </div>
+          )}
       </main>
       <footer className="footer">
         <p className="text-sm">Entwickelt mit Liebe zum Wein</p>
