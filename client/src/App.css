@@ -143,14 +143,25 @@ h3 {
 
 /* Glass Alert */
 .glass-alert {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 2px solid #496580;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px); /* Für iOS Safari */
+  border: 2px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
-  padding: 1rem;
-  font-size: 0.95rem;
+  padding: 6px 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #496580;
+  font-size: 14px;
+  font-weight: 500;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; transform: translateY(80px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 /* Buttons */
