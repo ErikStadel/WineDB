@@ -5,7 +5,7 @@ const cors = require('cors');
 const app = express();
 
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://192.168.0.208:3000', 'https://wine-db.vercel.app'],
+  origin: ['http://localhost:3000', 'http://192.168.0.208:3000', 'https://wine-db.vercel.app', 'https://wine-db-git-dev-erikstadels-projects.vercel.app'],
 }));
 app.use(express.json());
 
