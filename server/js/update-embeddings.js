@@ -15,25 +15,43 @@ async function updateEmbeddings() {
     await client.connect();
     const db = client.db('wineDB');
     const collection = db.collection('wines');
-    const wines = await collection.find({ 
-      imageUrl: { $exists: true, $ne: '' }, 
-      embedding: { $exists: false } 
-    }).toArray();
+    const wines = await collection
+      .find({ imageUrl: { $exists: true, $ne: '' }, embedding: { $exists: false } })
+      .limit(50) // Batch-Verarbeitung für Stabilität
+      .toArray();
+
+    if (wines.length === 0) {
+      console.log('Keine Weine ohne Embeddings gefunden.');
+      return;
+    }
+
     const ocr = await pipeline('image-to-text', 'Xenova/trocr-base-printed');
     const embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
 
     for (const wine of wines) {
       try {
+        // Bild von imageUrl laden
         const response = await axios.get(wine.imageUrl, { responseType: 'arraybuffer' });
-        const imageBuffer = Buffer.from(response.data);
+        const contentType = response.headers['content-type'];
+        if (!contentType.includes('image/jpeg') && !contentType.includes('image/png')) {
+          console.log(`Ungültiges Bildformat für Wein ${wine.name}: ${contentType}`);
+          continue;
+        }
+        const imageBuffer = Buffer.from(response.data, 'binary');
+
+        // OCR-Text extrahieren
         const ocrResult = await ocr(imageBuffer);
         const extractedText = ocrResult[0]?.generated_text || '';
         if (!extractedText) {
           console.log(`Kein Text für Wein: ${wine.name}`);
           continue;
         }
+
+        // Embedding generieren
         const output = await embedder(extractedText, { pooling: 'mean', normalize: true });
         const embedding = Array.from(output.data);
+
+        // MongoDB aktualisieren
         await collection.updateOne(
           { _id: new ObjectId(wine._id) },
           { $set: { embedding, extractedText } }
@@ -44,7 +62,7 @@ async function updateEmbeddings() {
       }
     }
   } catch (err) {
-    console.error('Fehler:', err.message);
+    console.error('Globaler Fehler:', err.message);
   } finally {
     await client.close();
   }
