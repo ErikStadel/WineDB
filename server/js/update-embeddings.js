@@ -17,7 +17,7 @@ async function updateEmbeddings() {
     const collection = db.collection('wines');
     const wines = await collection
       .find({ imageUrl: { $exists: true, $ne: '' }, embedding: { $exists: false } })
-      .limit(50) // Batch-Verarbeitung für Stabilität
+      .limit(10) // Kleiner Batch für Debugging
       .toArray();
 
     if (wines.length === 0) {
@@ -25,23 +25,34 @@ async function updateEmbeddings() {
       return;
     }
 
+    console.log(`Verarbeite ${wines.length} Weine...`);
     const ocr = await pipeline('image-to-text', 'Xenova/trocr-base-printed');
     const embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
 
     for (const wine of wines) {
       try {
         // Bild von imageUrl laden
+        console.log(`Lade Bild für Wein ${wine.name}: ${wine.imageUrl}`);
         const response = await axios.get(wine.imageUrl, { responseType: 'arraybuffer' });
         const contentType = response.headers['content-type'];
+        console.log(`Content-Type für ${wine.name}: ${contentType}`);
         if (!contentType.includes('image/jpeg') && !contentType.includes('image/png')) {
           console.log(`Ungültiges Bildformat für Wein ${wine.name}: ${contentType}`);
           continue;
         }
-        const imageBuffer = Buffer.from(response.data, 'binary');
+
+        // Buffer validieren
+        const imageBuffer = Buffer.from(response.data);
+        console.log(`Buffer-Größe für ${wine.name}: ${imageBuffer.length} Bytes`);
+        if (imageBuffer.length === 0) {
+          console.log(`Leerer Buffer für Wein ${wine.name}`);
+          continue;
+        }
 
         // OCR-Text extrahieren
         const ocrResult = await ocr(imageBuffer);
         const extractedText = ocrResult[0]?.generated_text || '';
+        console.log(`Extrahierter Text für ${wine.name}: ${extractedText}`);
         if (!extractedText) {
           console.log(`Kein Text für Wein: ${wine.name}`);
           continue;
@@ -59,10 +70,12 @@ async function updateEmbeddings() {
         console.log(`Updated embedding for wine: ${wine.name}`);
       } catch (err) {
         console.error(`Fehler bei Wein ${wine.name}:`, err.message);
+        console.error(`Stacktrace:`, err.stack);
       }
     }
   } catch (err) {
     console.error('Globaler Fehler:', err.message);
+    console.error('Stacktrace:', err.stack);
   } finally {
     await client.close();
   }
