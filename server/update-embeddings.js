@@ -2,7 +2,8 @@ require('dotenv').config();
 const { MongoClient, ObjectId } = require('mongodb');
 const { pipeline } = require('@xenova/transformers');
 const axios = require('axios');
-const sharp = require('sharp');
+const fs = require('fs').promises;
+const path = require('path');
 
 const uri = process.env.MONGODB_URI;
 if (!uri) {
@@ -27,7 +28,13 @@ async function updateEmbeddings() {
     }
 
     console.log(`Verarbeite ${wines.length} Weine...`);
-    const ocr = await pipeline('image-to-text', 'Xenova/trocr-small-printed'); // Fallback-Modell
+    let ocr;
+    try {
+      ocr = await pipeline('image-to-text', 'Xenova/trocr-base-printed');
+    } catch (err) {
+      console.error('Fehler beim Laden von trocr-base-printed, versuche trocr-small-printed:', err.message);
+      ocr = await pipeline('image-to-text', 'Xenova/trocr-small-printed');
+    }
     const embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
 
     for (const wine of wines) {
@@ -42,22 +49,30 @@ async function updateEmbeddings() {
           continue;
         }
 
-        // Bild mit sharp vorverarbeiten
-        const imageBuffer = await sharp(Buffer.from(response.data))
-          .jpeg({ quality: 90, progressive: true }) // Optimierte JPEG-Konvertierung
-          .resize({ width: 384, height: 384, fit: 'inside', withoutEnlargement: true }) // TROCR erwartet ~384px
-          .toBuffer();
-        console.log(`Buffer-Größe nach sharp für ${wine.name}: ${imageBuffer.length} Bytes`);
-
-        // Buffer-Typ prüfen
+        // Direkter Buffer
+        const imageBuffer = Buffer.from(response.data);
+        console.log(`Buffer-Größe für ${wine.name}: ${imageBuffer.length} Bytes`);
         console.log(`Buffer-Typ für ${wine.name}: ${imageBuffer instanceof Buffer}`);
+        console.log(`Buffer-Erste-Bytes für ${wine.name}: ${imageBuffer.slice(0, 10).toString('hex')}`);
+
+        // Fallback: Temporäre Datei schreiben
+        let input = imageBuffer;
+        const tempFilePath = path.join(__dirname, `temp_${wine._id}.jpg`);
+        try {
+          await fs.writeFile(tempFilePath, imageBuffer);
+          console.log(`Temporäre Datei für ${wine.name} erstellt: ${tempFilePath}`);
+          input = tempFilePath; // Verwende Dateipfad statt Buffer
+        } catch (err) {
+          console.error(`Fehler beim Schreiben der temporären Datei für ${wine.name}:`, err.message);
+        }
 
         // OCR-Text extrahieren
-        const ocrResult = await ocr(imageBuffer);
+        const ocrResult = await ocr(input);
         const extractedText = ocrResult[0]?.generated_text || '';
         console.log(`Extrahierter Text für ${wine.name}: ${extractedText}`);
         if (!extractedText) {
           console.log(`Kein Text für Wein: ${wine.name}`);
+          await fs.unlink(tempFilePath).catch(() => {}); // Bereinige temporäre Datei
           continue;
         }
 
@@ -71,6 +86,9 @@ async function updateEmbeddings() {
           { $set: { embedding, extractedText } }
         );
         console.log(`Updated embedding for wine: ${wine.name}`);
+
+        // Temporäre Datei bereinigen
+        await fs.unlink(tempFilePath).catch(() => {});
       } catch (err) {
         console.error(`Fehler bei Wein ${wine.name}:`, err.message);
         console.error(`Stacktrace:`, err.stack);
