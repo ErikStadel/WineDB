@@ -2,6 +2,7 @@ require('dotenv').config();
 const { MongoClient, ObjectId } = require('mongodb');
 const { pipeline } = require('@xenova/transformers');
 const axios = require('axios');
+const sharp = require('sharp');
 
 const uri = process.env.MONGODB_URI;
 if (!uri) {
@@ -26,7 +27,7 @@ async function updateEmbeddings() {
     }
 
     console.log(`Verarbeite ${wines.length} Weine...`);
-    const ocr = await pipeline('image-to-text', 'Xenova/trocr-base-printed');
+    const ocr = await pipeline('image-to-text', 'Xenova/trocr-small-printed'); // Fallback-Modell
     const embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
 
     for (const wine of wines) {
@@ -41,13 +42,15 @@ async function updateEmbeddings() {
           continue;
         }
 
-        // Buffer validieren
-        const imageBuffer = Buffer.from(response.data);
-        console.log(`Buffer-Größe für ${wine.name}: ${imageBuffer.length} Bytes`);
-        if (imageBuffer.length === 0) {
-          console.log(`Leerer Buffer für Wein ${wine.name}`);
-          continue;
-        }
+        // Bild mit sharp vorverarbeiten
+        const imageBuffer = await sharp(Buffer.from(response.data))
+          .jpeg({ quality: 90, progressive: true }) // Optimierte JPEG-Konvertierung
+          .resize({ width: 384, height: 384, fit: 'inside', withoutEnlargement: true }) // TROCR erwartet ~384px
+          .toBuffer();
+        console.log(`Buffer-Größe nach sharp für ${wine.name}: ${imageBuffer.length} Bytes`);
+
+        // Buffer-Typ prüfen
+        console.log(`Buffer-Typ für ${wine.name}: ${imageBuffer instanceof Buffer}`);
 
         // OCR-Text extrahieren
         const ocrResult = await ocr(imageBuffer);
