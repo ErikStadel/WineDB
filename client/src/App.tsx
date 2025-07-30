@@ -4,11 +4,13 @@ import './App.css';
 import AddWineScreen from './components/AddWineScreen';
 import InspirationScreen from './components/InspirationScreen';
 import WineDBScreen from './components/WineDBScreen';
+import ScanWineScreen from './components/ScanWineScreen';
 
 const App: React.FC = () => {
   const [showAddWine, setShowAddWine] = useState(false);
   const [showInspiration, setShowInspiration] = useState(false);
   const [showWineDB, setShowWineDB] = useState(false);
+  const [showScanWine, setShowScanWine] = useState(false);
   const [serverReady, setServerReady] = useState(false);
   const [isWakingUp, setIsWakingUp] = useState(false);
   
@@ -72,6 +74,7 @@ const App: React.FC = () => {
   };
 
   if (showAddWine) return <AddWineScreen onBack={() => setShowAddWine(false)} apiUrl={apiUrl} />;
+  if (showScanWine) return <ScanWineScreen onBack={() => setShowScanWine(false)} apiUrl={apiUrl} />;
   if (showInspiration) return <InspirationScreen onBack={() => setShowInspiration(false)} />;
   if (showWineDB) return (
     <WineDBScreen 
@@ -109,9 +112,9 @@ const App: React.FC = () => {
             </button>
             <button 
               className="btn-outline text-base font-medium w-full" 
-              onClick={() => setShowInspiration(true)}
+              onClick={() => setShowScanWine(true)}
             >
-              Inspiration
+              Wein Scannen
             </button>
           </div>
         </section>
