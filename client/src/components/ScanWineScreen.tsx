@@ -7,7 +7,7 @@ interface ScanWineScreenProps {
   apiUrl: string;
 }
 const successMessage = () => {
-  alert('Kamera erfolgreich gestartet (Platzhalter)');
+  alert('I BIMS 1 WEIN');
 }
 const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
 const startCamera = async () => {
