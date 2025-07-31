@@ -1,7 +1,6 @@
 name: Update Wine Embeddings
 on:
   schedule:
-    - cron: '0 0 * * *' # Täglich um Mitternacht UTC
   workflow_dispatch: # Manuelle Ausführung
 jobs:
   update-embeddings:
