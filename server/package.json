@@ -1,12 +1,14 @@
 {
   "name": "winedb",
   "version": "1.0.0",
+  "type": "module",
   "main": "js/app.js",
   "scripts": {
     "start": "node js/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "@huggingface/transformers": "^3.7.0",
     "@xenova/transformers": "^2.16.0",
     "axios": "^1.11.0",
     "cors": "^2.8.5",
