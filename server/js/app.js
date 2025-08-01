@@ -14,6 +14,12 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Fehler-Middleware für JSON-Antworten
+app.use((err, req, res, next) => {
+  console.error('Interner Serverfehler:', err.message, err.stack);
+  res.status(500).json({ error: 'Interner Serverfehler', message: err.message });
+});
+
 // Health Check Endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({
@@ -53,22 +59,36 @@ async function connectDB() {
   return db;
 }
 
+// Test-Endpunkt für MongoDB-Abfrage
+app.get('/test/wines', async (req, res) => {
+  try {
+    const db = await connectDB();
+    const collection = db.collection('wines');
+    const count = await collection.countDocuments({ ImageEmbedding: { $exists: true } });
+    res.status(200).json({ message: 'MongoDB-Abfrage erfolgreich', count });
+  } catch (err) {
+    console.error('Test Wines Fehler:', err.message, err.stack);
+    res.status(500).json({ error: 'Fehler bei der Test-Abfrage', message: err.message });
+  }
+});
+
 // GET /wines
 app.get('/wines', async (req, res) => {
   try {
     const db = await connectDB();
     const collection = db.collection('wines');
     const query = req.query.hasEmbedding === 'true' ? { ImageEmbedding: { $exists: true } } : {};
-    const wines = await collection.find(query).toArray();
+    console.log('Wines Query:', query);
+    const wines = await collection.find(query).limit(100).toArray(); // Begrenze auf 100 für Performance
     console.log('Fetched wines:', wines.length);
     res.json(wines);
   } catch (err) {
-    console.error('MongoDB Fehler:', err.message);
+    console.error('MongoDB Fehler:', err.message, err.stack);
     res.status(500).json({ error: 'Fehler beim Abrufen der Weine', message: err.message });
   }
 });
 
-// Bestehende Endpunkte (POST /wine, GET /wine/:id, etc.) bleiben unverändert...
+// POST /wine
 app.post('/wine', async (req, res) => {
   try {
     const db = await connectDB();
@@ -97,7 +117,183 @@ app.post('/wine', async (req, res) => {
   }
 });
 
-// ... (weitere Endpunkte wie GET /wine/:id, PUT /wine/:id, DELETE /wine/:id, GET /wines/search, GET /wines/search-fallback bleiben unverändert)
+app.get('/wines', async (req, res) => {
+  try {
+    const db = await connectDB();
+    const collection = db.collection('wines');
+    const wines = await collection.find({}).toArray();
+    console.log('Fetched wines:', wines.length);
+    res.json(wines);
+  } catch (err) {
+    console.error('MongoDB Fehler:', err.message);
+    res.status(500).json({ error: 'Fehler beim Abrufen der Weine', message: err.message });
+  }
+});
+
+app.get('/wine/:id', async (req, res) => {
+  try {
+    const db = await connectDB();
+    const collection = db.collection('wines');
+    const wine = await collection.findOne({ _id: new ObjectId(req.params.id) });
+    if (!wine) {
+      return res.status(404).json({ message: 'Wein nicht gefunden' });
+    }
+    res.json(wine);
+  } catch (err) {
+    console.error('Fehler beim Abrufen des Weins:', err.message);
+    res.status(500).json({ error: 'Fehler beim Abrufen des Weins', message: err.message });
+  }
+});
+
+app.put('/wine/:id', async (req, res) => {
+  try {
+    const db = await connectDB();
+    const collection = db.collection('wines');
+    const wineData = {
+      ...req.body,
+      timestamp: new Date(),
+    };
+    delete wineData._id;
+    const result = await collection.updateOne(
+      { _id: new ObjectId(req.params.id) },
+      { $set: wineData }
+    );
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ message: 'Wein nicht gefunden' });
+    }
+    console.log('Wein aktualisiert:', req.params.id);
+    res.json({ message: 'Wein erfolgreich aktualisiert', modifiedCount: result.modifiedCount });
+  } catch (err) {
+    console.error('Fehler beim Aktualisieren:', err.message);
+    res.status(500).json({ error: 'Fehler beim Aktualisieren des Weins', message: err.message });
+  }
+});
+
+app.delete('/wine/:id', async (req, res) => {
+  try {
+    const db = await connectDB();
+    const collection = db.collection('wines');
+    if (!ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: 'Ungültige Wein-ID' });
+    }
+    const result = await collection.deleteOne({ _id: new ObjectId(req.params.id) });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: 'Wein nicht gefunden' });
+    }
+    console.log('Wein gelöscht:', req.params.id);
+    res.json({ message: 'Wein erfolgreich gelöscht', deletedCount: result.deletedCount });
+  } catch (err) {
+    console.error('Fehler beim Löschen:', err.message);
+    res.status(500).json({ error: 'Fehler beim Löschen des Weins', message: err.message });
+  }
+});
+
+app.get('/wines/search', async (req, res) => {
+  try {
+    const { q, farbe, kauforte, kategorie, limit = 20, skip = 0 } = req.query;
+    const db = await connectDB();
+    const collection = db.collection('wines');
+    const pipeline = [];
+    if (q && q.trim() !== '') {
+      pipeline.push({
+        $search: {
+          index: 'WineSearch',
+          compound: {
+            should: [
+              {
+                text: {
+                  query: q.trim(),
+                  path: ['name', 'rebsorte', 'notizen'],
+                  fuzzy: { maxEdits: 2 },
+                },
+              },
+              {
+                autocomplete: {
+                  query: q.trim(),
+                  path: 'name_autocomplete',
+                  fuzzy: { maxEdits: 2 },
+                },
+              },
+              {
+                autocomplete: {
+                  query: q.trim(),
+                  path: 'rebsorte_autocomplete',
+                  fuzzy: { maxEdits: 2 },
+                },
+              },
+            ],
+            minimumShouldMatch: 1,
+          },
+        },
+      });
+      pipeline.push({
+        $addFields: {
+          score: { $meta: 'searchScore' },
+        },
+      });
+    }
+    const matchConditions = {};
+    if (farbe && farbe !== '') {
+      matchConditions.farbe = { $regex: `^${farbe}$`, $options: 'i' };
+    }
+    if (kauforte && kauforte !== '') {
+      matchConditions.kauforte = { $in: [kauforte] };
+    }
+    if (kategorie && kategorie !== '') {
+      matchConditions.kategorie = { $regex: `^${kategorie}$`, $options: 'i' };
+    }
+    if (Object.keys(matchConditions).length > 0) {
+      pipeline.push({ $match: matchConditions });
+    }
+    pipeline.push({
+      $sort: q && q.trim() !== '' ? { score: -1, timestamp: -1 } : { timestamp: -1 },
+    });
+    pipeline.push({ $skip: parseInt(skip) });
+    pipeline.push({ $limit: parseInt(limit) });
+    console.log('Search Query:', { q, farbe, kauforte, kategorie, limit, skip });
+    console.log('Search Pipeline:', JSON.stringify(pipeline, null, 2));
+    const wines = await collection.aggregate(pipeline).toArray();
+    console.log('Search Results:', { count: wines.length, wines });
+    const totalCount = wines.length === parseInt(limit)
+      ? parseInt(skip) + wines.length + 1
+      : parseInt(skip) + wines.length;
+    res.json({
+      wines,
+      totalCount,
+      hasMore: wines.length === parseInt(limit),
+    });
+  } catch (err) {
+    console.error('Atlas Search Fehler:', err.message, err.stack);
+    res.status(500).json({ error: 'Fehler bei der Suche', message: err.message });
+  }
+});
+
+app.get('/wines/search-fallback', async (req, res) => {
+  try {
+    const { q, farbe, kauforte, kategorie, limit = 20 } = req.query;
+    const db = await connectDB();
+    const collection = db.collection('wines');
+    const query = {};
+    if (q && q.trim() !== '') {
+      const searchRegex = new RegExp(q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+      query.$or = [
+        { name: searchRegex },
+        { rebsorte: searchRegex },
+        { notizen: searchRegex },
+      ];
+    }
+    if (farbe && farbe !== '') query.farbe = { $regex: `^${farbe}$`, $options: 'i' };
+    if (kauforte && kauforte !== '') query.kauforte = { $in: [kauforte] };
+    if (kategorie && kategorie !== '') query.kategorie = { $regex: `^${kategorie}$`, $options: 'i' };
+    console.log('Fallback Query:', JSON.stringify(query, null, 2));
+    const wines = await collection.find(query).sort({ timestamp: -1 }).limit(parseInt(limit)).toArray();
+    console.log('Fallback Results:', { count: wines.length, wines });
+    res.json({ wines, totalCount: wines.length, hasMore: false });
+  } catch (err) {
+    console.error('Fallback Search Fehler:', err.message, err.stack);
+    res.status(500).json({ error: 'Fehler bei der Suche', message: err.message });
+  }
+});
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {
