@@ -14,6 +14,12 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Middleware für JSON-Antworten
+app.use((req, res, next) => {
+  res.setHeader('Content-Type', 'application/json');
+  next();
+});
+
 // Fehler-Middleware für JSON-Antworten
 app.use((err, req, res, next) => {
   console.error('Interner Serverfehler:', err.message, err.stack);
@@ -22,7 +28,7 @@ app.use((err, req, res, next) => {
 
 // Health Check Endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({
+  res.json({
     status: 'OK',
     timestamp: new Date().toISOString(),
     message: 'Server is awake and ready',
@@ -65,7 +71,7 @@ app.get('/test/wines', async (req, res) => {
     const db = await connectDB();
     const collection = db.collection('wines');
     const count = await collection.countDocuments({ ImageEmbedding: { $exists: true } });
-    res.status(200).json({ message: 'MongoDB-Abfrage erfolgreich', count });
+    res.json({ message: 'MongoDB-Abfrage erfolgreich', count });
   } catch (err) {
     console.error('Test Wines Fehler:', err.message, err.stack);
     res.status(500).json({ error: 'Fehler bei der Test-Abfrage', message: err.message });
@@ -79,7 +85,11 @@ app.get('/wines', async (req, res) => {
     const collection = db.collection('wines');
     const query = req.query.hasEmbedding === 'true' ? { ImageEmbedding: { $exists: true } } : {};
     console.log('Wines Query:', query);
-    const wines = await collection.find(query).limit(100).toArray(); // Begrenze auf 100 für Performance
+    const wines = await collection
+      .find(query)
+      .project({ _id: 1, name: 1, imageUrl: 1, ImageEmbedding: 1 }) // Nur benötigte Felder
+      .limit(50) // Reduziere für Render Free Tier
+      .toArray();
     console.log('Fetched wines:', wines.length);
     res.json(wines);
   } catch (err) {

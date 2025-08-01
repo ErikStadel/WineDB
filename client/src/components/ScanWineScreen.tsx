@@ -79,12 +79,18 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
       const queryEmbedding = Array.from(imageEmbedding.data) as number[];
 
       // Weine mit Embeddings holen
-      console.log('Lade Weine von Server...');
+      console.log('Lade Weine von Server...', { apiUrl, url: `${apiUrl}/wines?hasEmbedding=true` });
       const response = await axios.get<Wine[]>(`${apiUrl}/wines`, {
-        params: { hasEmbedding: true }
+        params: { hasEmbedding: true },
+        headers: { Accept: 'application/json' }, // Erzwinge JSON
+        validateStatus: status => status >= 200 && status < 300, // Nur 2xx akzeptieren
+      }).catch(err => {
+        console.error('Axios Fehler:', err.response?.data || err.message);
+        throw new Error(`Axios Fehler: ${err.message}, Antwort: ${err.response?.data?.substring(0, 100) || 'Keine Antwort'}`);
       });
 
       const wines = response.data.filter(wine => wine.ImageEmbedding && Array.isArray(wine.ImageEmbedding));
+      console.log('Geladene Weine:', wines.length);
 
       // Cosinus-Ähnlichkeit berechnen
       const results = wines
