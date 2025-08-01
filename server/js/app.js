@@ -127,12 +127,22 @@ app.get('/test/wines', async (req, res) => {
 // GET /wines - mit verbessertem Logging und Error Handling
 app.get('/wines', async (req, res) => {
   try {
-    console.log('GET /wines aufgerufen mit Query:', req.query);
+    console.log('GET /wines aufgerufen mit:', {
+      url: req.originalUrl,
+      query: req.query,
+      headers: req.headers,
+    });
     
     const db = await connectDB();
     const collection = db.collection('wines');
     
-    const query = req.query.hasEmbedding === 'true' ? { ImageEmbedding: { $exists: true } } : [];
+    // Prüfe, ob hasEmbedding=true gesetzt ist
+    if (req.query.hasEmbedding !== 'true') {
+      console.warn('hasEmbedding=true fehlt, gebe leere Antwort zurück');
+      return res.json([]); // Leeres Array zurückgeben, wenn Parameter fehlt
+    }
+    
+    const query = { ImageEmbedding: { $exists: true, $ne: [] } }; // Nur nicht-leere Arrays
     console.log('MongoDB Query:', JSON.stringify(query));
     
     const wines = await collection
@@ -143,43 +153,33 @@ app.get('/wines', async (req, res) => {
     
     console.log(`Fetched ${wines.length} wines`);
     
-    // Validiere, dass alle Weine gültige Embeddings haben
     const validWines = wines.filter(wine => {
       if (!wine.ImageEmbedding) {
         console.warn(`Wein ${wine._id} hat kein ImageEmbedding`);
         return false;
       }
-      
       if (!Array.isArray(wine.ImageEmbedding)) {
         console.warn(`Wein ${wine._id} hat ungültiges ImageEmbedding:`, {
           type: typeof wine.ImageEmbedding,
-          constructor: wine.ImageEmbedding?.constructor?.name,
-          hasData: !!wine.ImageEmbedding?.data,
-          keys: wine.ImageEmbedding ? Object.keys(wine.ImageEmbedding).slice(0, 5) : []
+          constructor: wine.ImageEmbedding?.constructor?.name
         });
         return false;
       }
-      
       if (wine.ImageEmbedding.length === 0) {
         console.warn(`Wein ${wine._id} hat leeres ImageEmbedding`);
         return false;
       }
-      
-      // Prüfe die ersten paar Werte
       const hasValidNumbers = wine.ImageEmbedding.slice(0, 10).every(val => 
         typeof val === 'number' && !isNaN(val)
       );
-      
       if (!hasValidNumbers) {
         console.warn(`Wein ${wine._id} hat ungültige Zahlen im ImageEmbedding`);
         return false;
       }
-      
       return true;
     });
     
     console.log(`Returning ${validWines.length} valid wines with embeddings`);
-    
     res.json(validWines);
   } catch (err) {
     console.error('MongoDB Fehler bei GET /wines:', err.message, err.stack);
