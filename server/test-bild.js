@@ -17,7 +17,7 @@ async function updateEmbeddings() {
     const imageExtractor = await pipeline("image-feature-extraction", "Xenova/clip-vit-base-patch32");
     console.log("✅ Modell geladen");
 
-    const wineId = new ObjectId("688c6703fd2cbdac9895f1df");
+    const wineId = new ObjectId("688c7e03d731781f42fd30d1");
 
     const wein = await collection.findOne({ _id: wineId });
     if (!wein) {
