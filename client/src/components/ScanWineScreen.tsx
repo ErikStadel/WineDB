@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { pipeline, RawImage } from '@xenova/transformers';
 import '../App.css';
 
 // Typ für Wein-Daten
@@ -7,8 +8,9 @@ interface Wine {
   _id: string;
   name: string;
   imageUrl?: string;
-  similarity: number;
-  [key: string]: any; // Für zusätzliche Felder
+  ImageEmbedding: number[];
+  similarity?: number;
+  [key: string]: any;
 }
 
 // Props-Schnittstelle
@@ -21,6 +23,15 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
   const [results, setResults] = useState<Wine[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Cosinus-Ähnlichkeit
+  const cosineSimilarity = (a: number[], b: number[]): number => {
+    const dot = a.reduce((sum, x, i) => sum + x * b[i], 0);
+    const normA = Math.sqrt(a.reduce((sum, x) => sum + x * x, 0));
+    const normB = Math.sqrt(b.reduce((sum, x) => sum + x * x, 0));
+    return dot / (normA * normB);
+  };
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -33,23 +44,68 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
       setIsUploading(true);
       setError(null);
 
-      const formData = new FormData();
-      formData.append('image', file);
+      console.log('🚀 Lade CLIP Modell...');
+      setIsProcessing(true);
+      const extractor = await pipeline('image-feature-extraction', 'Xenova/clip-vit-base-patch32');
+      console.log('✅ Modell geladen');
 
-      console.log('Sende Bild an Server...');
-      const response = await axios.post<{ wines: Wine[]; totalCount: number; hasMore: boolean }>(
-        `${apiUrl}/search/image`,
-        formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
-      );
+      // Bild in Data-URL konvertieren und in <img> laden
+      const dataUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
 
-      setResults(response.data.wines);
+      const img = new Image();
+      img.src = dataUrl;
+      await new Promise((resolve) => {
+        img.onload = resolve;
+      });
+
+      // Bildgröße reduzieren (für Performance)
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        throw new Error('Canvas-Kontext nicht verfügbar');
+      }
+      canvas.width = 256;
+      canvas.height = 256;
+      ctx.drawImage(img, 0, 0, 256, 256);
+      const resizedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+
+      // Bild mit RawImage verarbeiten
+      const image = await RawImage.fromURL(resizedDataUrl);
+      const imageEmbedding = await extractor(image);
+      const queryEmbedding = Array.from(imageEmbedding.data) as number[];
+
+      // Weine mit Embeddings holen
+      console.log('Lade Weine von Server...');
+      const response = await axios.get<Wine[]>(`${apiUrl}/wines`, {
+        params: { hasEmbedding: true }
+      });
+
+      const wines = response.data.filter(wine => wine.ImageEmbedding && Array.isArray(wine.ImageEmbedding));
+
+      // Cosinus-Ähnlichkeit berechnen
+      const results = wines
+        .map(wine => ({
+          ...wine,
+          similarity: cosineSimilarity(queryEmbedding, wine.ImageEmbedding)
+        }))
+        .filter(wine => wine.similarity > 0.5)
+        .sort((a, b) => (b.similarity || 0) - (a.similarity || 0))
+        .slice(0, 10);
+
+      console.log('Suchergebnisse:', { count: results.length, results });
+
+      setResults(results);
       setError(null);
-      console.log('Suchergebnisse:', response.data.wines);
+      setIsProcessing(false);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Unbekannter Fehler';
       console.error('Fehler bei der Bildsuche:', errorMessage);
       setError(`Fehler bei der Bildsuche: ${errorMessage}`);
+      setIsProcessing(false);
     } finally {
       setIsUploading(false);
     }
@@ -66,7 +122,7 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
       <main className="flex-1 p-6 flex flex-col items-center gap-6">
         <section className="glass-card image-upload bg-white bg-opacity-80 rounded-lg shadow-lg p-6 w-full max-w-md">
           <h2 className="text-lg md:text-xl font-semibold mb-4 text-gray-800">Wein Scannen</h2>
-          {isUploading ? (
+          {isUploading || isProcessing ? (
             <div className="loader" />
           ) : (
             <label className="upload-plus flex items-center justify-center w-full h-32 bg-gray-200 rounded-lg cursor-pointer hover:bg-gray-300 transition">
@@ -94,7 +150,7 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
                   <div>
                     <p className="font-medium">{wine.name}</p>
                     <p className="text-sm text-gray-600">
-                      Ähnlichkeit: {(wine.similarity * 100).toFixed(2)}%
+                      Ähnlichkeit: {(wine.similarity! * 100).toFixed(2)}%
                     </p>
                   </div>
                 </li>
