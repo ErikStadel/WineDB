@@ -16,6 +16,7 @@
     "mongodb": "^6.18.0",
     "serve-static": "^1.15.0",
     "sharp": "^0.33.5",
+    "multer": "^2.x",
     "tesseract.js": "^6.0.1"
   },
   "devDependencies": {

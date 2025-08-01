@@ -2,12 +2,20 @@ require('dotenv').config();
 const express = require('express');
 const { MongoClient, ObjectId, ServerApiVersion } = require('mongodb');
 const cors = require('cors');
+const multer = require('multer');
+const { pipeline, RawImage } = require('@xenova/transformers');
+const sharp = require('sharp');
+
 const app = express();
 
+// CORS-Konfiguration
 app.use(cors({
   origin: ['http://localhost:3000', 'http://192.168.0.208:3000', 'https://wine-db.vercel.app', 'https://wine-db-git-dev-erikstadels-projects.vercel.app'],
 }));
 app.use(express.json());
+
+// Multer für Dateiuploads
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Health Check Endpoint
 app.get('/health', (req, res) => {
@@ -48,7 +56,65 @@ async function connectDB() {
   return db;
 }
 
-// POST /wine
+// Cosinus-Ähnlichkeit
+function cosineSimilarity(a, b) {
+  const dot = a.reduce((sum, x, i) => sum + x * b[i], 0);
+  const normA = Math.sqrt(a.reduce((sum, x) => sum + x * x, 0));
+  const normB = Math.sqrt(b.reduce((sum, x) => sum + x * x, 0));
+  return dot / (normA * normB);
+}
+
+// POST /search/image
+app.post('/search/image', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Kein Bild hochgeladen' });
+    }
+
+    const db = await connectDB();
+    const collection = db.collection('wines');
+
+    console.log('🚀 Lade CLIP Modell...');
+    const imageExtractor = await pipeline('image-feature-extraction', 'Xenova/clip-vit-base-patch32');
+    console.log('✅ Modell geladen');
+
+    // Bildvorverarbeitung mit sharp
+    const imageBuffer = await sharp(req.file.buffer)
+      .jpeg({ quality: 95, progressive: true })
+      .resize({ width: 512, height: 512, fit: 'contain', background: 'white' })
+      .sharpen({ sigma: 1, m1: 1, m2: 3 })
+      .modulate({ brightness: 1.3, contrast: 1.7 })
+      .toBuffer();
+
+    const image = await RawImage.fromBuffer(imageBuffer);
+    const imageEmbedding = await imageExtractor(image, { pooling: 'mean', normalize: true });
+    const queryEmbedding = Array.from(imageEmbedding.data);
+
+    // Suche nach ähnlichen Weinen
+    const wines = await collection.find({ ImageEmbedding: { $exists: true } }).toArray();
+    const results = wines
+      .map(wine => ({
+        ...wine,
+        similarity: cosineSimilarity(queryEmbedding, Array.from(wine.ImageEmbedding))
+      }))
+      .filter(wine => wine.similarity > 0.5) // Ähnlichkeitsschwelle
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, 10); // Top 10 Ergebnisse
+
+    console.log('Search Results:', { count: results.length, results });
+
+    res.json({
+      wines: results,
+      totalCount: results.length,
+      hasMore: false
+    });
+  } catch (err) {
+    console.error('Image Search Fehler:', err.message, err.stack);
+    res.status(500).json({ error: 'Fehler bei der Bildsuche', message: err.message });
+  }
+});
+
+// Bestehende Endpunkte (POST /wine, GET /wines, etc.) bleiben unverändert...
 app.post('/wine', async (req, res) => {
   try {
     const db = await connectDB();
@@ -77,13 +143,12 @@ app.post('/wine', async (req, res) => {
   }
 });
 
-// GET /wines
 app.get('/wines', async (req, res) => {
   try {
     const db = await connectDB();
     const collection = db.collection('wines');
     const wines = await collection.find({}).toArray();
-    console.log('Fetched wines:', wines.length); // Debugging
+    console.log('Fetched wines:', wines.length);
     res.json(wines);
   } catch (err) {
     console.error('MongoDB Fehler:', err.message);
@@ -91,7 +156,6 @@ app.get('/wines', async (req, res) => {
   }
 });
 
-// GET /wine/:id
 app.get('/wine/:id', async (req, res) => {
   try {
     const db = await connectDB();
@@ -107,7 +171,6 @@ app.get('/wine/:id', async (req, res) => {
   }
 });
 
-// PUT /wine/:id
 app.put('/wine/:id', async (req, res) => {
   try {
     const db = await connectDB();
@@ -132,7 +195,6 @@ app.put('/wine/:id', async (req, res) => {
   }
 });
 
-// DELETE /wine/:id
 app.delete('/wine/:id', async (req, res) => {
   try {
     const db = await connectDB();
@@ -152,29 +214,23 @@ app.delete('/wine/:id', async (req, res) => {
   }
 });
 
-// Atlas Search Route
 app.get('/wines/search', async (req, res) => {
   try {
     const { q, farbe, kauforte, kategorie, limit = 20, skip = 0 } = req.query;
-
     const db = await connectDB();
     const collection = db.collection('wines');
-
-    // Basis-Pipeline für Atlas Search
     const pipeline = [];
-
-    // Wenn Suchterm vorhanden, verwende Atlas Search
     if (q && q.trim() !== '') {
       pipeline.push({
         $search: {
-          index: 'WineSearch', // Stelle sicher, dass der Index-Name korrekt ist
+          index: 'WineSearch',
           compound: {
             should: [
               {
                 text: {
                   query: q.trim(),
                   path: ['name', 'rebsorte', 'notizen'],
-                  fuzzy: { maxEdits: 2 }, // Erhöhe maxEdits für mehr Flexibilität
+                  fuzzy: { maxEdits: 2 },
                 },
               },
               {
@@ -202,8 +258,6 @@ app.get('/wines/search', async (req, res) => {
         },
       });
     }
-
-    // Case-insensitive Filter für Facetten
     const matchConditions = {};
     if (farbe && farbe !== '') {
       matchConditions.farbe = { $regex: `^${farbe}$`, $options: 'i' };
@@ -217,28 +271,18 @@ app.get('/wines/search', async (req, res) => {
     if (Object.keys(matchConditions).length > 0) {
       pipeline.push({ $match: matchConditions });
     }
-
-    // Sortierung: Zuerst nach Score (bei Suche), dann nach Timestamp
     pipeline.push({
       $sort: q && q.trim() !== '' ? { score: -1, timestamp: -1 } : { timestamp: -1 },
     });
-
-    // Pagination
     pipeline.push({ $skip: parseInt(skip) });
     pipeline.push({ $limit: parseInt(limit) });
-
-    // Debugging: Logge die gesamte Pipeline und Parameter
     console.log('Search Query:', { q, farbe, kauforte, kategorie, limit, skip });
     console.log('Search Pipeline:', JSON.stringify(pipeline, null, 2));
-
     const wines = await collection.aggregate(pipeline).toArray();
     console.log('Search Results:', { count: wines.length, wines });
-
-    // Gesamtanzahl für Pagination
     const totalCount = wines.length === parseInt(limit)
       ? parseInt(skip) + wines.length + 1
       : parseInt(skip) + wines.length;
-
     res.json({
       wines,
       totalCount,
@@ -250,14 +294,11 @@ app.get('/wines/search', async (req, res) => {
   }
 });
 
-// Fallback Search Route
 app.get('/wines/search-fallback', async (req, res) => {
   try {
     const { q, farbe, kauforte, kategorie, limit = 20 } = req.query;
-
     const db = await connectDB();
     const collection = db.collection('wines');
-
     const query = {};
     if (q && q.trim() !== '') {
       const searchRegex = new RegExp(q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
@@ -270,11 +311,9 @@ app.get('/wines/search-fallback', async (req, res) => {
     if (farbe && farbe !== '') query.farbe = { $regex: `^${farbe}$`, $options: 'i' };
     if (kauforte && kauforte !== '') query.kauforte = { $in: [kauforte] };
     if (kategorie && kategorie !== '') query.kategorie = { $regex: `^${kategorie}$`, $options: 'i' };
-
     console.log('Fallback Query:', JSON.stringify(query, null, 2));
     const wines = await collection.find(query).sort({ timestamp: -1 }).limit(parseInt(limit)).toArray();
     console.log('Fallback Results:', { count: wines.length, wines });
-
     res.json({ wines, totalCount: wines.length, hasMore: false });
   } catch (err) {
     console.error('Fallback Search Fehler:', err.message, err.stack);

@@ -1,4 +1,4 @@
-const { MongoClient } = require("mongodb");
+const { MongoClient, ObjectId } = require("mongodb");
 const { pipeline, RawImage } = require("@xenova/transformers");
 const dotenv = require("dotenv");
 
@@ -10,41 +10,42 @@ async function updateEmbeddings() {
 
   try {
     await client.connect();
-    const db = client.db("WineDB"); // ggf. anpassen
-    const collection = db.collection("weine");
+    const db = client.db("wineDB"); 
+    const collection = db.collection("wines");
 
-    // CLIP Image Embedding Pipeline
+    console.log("🚀 Lade CLIP Modell...");
     const imageExtractor = await pipeline("image-feature-extraction", "Xenova/clip-vit-base-patch32");
+    console.log("✅ Modell geladen");
 
-    // Alle Weine mit Name = "Test"
-    const cursor = collection.find({ name: "Test" });
+    const wineId = new ObjectId("688c6703fd2cbdac9895f1df");
 
-    while (await cursor.hasNext()) {
-      const wein = await cursor.next();
-      if (!wein?.imageUrl) {
-        console.warn(`⚠️ Kein Bild für Wein ${wein._id}`);
-        continue;
-      }
-
-      console.log(`🔎 Verarbeite Wein: ${wein._id} (${wein.name})`);
-
-      // Bild laden & Embedding berechnen
-      const image = await RawImage.fromURL(wein.imageUrl);
-      const imageEmbedding = await imageExtractor(image, {
-        pooling: "mean",
-        normalize: true,
-      });
-
-      // In MongoDB speichern
-      await collection.updateOne(
-        { _id: wein._id },
-        { $set: { ImageEmbedding: imageEmbedding.data } }
-      );
-
-      console.log(`✅ Embedding gespeichert für Wein ${wein._id}`);
+    const wein = await collection.findOne({ _id: wineId });
+    if (!wein) {
+      console.log("❌ Kein Wein mit dieser ID gefunden.");
+      return;
     }
+
+    if (!wein.imageUrl) {
+      console.warn(`⚠️ Kein Bild für Wein ${wein._id}`);
+      return;
+    }
+
+    console.log(`🔎 Verarbeite Wein: ${wein._id} (${wein.name})`);
+
+    const image = await RawImage.fromURL(wein.imageUrl);
+    const imageEmbedding = await imageExtractor(image, {
+      pooling: "mean",
+      normalize: true,
+    });
+
+    await collection.updateOne(
+      { _id: wineId },
+      { $set: { ImageEmbedding: imageEmbedding.data } }
+    );
+
+    console.log(`✅ Embedding gespeichert für Wein ${wein._id}`);
   } catch (err) {
-    console.error("❌ Fehler:", err);
+    console.error("❌ Fehler:", err.message);
   } finally {
     await client.close();
   }
