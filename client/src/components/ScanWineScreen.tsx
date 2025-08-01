@@ -48,7 +48,19 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
     setError(null);
 
     console.log('🚀 Lade CLIP Modell...');
-    setIsProcessing(true);
+setIsProcessing(true);
+try {
+  console.log('Lade Modell: Xenova/clip-vit-base-patch32');
+  const extractor = await window.Xenova.pipeline('image-feature-extraction', 'Xenova/clip-vit-base-patch32');
+  console.log('✅ Modell geladen');
+} catch (err) {
+  const error = err as Error;
+  console.error('Fehler beim Laden des CLIP-Modells:', error.message, error.stack);
+  setError('KI-Modell konnte nicht geladen werden. Bitte versuche es später erneut.');
+  setIsProcessing(false);
+  setIsUploading(false);
+  return;
+}
     const extractor = await pipeline('image-feature-extraction', 'Xenova/clip-vit-base-patch32').catch(err => {
       console.error('Fehler beim Laden des CLIP-Modells:', err.message, err.stack);
       throw new Error(`Fehler beim Laden des CLIP-Modells: ${err.message}`);
@@ -173,7 +185,7 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
   return (
     <div className="App min-h-screen bg-gray-100 flex flex-col">
       <header className="glass-header p-4 flex justify-between items-center">
-        <h1 className="header-title text-xl font-bold text-gray-800">Wein Scanner</h1>
+        <h1 className="header-title text-xl font-bold text-gray-800">Wein Scanner neu</h1>
         <span className="header-back text-blue-600 cursor-pointer" onClick={onBack}>
           Zurück
         </span>
