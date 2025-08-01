@@ -145,10 +145,36 @@ app.get('/wines', async (req, res) => {
     
     // Validiere, dass alle Weine gültige Embeddings haben
     const validWines = wines.filter(wine => {
-      if (!wine.ImageEmbedding || !Array.isArray(wine.ImageEmbedding)) {
-        console.warn(`Wein ${wine._id} hat ungültiges ImageEmbedding:`, typeof wine.ImageEmbedding);
+      if (!wine.ImageEmbedding) {
+        console.warn(`Wein ${wine._id} hat kein ImageEmbedding`);
         return false;
       }
+      
+      if (!Array.isArray(wine.ImageEmbedding)) {
+        console.warn(`Wein ${wine._id} hat ungültiges ImageEmbedding:`, {
+          type: typeof wine.ImageEmbedding,
+          constructor: wine.ImageEmbedding?.constructor?.name,
+          hasData: !!wine.ImageEmbedding?.data,
+          keys: wine.ImageEmbedding ? Object.keys(wine.ImageEmbedding).slice(0, 5) : []
+        });
+        return false;
+      }
+      
+      if (wine.ImageEmbedding.length === 0) {
+        console.warn(`Wein ${wine._id} hat leeres ImageEmbedding`);
+        return false;
+      }
+      
+      // Prüfe die ersten paar Werte
+      const hasValidNumbers = wine.ImageEmbedding.slice(0, 10).every(val => 
+        typeof val === 'number' && !isNaN(val)
+      );
+      
+      if (!hasValidNumbers) {
+        console.warn(`Wein ${wine._id} hat ungültige Zahlen im ImageEmbedding`);
+        return false;
+      }
+      
       return true;
     });
     

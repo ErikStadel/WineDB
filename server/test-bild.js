@@ -31,21 +31,47 @@ async function updateEmbeddings() {
     }
 
     console.log(`🔎 Verarbeite Wein: ${wein._id} (${wein.name})`);
+    console.log(`🖼️ Bild-URL: ${wein.imageUrl}`);
 
-    const image = await RawImage.fromURL(wein.imageUrl);
-    const imageEmbedding = await imageExtractor(image, {
-      pooling: "mean",
-      normalize: true,
-    });
+    try {
+      const image = await RawImage.fromURL(wein.imageUrl);
+      console.log(`📐 Bildgröße: ${image.width}x${image.height}`);
+      
+      const imageEmbedding = await imageExtractor(image, {
+        pooling: "mean",
+        normalize: true,
+      });
 
-    await collection.updateOne(
-      { _id: wineId },
-      { $set: { ImageEmbedding: imageEmbedding.data } }
-    );
+      console.log(`🧮 Embedding-Typ: ${typeof imageEmbedding.data}`);
+      console.log(`🧮 Embedding-Konstruktor: ${imageEmbedding.data.constructor.name}`);
+      console.log(`📊 Embedding-Größe: ${imageEmbedding.data.length}`);
 
-    console.log(`✅ Embedding gespeichert für Wein ${wein._id}`);
+      // WICHTIG: Konvertiere Float32Array zu normalem Array
+      const embeddingArray = Array.from(imageEmbedding.data);
+      
+      console.log(`✅ Konvertiert zu Array: ${Array.isArray(embeddingArray)}`);
+      console.log(`📊 Array-Größe: ${embeddingArray.length}`);
+      console.log(`🔢 Erste 5 Werte: ${embeddingArray.slice(0, 5).join(', ')}`);
+
+      await collection.updateOne(
+        { _id: wineId },
+        { $set: { ImageEmbedding: embeddingArray } }
+      );
+
+      console.log(`✅ Embedding als Array gespeichert für Wein ${wein._id}`);
+      
+      // Verifikation: Lade den Wein neu und prüfe das Embedding
+      const updatedWein = await collection.findOne({ _id: wineId });
+      console.log(`🔍 Verifikation - ImageEmbedding ist Array: ${Array.isArray(updatedWein.ImageEmbedding)}`);
+      console.log(`🔍 Verifikation - ImageEmbedding Länge: ${updatedWein.ImageEmbedding?.length}`);
+      
+    } catch (imageError) {
+      console.error(`❌ Fehler beim Verarbeiten des Bildes: ${imageError.message}`);
+    }
+
   } catch (err) {
     console.error("❌ Fehler:", err.message);
+    console.error("❌ Stack:", err.stack);
   } finally {
     await client.close();
   }
