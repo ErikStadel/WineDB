@@ -93,6 +93,15 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
         console.error('Health Check fehlgeschlagen:', healthError);
       }
 
+      console.log('Verwendete apiUrl:', apiUrl);
+      console.log('Sende Anfrage an:', `${apiUrl}/wines`, {
+        params: { hasEmbedding: true },
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      
       const response = await axios.get<Wine[]>(`${apiUrl}/wines`, {
         params: { hasEmbedding: true },
         headers: { 

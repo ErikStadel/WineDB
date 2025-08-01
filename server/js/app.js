@@ -132,7 +132,7 @@ app.get('/wines', async (req, res) => {
     const db = await connectDB();
     const collection = db.collection('wines');
     
-    const query = req.query.hasEmbedding === 'true' ? { ImageEmbedding: { $exists: true } } : {};
+    const query = req.query.hasEmbedding === 'true' ? { ImageEmbedding: { $exists: true } } : [];
     console.log('MongoDB Query:', JSON.stringify(query));
     
     const wines = await collection
