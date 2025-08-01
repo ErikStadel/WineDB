@@ -55,7 +55,7 @@ function postProcessOCR(fullText) {
 }
 
 async function testOCR() {
-  const imageUrl = "https://i.ibb.co/3QNCjgq/1d586615-4337-4664-bf0c-9b8483fb083d.jpg";
+  const imageUrl = "https://i.ibb.co/9K31whJ/Image-5.jpg";
   const response = await axios.get(imageUrl, { responseType: "arraybuffer" });
   const base64Image = Buffer.from(response.data).toString("base64");
 
