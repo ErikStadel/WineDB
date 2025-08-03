@@ -1,1 +1,7 @@
+node_modules/
 .env
+build/
+.pnp
+.pnp.js
+coverage/
+.DS_Store
