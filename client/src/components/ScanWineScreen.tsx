@@ -12,59 +12,116 @@ interface Wine {
 
 interface ScanWineScreenProps {
   onBack: () => void;
-  apiUrl: string; // URL for the API endpoint
 }
 
-const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
+const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack }) => {
   const [results, setResults] = useState<Wine[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  const compressImage = (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        img.src = e.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d')!;
+          const maxSize = 1024;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxSize) {
+              height = Math.round((height * maxSize) / width);
+              width = maxSize;
+            }
+          } else {
+            if (height > maxSize) {
+              width = Math.round((width * maxSize) / height);
+              height = maxSize;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const compressedFile = new File([blob], file.name, {
+                  type: 'image/jpeg',
+                  lastModified: Date.now(),
+                });
+                resolve(compressedFile);
+              } else {
+                resolve(file);
+              }
+            },
+            'image/jpeg',
+            0.8
+          );
+        };
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-  try {
-    console.log('ImgBB API-Schlüssel:', process.env.REACT_APP_IMGBB_API_KEY); // Debugging
-    const file = event.target.files?.[0];
-    if (!file) {
-      setError('Kein Bild ausgewählt');
-      return;
-    }
-
-    setIsUploading(true);
-    setError(null);
-
-    // Bild zu ImgBB hochladen
-    const formData = new FormData();
-    formData.append('image', file);
-    const imgbbResponse = await axios.post(
-      'https://api.imgbb.com/1/upload?key=YOUR_IMGBB_API_KEY',
-      formData,
-      { headers: { 'Content-Type': 'multipart/form-data' } }
-    );
-
-    const imageUrl = imgbbResponse.data.data.url;
-    console.log('Bild hochgeladen zu ImgBB:', imageUrl);
-
-    // Anfrage an Cloud Run mit der Bild-URL
-    const response = await axios.post<{ wines: Wine[]; totalCount: number; hasMore: boolean }>(
-      'https://cloud-job-608509602627.europe-west3.run.app/searchImage',
-      { imageUrl },
-      {
-        headers: { 'Content-Type': 'application/json' },
-        timeout: 10000,
+    try {
+      const file = event.target.files?.[0];
+      if (!file) {
+        setError('Kein Bild ausgewählt');
+        return;
       }
-    );
 
-    setResults(response.data.wines);
-    setError(null);
-    console.log('Suchergebnisse:', response.data.wines);
-  } catch (err: unknown) {
-    const errorMessage = err instanceof Error ? err.message : 'Unbekannter Fehler';
-    console.error('Fehler bei der Bildsuche:', errorMessage);
-    setError(`Fehler bei der Bildsuche: ${errorMessage}`);
-  } finally {
-    setIsUploading(false);
-  }
-};
+      setIsUploading(true);
+      setError(null);
+
+      console.log('API-Schlüssel:', process.env.REACT_APP_IMGBB_API_KEY); // Debugging
+      console.log('Datei:', file.name, file.size, file.type); // Debugging
+
+      const compressedFile = await compressImage(file);
+      console.log('Komprimierte Datei:', compressedFile.name, compressedFile.size, compressedFile.type); // Debugging
+
+      const formData = new FormData();
+      formData.append('image', compressedFile);
+      console.log('FormData:', Array.from(formData.entries())); // Debugging
+
+      const imgbbResponse = await axios.post(
+        'https://api.imgbb.com/1/upload',
+        formData,
+        {
+          params: { key: process.env.REACT_APP_IMGBB_API_KEY },
+          headers: { 'Content-Type': 'multipart/form-data' },
+        }
+      );
+
+      const imageUrl = imgbbResponse.data.data.url;
+      console.log('Bild hochgeladen zu ImgBB:', imageUrl);
+
+      const response = await axios.post<{ wines: Wine[]; totalCount: number; hasMore: boolean }>(
+        'https://cloud-job-608509602627.europe-west3.run.app/searchImage',
+        { imageUrl },
+        {
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 10000,
+        }
+      );
+
+      setResults(response.data.wines);
+      setError(null);
+      console.log('Suchergebnisse:', response.data.wines);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unbekannter Fehler';
+      console.error('Fehler bei der Bildsuche:', errorMessage, err);
+      setError(`Fehler bei der Bildsuche: ${errorMessage}`);
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <div className="App min-h-screen bg-gray-100 flex flex-col">
@@ -85,7 +142,7 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
               <input
                 id="library-input"
                 type="file"
-                accept="image/*" // Optimiert für iOS Safari
+                accept="image/*" // Für iOS Safari
                 className="hidden-input hidden"
                 onChange={handleImageUpload}
               />
