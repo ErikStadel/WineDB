@@ -401,6 +401,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
             <option value="Lidl">Lidl</option>
             <option value="Edeka">Edeka</option>
             <option value="Henkell">Henkell</option>
+            <option value="Tegut">Tegut</option>
             <option value="Wo anders">Wo anders</option>
           </select>
           <label className="block font-semibold text-[#496580] mb-1 mt-4">Name <span className="text-red-500">*</span></label>
