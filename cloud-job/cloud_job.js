@@ -49,7 +49,7 @@ function cosineSimilarity(a, b) {
 
 // Cloud Function
 functions.http('searchImage', async (req, res) => {
-  res.set('Access-Control-Allow-Origin', 'https://wine-db.vercel.app'); // Nur benötigte Origins
+  res.set('Access-Control-Allow-Origin', 'https://wine-db.vercel.app', 'https://wine-db-git-dev-erikstadels-projects.vercel.app'); // Nur benötigte Origins
   res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.set('Access-Control-Allow-Headers', 'Content-Type');
 
