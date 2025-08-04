@@ -45,7 +45,15 @@ function cosineSimilarity(a, b) {
 }
 
 functions.http('searchImage', async (req, res) => {
-  res.set('Access-Control-Allow-Origin', 'https://wine-db.vercel.app');
+  // CORS für Prod und Dev
+  const allowedOrigins = [
+    'https://wine-db.vercel.app',
+    'https://wine-db-git-dev-erikstadels-projects.vercel.app',
+  ];
+  const origin = req.get('origin');
+  if (allowedOrigins.includes(origin)) {
+    res.set('Access-Control-Allow-Origin', origin);
+  }
   res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.set('Access-Control-Allow-Headers', 'Content-Type');
 
