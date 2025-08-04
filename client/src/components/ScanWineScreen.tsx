@@ -12,9 +12,10 @@ interface Wine {
 
 interface ScanWineScreenProps {
   onBack: () => void;
+  apiUrl: string; // URL for the API endpoint
 }
 
-const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack }) => {
+const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
   const [results, setResults] = useState<Wine[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
