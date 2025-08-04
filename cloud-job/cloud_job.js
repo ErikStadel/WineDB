@@ -53,19 +53,12 @@ functions.http('searchImage', async (req, res) => {
   res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.set('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(204).send('');
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Nur POST erlaubt' });
-  }
+  if (req.method === 'OPTIONS') return res.status(204).send('');
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Nur POST erlaubt' });
 
   try {
     const { imageUrl } = req.body;
-    if (!imageUrl) {
-      return res.status(400).json({ error: 'Keine Bild-URL angegeben' });
-    }
+    if (!imageUrl) return res.status(400).json({ error: 'Keine Bild-URL angegeben' });
 
     console.log('Verarbeite Bild-URL:', imageUrl);
 
@@ -78,14 +71,14 @@ functions.http('searchImage', async (req, res) => {
     if (!response.ok) throw new Error(`HTTP Fehler: ${response.status}`);
     const imageBuffer = Buffer.from(await response.arrayBuffer());
 
-    // Bildverarbeitung
+    // Bildvorverarbeitung mit sharp
     const processedBuffer = await sharp(imageBuffer)
       .jpeg({ quality: 80, progressive: true })
       .resize({ width: 256, height: 256, fit: 'contain', background: 'white' })
       .toBuffer();
 
-    // Bild direkt als Buffer an imageExtractor übergeben
-    const imageEmbedding = await imageExtractor(processedBuffer, { pooling: 'mean', normalize: true });
+    // Bild als URL an imageExtractor übergeben
+    const imageEmbedding = await imageExtractor(imageUrl, { pooling: 'mean', normalize: true });
     const queryEmbedding = Array.from(imageEmbedding.data);
 
     // Suche
