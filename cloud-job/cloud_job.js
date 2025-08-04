@@ -1,5 +1,5 @@
 const functions = require('@google-cloud/functions-framework');
-const { pipeline, RawImage } = require('@xenova/transformers');
+const { pipeline } = require('@xenova/transformers');
 const sharp = require('sharp');
 const { MongoClient } = require('mongodb');
 const multer = require('multer');
@@ -8,9 +8,8 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 let imageExtractor;
 let isModelLoading = false;
-let client; // Singleton für MongoDB-Client
+let client;
 
-// MongoDB-Verbindung optimieren
 async function connectDB() {
   if (!client) {
     client = new MongoClient(process.env.MONGODB_URI, {
@@ -23,7 +22,6 @@ async function connectDB() {
   return client.db('wineDB');
 }
 
-// Modellinitialisierung mit Fehlerbehandlung
 async function initializeModel() {
   if (imageExtractor || isModelLoading) return imageExtractor;
   isModelLoading = true;
@@ -39,17 +37,15 @@ async function initializeModel() {
   }
 }
 
-// Cosinus-Ähnlichkeit
 function cosineSimilarity(a, b) {
   const dot = a.reduce((sum, x, i) => sum + x * b[i], 0);
   const normA = Math.sqrt(a.reduce((sum, x) => sum + x * x, 0));
   const normB = Math.sqrt(b.reduce((sum, x) => sum + x * x, 0));
-  return normA && normB ? dot / (normA * normB) : 0; // Schutz vor Division durch 0
+  return normA && normB ? dot / (normA * normB) : 0;
 }
 
-// Cloud Function
 functions.http('searchImage', async (req, res) => {
-  res.set('Access-Control-Allow-Origin', 'https://wine-db.vercel.app', 'https://wine-db-git-dev-erikstadels-projects.vercel.app'); // Nur benötigte Origins
+  res.set('Access-Control-Allow-Origin', 'https://wine-db.vercel.app');
   res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.set('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -77,8 +73,8 @@ functions.http('searchImage', async (req, res) => {
       .resize({ width: 256, height: 256, fit: 'contain', background: 'white' })
       .toBuffer();
 
-    const image = await RawImage.fromBuffer(imageBuffer);
-    const imageEmbedding = await imageExtractor(image, { pooling: 'mean', normalize: true });
+    // Bild direkt als Buffer an imageExtractor übergeben
+    const imageEmbedding = await imageExtractor(imageBuffer, { pooling: 'mean', normalize: true });
     const queryEmbedding = Array.from(imageEmbedding.data);
 
     // Suche
@@ -99,7 +95,6 @@ functions.http('searchImage', async (req, res) => {
   }
 });
 
-// Cleanup bei Beendigung
 process.on('SIGTERM', async () => {
   if (client) {
     await client.close();
