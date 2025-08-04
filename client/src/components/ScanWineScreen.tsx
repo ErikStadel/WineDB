@@ -21,37 +21,40 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
   const [isUploading, setIsUploading] = useState(false);
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      const file = event.target.files?.[0];
-      if (!file) {
-        setError('Kein Bild ausgewählt');
-        return;
-      }
-
-      setIsUploading(true);
-      setError(null);
-
-      const formData = new FormData();
-      formData.append('image', file);
-
-      console.log('Sende Bild an Cloud Run...');
-      const response = await axios.post<{ wines: Wine[]; totalCount: number; hasMore: boolean }>(
-        'https://cloud-job-608509602627.europe-west3.run.app/searchImage',
-        formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
-      );
-
-      setResults(response.data.wines);
-      setError(null);
-      console.log('Suchergebnisse:', response.data.wines);
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Unbekannter Fehler';
-      console.error('Fehler bei der Bildsuche:', errorMessage);
-      setError(`Fehler bei der Bildsuche: ${errorMessage}`);
-    } finally {
-      setIsUploading(false);
+  try {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setError('Kein Bild ausgewählt');
+      return;
     }
-  };
+
+    setIsUploading(true);
+    setError(null);
+
+    const formData = new FormData();
+    formData.append('image', file); // Muss exakt 'image' sein, wie in cloud_job.js
+
+    console.log('Sende Bild an Cloud Run...', file.name, file.size); // Debugging
+    const response = await axios.post<{ wines: Wine[]; totalCount: number; hasMore: boolean }>(
+      'https://cloud-job-608509602627.europe-west3.run.app/searchImage',
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 10000, // 10s Timeout für iOS Safari
+      }
+    );
+
+    setResults(response.data.wines);
+    setError(null);
+    console.log('Suchergebnisse:', response.data.wines);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Unbekannter Fehler';
+    console.error('Fehler bei der Bildsuche:', errorMessage);
+    setError(`Fehler bei der Bildsuche: ${errorMessage}`);
+  } finally {
+    setIsUploading(false);
+  }
+};
 
   return (
     <div className="App min-h-screen bg-gray-100 flex flex-col">

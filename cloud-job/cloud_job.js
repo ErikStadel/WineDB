@@ -2,9 +2,6 @@ const functions = require('@google-cloud/functions-framework');
 const { pipeline } = require('@xenova/transformers');
 const sharp = require('sharp');
 const { MongoClient } = require('mongodb');
-const multer = require('multer');
-
-const upload = multer({ storage: multer.memoryStorage() });
 
 let imageExtractor;
 let isModelLoading = false;
@@ -45,7 +42,6 @@ function cosineSimilarity(a, b) {
 }
 
 functions.http('searchImage', async (req, res) => {
-  // CORS für Prod und Dev
   const allowedOrigins = [
     'https://wine-db.vercel.app',
     'https://wine-db-git-dev-erikstadels-projects.vercel.app',
@@ -66,23 +62,30 @@ functions.http('searchImage', async (req, res) => {
   }
 
   try {
-    await upload.single('image')(req, res, () => {});
-    if (!req.file) {
-      return res.status(400).json({ error: 'Kein Bild hochgeladen' });
+    const { imageUrl } = req.body;
+    if (!imageUrl) {
+      return res.status(400).json({ error: 'Keine Bild-URL angegeben' });
     }
+
+    console.log('Verarbeite Bild-URL:', imageUrl);
 
     await initializeModel();
     const db = await connectDB();
     const collection = db.collection('wines');
 
+    // Bild herunterladen
+    const response = await fetch(imageUrl);
+    if (!response.ok) throw new Error(`HTTP Fehler: ${response.status}`);
+    const imageBuffer = Buffer.from(await response.arrayBuffer());
+
     // Bildverarbeitung
-    const imageBuffer = await sharp(req.file.buffer)
+    const processedBuffer = await sharp(imageBuffer)
       .jpeg({ quality: 80, progressive: true })
       .resize({ width: 256, height: 256, fit: 'contain', background: 'white' })
       .toBuffer();
 
     // Bild direkt als Buffer an imageExtractor übergeben
-    const imageEmbedding = await imageExtractor(imageBuffer, { pooling: 'mean', normalize: true });
+    const imageEmbedding = await imageExtractor(processedBuffer, { pooling: 'mean', normalize: true });
     const queryEmbedding = Array.from(imageEmbedding.data);
 
     // Suche
