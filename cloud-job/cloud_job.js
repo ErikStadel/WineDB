@@ -8,49 +8,48 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 let imageExtractor;
 let isModelLoading = false;
+let client; // Singleton für MongoDB-Client
 
+// MongoDB-Verbindung optimieren
+async function connectDB() {
+  if (!client) {
+    client = new MongoClient(process.env.MONGODB_URI, {
+      serverApi: { version: '1', strict: false, deprecationErrors: true },
+      tls: true,
+    });
+    await client.connect();
+    console.log('MongoDB verbunden');
+  }
+  return client.db('wineDB');
+}
+
+// Modellinitialisierung mit Fehlerbehandlung
 async function initializeModel() {
   if (imageExtractor || isModelLoading) return imageExtractor;
-  
   isModelLoading = true;
   console.log('🚀 Lade CLIP Modell...');
-  
   try {
     imageExtractor = await pipeline('image-feature-extraction', 'Xenova/clip-vit-base-patch32');
     console.log('✅ Modell geladen');
     isModelLoading = false;
     return imageExtractor;
   } catch (error) {
-    console.error('❌ Fehler beim Laden des Modells:', error);
     isModelLoading = false;
     throw error;
   }
 }
 
-const uri = process.env.MONGODB_URI;
-let client;
-let db;
-
-async function connectDB() {
-  if (!client) {
-    client = new MongoClient(uri);
-    await client.connect();
-    db = client.db('wineDB');
-  }
-  return db;
-}
-
+// Cosinus-Ähnlichkeit
 function cosineSimilarity(a, b) {
   const dot = a.reduce((sum, x, i) => sum + x * b[i], 0);
   const normA = Math.sqrt(a.reduce((sum, x) => sum + x * x, 0));
   const normB = Math.sqrt(b.reduce((sum, x) => sum + x * x, 0));
-  return dot / (normA * normB);
+  return normA && normB ? dot / (normA * normB) : 0; // Schutz vor Division durch 0
 }
 
-// Cloud Function HTTP Handler
+// Cloud Function
 functions.http('searchImage', async (req, res) => {
-  // CORS Headers
-  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Origin', 'https://wine-db.vercel.app'); // Nur benötigte Origins
   res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.set('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -59,54 +58,31 @@ functions.http('searchImage', async (req, res) => {
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Nur POST-Requests erlaubt' });
+    return res.status(405).json({ error: 'Nur POST erlaubt' });
   }
 
-  // Promise wrapper für multer
-  const handleUpload = () => {
-    return new Promise((resolve, reject) => {
-      upload.single('image')(req, res, (err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-  };
-
   try {
-    // Handle file upload
-    await handleUpload();
-
+    await upload.single('image')(req, res, () => {});
     if (!req.file) {
       return res.status(400).json({ error: 'Kein Bild hochgeladen' });
     }
 
-    // Initialize model if not loaded
-    if (!imageExtractor) {
-      console.log('Modell wird geladen...');
-      await initializeModel();
-    }
+    await initializeModel();
+    const db = await connectDB();
+    const collection = db.collection('wines');
 
-    // Connect to database
-    const database = await connectDB();
-    const collection = database.collection('wines');
-
-    // Process image
-    console.log('Verarbeite Bild...');
+    // Bildverarbeitung
     const imageBuffer = await sharp(req.file.buffer)
-      .jpeg({ quality: 80 })
+      .jpeg({ quality: 80, progressive: true })
       .resize({ width: 256, height: 256, fit: 'contain', background: 'white' })
       .toBuffer();
 
-    // Extract features
-    console.log('Extrahiere Features...');
     const image = await RawImage.fromBuffer(imageBuffer);
     const imageEmbedding = await imageExtractor(image, { pooling: 'mean', normalize: true });
     const queryEmbedding = Array.from(imageEmbedding.data);
 
-    // Search for similar wines
-    console.log('Suche ähnliche Weine...');
+    // Suche
     const wines = await collection.find({ ImageEmbedding: { $exists: true } }).toArray();
-    
     const results = wines
       .map(wine => ({
         ...wine,
@@ -116,14 +92,18 @@ functions.http('searchImage', async (req, res) => {
       .sort((a, b) => b.similarity - a.similarity)
       .slice(0, 10);
 
-    console.log(`Gefunden: ${results.length} ähnliche Weine`);
     res.json({ wines: results, totalCount: results.length, hasMore: false });
-
   } catch (error) {
     console.error('Fehler bei der Bildsuche:', error);
-    res.status(500).json({ 
-      error: 'Fehler bei der Bildsuche', 
-      message: error.message 
-    });
+    res.status(500).json({ error: 'Fehler bei der Bildsuche', message: error.message });
   }
+});
+
+// Cleanup bei Beendigung
+process.on('SIGTERM', async () => {
+  if (client) {
+    await client.close();
+    console.log('MongoDB-Verbindung geschlossen');
+  }
+  process.exit(0);
 });

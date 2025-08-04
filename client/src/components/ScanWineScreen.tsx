@@ -2,22 +2,19 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import '../App.css';
 
-// Typ für Wein-Daten
 interface Wine {
   _id: string;
   name: string;
   imageUrl?: string;
   similarity: number;
-  [key: string]: any; // Für zusätzliche Felder
+  [key: string]: any;
 }
 
-// Props-Schnittstelle
 interface ScanWineScreenProps {
   onBack: () => void;
-  apiUrl: string;
 }
 
-const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
+const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack }) => {
   const [results, setResults] = useState<Wine[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -36,9 +33,9 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
       const formData = new FormData();
       formData.append('image', file);
 
-      console.log('Sende Bild an Server...');
+      console.log('Sende Bild an Cloud Run...');
       const response = await axios.post<{ wines: Wine[]; totalCount: number; hasMore: boolean }>(
-        `${apiUrl}/search/image`,
+        'https://cloud-job-608509602627.europe-west3.run.app/searchImage',
         formData,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
@@ -74,7 +71,7 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
               <input
                 id="library-input"
                 type="file"
-                accept="image/*"
+                accept="image/*;capture=camera" // Optimiert für iOS Safari
                 className="hidden-input hidden"
                 onChange={handleImageUpload}
               />

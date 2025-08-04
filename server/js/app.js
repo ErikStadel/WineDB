@@ -64,56 +64,6 @@ function cosineSimilarity(a, b) {
   return dot / (normA * normB);
 }
 
-// POST /search/image
-app.post('/search/image', upload.single('image'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'Kein Bild hochgeladen' });
-    }
-
-    const db = await connectDB();
-    const collection = db.collection('wines');
-
-    console.log('🚀 Lade CLIP Modell...');
-    const imageExtractor = await pipeline('image-feature-extraction', 'Xenova/clip-vit-base-patch32');
-    console.log('✅ Modell geladen');
-
-    // Bildvorverarbeitung mit sharp
-    const imageBuffer = await sharp(req.file.buffer)
-      .jpeg({ quality: 95, progressive: true })
-      .resize({ width: 512, height: 512, fit: 'contain', background: 'white' })
-      .sharpen({ sigma: 1, m1: 1, m2: 3 })
-      .modulate({ brightness: 1.3, contrast: 1.7 })
-      .toBuffer();
-
-    const image = await RawImage.fromBuffer(imageBuffer);
-    const imageEmbedding = await imageExtractor(image, { pooling: 'mean', normalize: true });
-    const queryEmbedding = Array.from(imageEmbedding.data);
-
-    // Suche nach ähnlichen Weinen
-    const wines = await collection.find({ ImageEmbedding: { $exists: true } }).toArray();
-    const results = wines
-      .map(wine => ({
-        ...wine,
-        similarity: cosineSimilarity(queryEmbedding, Array.from(wine.ImageEmbedding))
-      }))
-      .filter(wine => wine.similarity > 0.5) // Ähnlichkeitsschwelle
-      .sort((a, b) => b.similarity - a.similarity)
-      .slice(0, 10); // Top 10 Ergebnisse
-
-    console.log('Search Results:', { count: results.length, results });
-
-    res.json({
-      wines: results,
-      totalCount: results.length,
-      hasMore: false
-    });
-  } catch (err) {
-    console.error('Image Search Fehler:', err.message, err.stack);
-    res.status(500).json({ error: 'Fehler bei der Bildsuche', message: err.message });
-  }
-});
-
 // Bestehende Endpunkte (POST /wine, GET /wines, etc.) bleiben unverändert...
 app.post('/wine', async (req, res) => {
   try {
