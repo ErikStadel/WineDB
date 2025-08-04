@@ -22,6 +22,7 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
   try {
+    console.log('ImgBB API-Schlüssel:', process.env.REACT_APP_IMGBB_API_KEY); // Debugging
     const file = event.target.files?.[0];
     if (!file) {
       setError('Kein Bild ausgewählt');
