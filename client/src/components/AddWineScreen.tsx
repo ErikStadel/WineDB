@@ -104,102 +104,28 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
-  if (file) {
-    console.log('=== IMAGE UPLOAD DEBUG START ===');
-    console.log('Original file:', {
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      lastModified: file.lastModified
-    });
-    
-    setIsUploading(true);
-    try {
-      // API Key Check
-      const apiKey = process.env.REACT_APP_IMGBB_API_KEY;
-      console.log('API Key exists:', !!apiKey);
-      console.log('API Key length:', apiKey?.length);
-      console.log('API Key first 4 chars:', apiKey?.substring(0, 4));
-      
-      if (!apiKey) {
-        throw new Error('ImgBB API Key ist nicht gesetzt');
+    const file = e.target.files?.[0];
+    if (file) {
+      setIsUploading(true);
+      try {
+        const compressedFile = await compressImage(file);
+        const formData = new FormData();
+        formData.append('image', compressedFile);
+        const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
+          params: { key: process.env.REACT_APP_IMGBB_API_KEY},
+        });
+        const imageUrl = response.data.data.url;
+        // Funktionale Zustandsaktualisierung, um den neuesten Zustand zu verwenden
+        setForm((prevForm) => ({ ...prevForm, imageUrl }));
+      } catch (error: any) {
+        console.error('imgbb Upload Fehler:', error.response?.data || error.message);
+        setErrorMessage(true);
+        setTimeout(() => setErrorMessage(false), 2000);
+      } finally {
+        setIsUploading(false);
       }
-      
-      const compressedFile = await compressImage(file);
-      console.log('Compressed file:', {
-        name: compressedFile.name,
-        size: compressedFile.size,
-        type: compressedFile.type,
-        lastModified: compressedFile.lastModified
-      });
-      
-      // Validierung der komprimierten Datei
-      if (compressedFile.size === 0) {
-        throw new Error('Komprimierte Datei ist leer');
-      }
-      
-      if (compressedFile.size > 32 * 1024 * 1024) { // 32MB ImgBB Limit
-        throw new Error('Datei ist zu groß für ImgBB (max 32MB)');
-      }
-      
-      const formData = new FormData();
-      formData.append('image', compressedFile);
-      
-      // FormData debugging
-      console.log('FormData entries:');
-      console.log('FormData has image:', formData.has('image'));
-      console.log('FormData get image:', formData.get('image'));
-      
-      console.log('Sending request to ImgBB...');
-      console.log('Request URL:', `https://api.imgbb.com/1/upload?key=${apiKey}`);
-      
-      const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
-        params: { key: apiKey },
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        timeout: 30000, // 30 Sekunden Timeout
-      });
-      
-      console.log('ImgBB Success Response:', response.data);
-      const imageUrl = response.data.data.url;
-      
-      setForm((prevForm) => ({ ...prevForm, imageUrl }));
-      console.log('Image URL set successfully:', imageUrl);
-      
-    } catch (error: any) {
-      console.log('=== IMAGE UPLOAD ERROR ===');
-      console.error('Full error object:', error);
-      
-      if (error.response) {
-        // Server responded with error status
-        console.error('Response status:', error.response.status);
-        console.error('Response headers:', error.response.headers);
-        console.error('Response data:', error.response.data);
-        
-        // Spezifische ImgBB Fehlermeldungen
-        if (error.response.data?.error) {
-          console.error('ImgBB Error Details:', error.response.data.error);
-        }
-      } else if (error.request) {
-        // Request was made but no response received
-        console.error('No response received:', error.request);
-      } else {
-        // Something else happened
-        console.error('Error message:', error.message);
-      }
-      
-      setErrorMessage(true);
-      setTimeout(() => setErrorMessage(false), 3000);
-    } finally {
-      setIsUploading(false);
-      console.log('=== IMAGE UPLOAD DEBUG END ===');
     }
-  } else {
-    console.log('No file selected');
-  }
-};
+  };
 
   const handleGeschmackChange = (value: string) => {
     setForm((prevForm) => {
