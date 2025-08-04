@@ -71,58 +71,58 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
   };
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      const file = event.target.files?.[0];
-      if (!file) {
-        setError('Kein Bild ausgewählt');
-        return;
-      }
-
-      setIsUploading(true);
-      setError(null);
-
-      console.log('API-Schlüssel:', process.env.REACT_APP_IMGBB_API_KEY); // Debugging
-      console.log('Datei:', file.name, file.size, file.type); // Debugging
-
-      const compressedFile = await compressImage(file);
-      console.log('Komprimierte Datei:', compressedFile.name, compressedFile.size, compressedFile.type); // Debugging
-
-      const formData = new FormData();
-      formData.append('image', compressedFile);
-      console.log('FormData:', Array.from(formData.entries())); // Debugging
-
-      const imgbbResponse = await axios.post(
-        'https://api.imgbb.com/1/upload',
-        formData,
-        {
-          params: { key: process.env.REACT_APP_IMGBB_API_KEY },
-          headers: { 'Content-Type': 'multipart/form-data' },
-        }
-      );
-
-      const imageUrl = imgbbResponse.data.data.url;
-      console.log('Bild hochgeladen zu ImgBB:', imageUrl);
-
-      const response = await axios.post<{ wines: Wine[]; totalCount: number; hasMore: boolean }>(
-        `${apiUrl}/searchImage`,
-        { imageUrl },
-        {
-          headers: { 'Content-Type': 'application/json' },
-          timeout: 10000,
-        }
-      );
-
-      setResults(response.data.wines);
-      setError(null);
-      console.log('Suchergebnisse:', response.data.wines);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error?.message || err.message || 'Unbekannter Fehler';
-      console.error('Fehler bei der Bildsuche:', errorMessage, err.response?.data); // Verbessertes Debugging
-      setError(`Fehler bei der Bildsuche: ${errorMessage}`);
-    } finally {
-      setIsUploading(false);
+  try {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setError('Kein Bild ausgewählt');
+      return;
     }
-  };
+
+    setIsUploading(true);
+    setError(null);
+
+    console.log('API-Schlüssel:', process.env.REACT_APP_IMGBB_API_KEY);
+    console.log('Datei:', file.name, file.size, file.type);
+
+    const compressedFile = await compressImage(file);
+    console.log('Komprimierte Datei:', compressedFile.name, compressedFile.size, compressedFile.type);
+
+    const formData = new FormData();
+    formData.append('image', compressedFile);
+    console.log('FormData:', Array.from(formData.entries()));
+
+    const imgbbResponse = await axios.post(
+      'https://api.imgbb.com/1/upload',
+      formData,
+      {
+        params: { key: process.env.REACT_APP_IMGBB_API_KEY },
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }
+    );
+
+    const imageUrl = imgbbResponse.data.data.url;
+    console.log('Bild hochgeladen zu ImgBB:', imageUrl);
+
+    const response = await axios.post<{ wines: Wine[]; totalCount: number; hasMore: boolean }>(
+      'https://cloud-job-608509602627.europe-west3.run.app/searchImage', // Hartkodierte Cloud Run-URL
+      { imageUrl },
+      {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 10000,
+      }
+    );
+
+    setResults(response.data.wines);
+    setError(null);
+    console.log('Suchergebnisse:', response.data.wines);
+  } catch (err: any) {
+    const errorMessage = err.response?.data?.error?.message || err.message || 'Unbekannter Fehler';
+    console.error('Fehler bei der Bildsuche:', errorMessage, err.response?.data);
+    setError(`Fehler bei der Bildsuche: ${errorMessage}`);
+  } finally {
+    setIsUploading(false);
+  }
+};
 
   return (
     <div className="App min-h-screen bg-gray-100 flex flex-col">
