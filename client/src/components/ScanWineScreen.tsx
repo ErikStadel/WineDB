@@ -31,16 +31,25 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
     setIsUploading(true);
     setError(null);
 
+    // Bild zu ImgBB hochladen
     const formData = new FormData();
-    formData.append('image', file); // Muss exakt 'image' sein, wie in cloud_job.js
+    formData.append('image', file);
+    const imgbbResponse = await axios.post(
+      'https://api.imgbb.com/1/upload?key=YOUR_IMGBB_API_KEY',
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
 
-    console.log('Sende Bild an Cloud Run...', file.name, file.size); // Debugging
+    const imageUrl = imgbbResponse.data.data.url;
+    console.log('Bild hochgeladen zu ImgBB:', imageUrl);
+
+    // Anfrage an Cloud Run mit der Bild-URL
     const response = await axios.post<{ wines: Wine[]; totalCount: number; hasMore: boolean }>(
       'https://cloud-job-608509602627.europe-west3.run.app/searchImage',
-      formData,
+      { imageUrl },
       {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        timeout: 10000, // 10s Timeout für iOS Safari
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 10000,
       }
     );
 
