@@ -71,7 +71,7 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack }) => {
               <input
                 id="library-input"
                 type="file"
-                accept="image/*;capture=camera" // Optimiert für iOS Safari
+                accept="image/*" // Optimiert für iOS Safari
                 className="hidden-input hidden"
                 onChange={handleImageUpload}
               />
