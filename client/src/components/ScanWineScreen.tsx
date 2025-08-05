@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import ReactDOM from 'react-dom';
+import WineDetailScreen from './WineDetailScreen';
 import '../App.css';
 
 interface Wine {
@@ -7,6 +9,12 @@ interface Wine {
   name: string;
   imageUrl?: string;
   similarity: number;
+  rebsorte?: string;
+  farbe?: string;
+  preis?: string;
+  kategorie?: string;
+  unterkategorie?: string;
+  bewertung?: number;
   [key: string]: any;
 }
 
@@ -19,6 +27,8 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
   const [results, setResults] = useState<Wine[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedWineId, setSelectedWineId] = useState<string | null>(null);
 
   const compressImage = (file: File): Promise<File> => {
     return new Promise((resolve) => {
@@ -71,58 +81,76 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
   };
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-  try {
-    const file = event.target.files?.[0];
-    if (!file) {
-      setError('Kein Bild ausgewählt');
-      return;
+    try {
+      const file = event.target.files?.[0];
+      if (!file) {
+        setError('Kein Bild ausgewählt');
+        return;
+      }
+
+      setIsUploading(true);
+      setError(null);
+
+      console.log('API-Schlüssel:', process.env.REACT_APP_IMGBB_API_KEY);
+      console.log('Datei:', file.name, file.size, file.type);
+
+      const compressedFile = await compressImage(file);
+      console.log('Komprimierte Datei:', compressedFile.name, compressedFile.size, compressedFile.type);
+
+      const formData = new FormData();
+      formData.append('image', compressedFile);
+      console.log('FormData:', Array.from(formData.entries()));
+
+      const imgbbResponse = await axios.post(
+        'https://api.imgbb.com/1/upload',
+        formData,
+        {
+          params: { key: process.env.REACT_APP_IMGBB_API_KEY },
+          headers: { 'Content-Type': 'multipart/form-data' },
+        }
+      );
+
+      const imageUrl = imgbbResponse.data.data.url;
+      console.log('Bild hochgeladen zu ImgBB:', imageUrl);
+
+      const response = await axios.post<{ wines: Wine[]; totalCount: number; hasMore: boolean }>(
+        'https://cloud-job-608509602627.europe-west3.run.app/searchImage',
+        { imageUrl },
+        {
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 10000,
+        }
+      );
+
+      setResults(response.data.wines);
+      setError(null);
+      console.log('Suchergebnisse:', response.data.wines);
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error?.message || err.message || 'Unbekannter Fehler';
+      console.error('Fehler bei der Bildsuche:', errorMessage, err.response?.data);
+      setError(`Fehler bei der Bildsuche: ${errorMessage}`);
+    } finally {
+      setIsUploading(false);
     }
+  };
 
-    setIsUploading(true);
-    setError(null);
+  const handleViewDetails = (wineId: string) => {
+    setSelectedWineId(wineId);
+  };
 
-    console.log('API-Schlüssel:', process.env.REACT_APP_IMGBB_API_KEY);
-    console.log('Datei:', file.name, file.size, file.type);
+  const handleDetailBack = () => {
+    setSelectedWineId(null);
+  };
 
-    const compressedFile = await compressImage(file);
-    console.log('Komprimierte Datei:', compressedFile.name, compressedFile.size, compressedFile.type);
-
-    const formData = new FormData();
-    formData.append('image', compressedFile);
-    console.log('FormData:', Array.from(formData.entries()));
-
-    const imgbbResponse = await axios.post(
-      'https://api.imgbb.com/1/upload',
-      formData,
-      {
-        params: { key: process.env.REACT_APP_IMGBB_API_KEY },
-        headers: { 'Content-Type': 'multipart/form-data' },
-      }
+  if (selectedWineId) {
+    return (
+      <WineDetailScreen
+        wineId={selectedWineId}
+        onBack={handleDetailBack}
+        apiUrl={apiUrl}
+      />
     );
-
-    const imageUrl = imgbbResponse.data.data.url;
-    console.log('Bild hochgeladen zu ImgBB:', imageUrl);
-
-    const response = await axios.post<{ wines: Wine[]; totalCount: number; hasMore: boolean }>(
-      'https://cloud-job-608509602627.europe-west3.run.app/searchImage', // Hartkodierte Cloud Run-URL
-      { imageUrl },
-      {
-        headers: { 'Content-Type': 'application/json' },
-        timeout: 10000,
-      }
-    );
-
-    setResults(response.data.wines);
-    setError(null);
-    console.log('Suchergebnisse:', response.data.wines);
-  } catch (err: any) {
-    const errorMessage = err.response?.data?.error?.message || err.message || 'Unbekannter Fehler';
-    console.error('Fehler bei der Bildsuche:', errorMessage, err.response?.data);
-    setError(`Fehler bei der Bildsuche: ${errorMessage}`);
-  } finally {
-    setIsUploading(false);
   }
-};
 
   return (
     <div className="App min-h-screen bg-gray-100 flex flex-col">
@@ -152,29 +180,88 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
           {error && <p className="text-red-600 mt-4">{error}</p>}
         </section>
         {results.length > 0 && (
-          <section className="glass-card bg-white bg-opacity-80 rounded-lg shadow-lg p-6 w-full max-w-md">
+          <section className="flex flex-col gap-4 w-full max-w-3xl">
             <h2 className="text-lg md:text-xl font-semibold mb-4 text-gray-800">Ergebnisse</h2>
-            <ul className="space-y-4">
-              {results.map(wine => (
-                <li key={wine._id} className="flex items-center gap-4">
+            {results.map(wine => (
+              <div
+                key={wine._id}
+                className="glass-card p-4 flex flex-col md:flex-row items-start md:items-center justify-between cursor-pointer wine-entry"
+              >
+                <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-200 rounded-lg flex-shrink-0 mr-4">
                   {wine.imageUrl && (
-                    <img src={wine.imageUrl} alt={wine.name} className="w-16 h-16 object-cover rounded" />
+                    <img
+                      src={wine.imageUrl}
+                      alt={wine.name}
+                      className="w-full h-full object-contain rounded-lg cursor-pointer"
+                      onClick={() => setSelectedImage(prev => (prev === wine.imageUrl ? null : wine.imageUrl || null))}
+                    />
                   )}
-                  <div>
-                    <p className="font-medium">{wine.name}</p>
-                    <p className="text-sm text-gray-600">
-                      Ähnlichkeit: {(wine.similarity * 100).toFixed(2)}%
-                    </p>
+                </div>
+                <div className="flex-1">
+                  <div className="flex flex-col md:flex-row justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold">
+                        {wine.name}
+                        <span className="text-xs text-[#baddff] ml-2">
+                          ({(wine.similarity * 100).toFixed(2)}%)
+                        </span>
+                      </h3>
+                      <p className="text-right">Sorte: {wine.rebsorte || 'N/A'}</p>
+                    </div>
+                    <div className="text-right">
+                      <p>Kategorie: {wine.kategorie || 'N/A'}</p>
+                      <p>Unterkategorie: {wine.unterkategorie || 'N/A'}</p>
+                    </div>
                   </div>
-                </li>
-              ))}
-            </ul>
+                  <div className="flex flex-col md:flex-row justify-between mt-2">
+                    <p>Farbe: {wine.farbe || 'N/A'}</p>
+                    <p>Preis: {wine.preis || 'N/A'}</p>
+                    <p>Bewertung: {wine.bewertung || 0}/5</p>
+                  </div>
+                </div>
+                <svg
+                  onClick={() => handleViewDetails(wine._id)}
+                  className="view-icon"
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#496580"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </div>
+            ))}
           </section>
         )}
       </main>
       <footer className="footer p-4 text-center">
         <p className="text-sm text-gray-600">Entwickelt mit Liebe zum Wein</p>
       </footer>
+      {selectedImage &&
+        ReactDOM.createPortal(
+          <div
+            className="image-overlay"
+            onClick={() => setSelectedImage(null)}
+          >
+            <img
+              src={selectedImage}
+              alt="Vergrößerte Ansicht"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <span
+              className="close-button"
+              onClick={() => setSelectedImage(null)}
+            >
+              ×
+            </span>
+          </div>,
+          document.getElementById('image-portal-root') as HTMLElement
+        )}
     </div>
   );
 };
