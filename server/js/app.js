@@ -56,13 +56,6 @@ async function connectDB() {
   return db;
 }
 
-// Cosinus-Ähnlichkeit
-function cosineSimilarity(a, b) {
-  const dot = a.reduce((sum, x, i) => sum + x * b[i], 0);
-  const normA = Math.sqrt(a.reduce((sum, x) => sum + x * x, 0));
-  const normB = Math.sqrt(b.reduce((sum, x) => sum + x * x, 0));
-  return dot / (normA * normB);
-}
 
 // Bestehende Endpunkte (POST /wine, GET /wines, etc.) bleiben unverändert...
 app.post('/wine', async (req, res) => {

@@ -91,9 +91,6 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
       setIsUploading(true);
       setError(null);
 
-      console.log('API-Schlüssel:', process.env.REACT_APP_IMGBB_API_KEY);
-      console.log('Datei:', file.name, file.size, file.type);
-
       const compressedFile = await compressImage(file);
       console.log('Komprimierte Datei:', compressedFile.name, compressedFile.size, compressedFile.type);
 
@@ -118,7 +115,7 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
         { imageUrl },
         {
           headers: { 'Content-Type': 'application/json' },
-          timeout: 10000,
+          timeout: 15000,
         }
       );
 
