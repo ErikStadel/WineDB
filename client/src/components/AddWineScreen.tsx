@@ -21,6 +21,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
     notizen: string;
     bewertung: number;
     imageUrl: string;
+    imageFileId: string;
   }>({
     name: '',
     rebsorte: '',
@@ -33,7 +34,9 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
     notizen: '',
     bewertung: 0,
     imageUrl: '',
+    imageFileId: ''
   });
+  
   const [successMessage, setSuccessMessage] = useState(false);
   const [errorMessage, setErrorMessage] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -103,46 +106,64 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
     });
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
-  if (file) {
-    setIsUploading(true);
-    try {
-      const compressedFile = await compressImage(file);
-      const urlEndpoint = process.env.REACT_APP_IMAGEKIT_URL_ENDPOINT;
-      if (!urlEndpoint) {
-        throw new Error('REACT_APP_IMAGEKIT_URL_ENDPOINT ist nicht definiert');
+ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setIsUploading(true);
+      try {
+        const compressedFile = await compressImage(file);
+        const urlEndpoint = process.env.REACT_APP_IMAGEKIT_URL_ENDPOINT;
+        if (!urlEndpoint) {
+          throw new Error('REACT_APP_IMAGEKIT_URL_ENDPOINT ist nicht definiert');
+        }
+        const publicKey = process.env.REACT_APP_IMAGEKIT_PUBLIC_KEY || '';
+        const imagekit = new ImageKit({
+          publicKey,
+          urlEndpoint
+        });
+
+        // Dateinamen aus form.name und form.rebsorte erstellen
+        let fileName = `wine_${Date.now()}.jpg`;
+        if (form.name && form.rebsorte) {
+          const cleanName = form.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+          const cleanRebsorte = form.rebsorte.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+          fileName = `${cleanName}_${cleanRebsorte}.jpg`;
+        }
+
+        // Authentifizierungsparameter abrufen
+        const authResponse = await axios.get(`${apiUrl}/imagekit-auth`);
+        const { token, expire, signature } = authResponse.data;
+
+        const uploadOptions: any = {
+          file: compressedFile,
+          fileName,
+          folder: '/wines',
+          token,
+          expire,
+          signature
+        };
+
+        // Bestehendes Bild überschreiben, falls imageFileId vorhanden
+        if (form.imageFileId) {
+          uploadOptions.overwriteFile = true;
+          uploadOptions.fileId = form.imageFileId;
+        }
+
+        const uploadResponse = await imagekit.upload(uploadOptions);
+
+        const imageUrl = uploadResponse.url;
+        const imageFileId = uploadResponse.fileId;
+        setForm((prevForm) => ({ ...prevForm, imageUrl, imageFileId }));
+      } catch (error: any) {
+        console.error('Imagekit Upload Fehler:', error.message);
+        setErrorMessage(true);
+        setTimeout(() => setErrorMessage(false), 2000);
+      } finally {
+        setIsUploading(false);
       }
-      const publicKey = process.env.REACT_APP_IMAGEKIT_PUBLIC_KEY || '';
-      const imagekit = new ImageKit({
-        publicKey,
-        urlEndpoint
-      });
-
-      // Authentifizierungsparameter abrufen
-      const authResponse = await axios.get(`${apiUrl}/imagekit-auth`);
-      const { token, expire, signature } = authResponse.data;
-
-      const uploadResponse = await imagekit.upload({
-        file: compressedFile,
-        fileName: `wine_${Date.now()}.jpg`,
-        folder: '/wines',
-        token,
-        expire,
-        signature
-      });
-
-      const imageUrl = uploadResponse.url;
-      setForm((prevForm) => ({ ...prevForm, imageUrl }));
-    } catch (error: any) {
-      console.error('Imagekit Upload Fehler:', error.message);
-      setErrorMessage(true);
-      setTimeout(() => setErrorMessage(false), 2000);
-    } finally {
-      setIsUploading(false);
     }
-  }
-};
+  };
+
 
   const handleGeschmackChange = (value: string) => {
     setForm((prevForm) => {
@@ -201,7 +222,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
   };
 
   const handleDeleteImage = () => {
-    setForm((prevForm) => ({ ...prevForm, imageUrl: '' }));
+    setForm((prevForm) => ({ ...prevForm, imageUrl: '', imageFileId: '' }));
   };
 
   const isFormValid = () => {

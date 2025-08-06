@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ImageKit from 'imagekit-javascript';
-import { mockWines } from '../mocks/mockWines';
-import { Wine } from '../types/Wine';
 import '../App.css';
 
 interface EditWineScreenProps {
@@ -11,7 +9,7 @@ interface EditWineScreenProps {
   apiUrl: string;
 }
 
-interface FormWine extends Omit<Wine, '_id' | 'timestamp'> {
+interface FormWine {
   name: string;
   rebsorte: string;
   farbe: string;
@@ -23,6 +21,7 @@ interface FormWine extends Omit<Wine, '_id' | 'timestamp'> {
   notizen: string;
   bewertung: number;
   imageUrl: string;
+  imageFileId: string;
 }
 
 const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl }) => {
@@ -38,6 +37,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
     notizen: '',
     bewertung: 0,
     imageUrl: '',
+    imageFileId: ''
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,52 +45,32 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
-    const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
-    
-    if (useMockData) {
-      const mockWine = mockWines.find((w: Wine) => w._id.$oid === wineId);
-      if (mockWine) {
+    const fetchWine = async () => {
+      try {
+        const response = await axios.get(`${apiUrl}/wine/${wineId}`);
+        const wineData = response.data;
         setForm({
-          name: mockWine.name || '',
-          rebsorte: mockWine.rebsorte || '',
-          farbe: mockWine.farbe || '',
-          preis: mockWine.preis || '',
-          kauforte: mockWine.kauforte || [],
-          geschmack: mockWine.geschmack || [],
-          kategorie: mockWine.kategorie || '',
-          unterkategorie: mockWine.unterkategorie || '',
-          notizen: mockWine.notizen || '',
-          bewertung: mockWine.bewertung || 0,
-          imageUrl: mockWine.imageUrl || '',
+          name: wineData.name || '',
+          rebsorte: wineData.rebsorte || '',
+          farbe: wineData.farbe || '',
+          preis: wineData.preis || '',
+          kauforte: wineData.kauforte || [],
+          geschmack: wineData.geschmack || [],
+          kategorie: wineData.kategorie || '',
+          unterkategorie: wineData.unterkategorie || '',
+          notizen: wineData.notizen || '',
+          bewertung: wineData.bewertung || 0,
+          imageUrl: wineData.imageUrl || '',
+          imageFileId: '' // imageFileId wird nicht aus DB geladen
         });
-      } else {
-        setError('Wein nicht gefunden');
+        setLoading(false);
+      } catch (err: any) {
+        setError('Fehler beim Laden des Weins');
+        setTimeout(() => setError(null), 2000);
+        setLoading(false);
       }
-      setLoading(false);
-    } else {
-      axios.get(`${apiUrl}/wine/${wineId}`)
-        .then(res => {
-          const wineData = res.data as Wine;
-          setForm({
-            name: wineData.name || '',
-            rebsorte: wineData.rebsorte || '',
-            farbe: wineData.farbe || '',
-            preis: wineData.preis || '',
-            kauforte: wineData.kauforte || [],
-            geschmack: wineData.geschmack || [],
-            kategorie: wineData.kategorie || '',
-            unterkategorie: wineData.unterkategorie || '',
-            notizen: wineData.notizen || '',
-            bewertung: wineData.bewertung || 0,
-            imageUrl: wineData.imageUrl || '',
-          });
-          setLoading(false);
-        })
-        .catch(err => {
-          setError('Fehler beim Laden der Weindaten');
-          setLoading(false);
-        });
-    }
+    };
+    fetchWine();
   }, [wineId, apiUrl]);
 
   const compressImage = (file: File): Promise<File> => {
@@ -144,74 +124,62 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
-  if (file) {
-    setIsUploading(true);
-    try {
-      const compressedFile = await compressImage(file);
-      const urlEndpoint = process.env.REACT_APP_IMAGEKIT_URL_ENDPOINT;
-      if (!urlEndpoint) {
-        throw new Error('REACT_APP_IMAGEKIT_URL_ENDPOINT ist nicht definiert');
+    const file = e.target.files?.[0];
+    if (file) {
+      setIsUploading(true);
+      try {
+        const compressedFile = await compressImage(file);
+        const urlEndpoint = process.env.REACT_APP_IMAGEKIT_URL_ENDPOINT;
+        if (!urlEndpoint) {
+          throw new Error('REACT_APP_IMAGEKIT_URL_ENDPOINT ist nicht definiert');
+        }
+        const publicKey = process.env.REACT_APP_IMAGEKIT_PUBLIC_KEY || '';
+        const imagekit = new ImageKit({
+          publicKey,
+          urlEndpoint
+        });
+
+        let fileName = `wine_${Date.now()}.jpg`;
+        if (form.name && form.rebsorte) {
+          const cleanName = form.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+          const cleanRebsorte = form.rebsorte.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+          fileName = `${cleanName}_${cleanRebsorte}.jpg`;
+        }
+
+        const authResponse = await axios.get(`${apiUrl}/imagekit-auth`);
+        const { token, expire, signature } = authResponse.data;
+
+        const uploadOptions: any = {
+          file: compressedFile,
+          fileName,
+          folder: '/wines',
+          token,
+          expire,
+          signature
+        };
+
+        if (form.imageFileId) {
+          uploadOptions.overwriteFile = true;
+          uploadOptions.fileId = form.imageFileId;
+        }
+
+        const uploadResponse = await imagekit.upload(uploadOptions);
+
+        const imageUrl = uploadResponse.url;
+        const imageFileId = uploadResponse.fileId;
+        setForm((prevForm) => ({ ...prevForm, imageUrl, imageFileId }));
+      } catch (error: any) {
+        console.error('Imagekit Upload Fehler:', error.message);
+        setError('Fehler beim Bildupload');
+        setTimeout(() => setError(null), 2000);
+      } finally {
+        setIsUploading(false);
       }
-      const publicKey = process.env.REACT_APP_IMAGEKIT_PUBLIC_KEY || '';
-      const imagekit = new ImageKit({
-        publicKey,
-        urlEndpoint
-      });
-
-      // Authentifizierungsparameter abrufen
-      const authResponse = await axios.get(`${apiUrl}/imagekit-auth`);
-      const { token, expire, signature } = authResponse.data;
-
-      const uploadResponse = await imagekit.upload({
-        file: compressedFile,
-        fileName: `wine_${Date.now()}.jpg`,
-        folder: '/wines',
-        token,
-        expire,
-        signature
-      });
-
-      const imageUrl = uploadResponse.url;
-      setForm((prevForm) => ({ ...prevForm, imageUrl }));
-    } catch (error: any) {
-      console.error('Imagekit Upload Fehler:', error.message);
-    } finally {
-      setIsUploading(false);
     }
-  }
-};
+  };
 
   const handleDeleteImage = () => {
-    setForm((prevForm) => ({ ...prevForm, imageUrl: '' }));
-  };
-
-  const handleGeschmackChange = (value: string) => {
-    setForm((prevForm) => {
-      if (prevForm.geschmack.includes(value)) {
-        return { ...prevForm, geschmack: prevForm.geschmack.filter(g => g !== value) };
-      } else if (prevForm.geschmack.length < 3) {
-        return { ...prevForm, geschmack: [...prevForm.geschmack, value] };
-      }
-      return prevForm;
-    });
-  };
-
-  const handleKategorieChange = (kategorie: string) => {
-    setForm((prevForm) => ({ ...prevForm, kategorie, unterkategorie: '' }));
-  };
-
-  const handleUnterkategorieChange = (unterkategorie: string) => {
-    setForm((prevForm) => ({ ...prevForm, unterkategorie }));
-  };
-
-  const handleBewertungChange = (bewertung: number) => {
-    setForm((prevForm) => ({ ...prevForm, bewertung }));
-  };
-
-  const handleKauforteChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
-    setForm((prevForm) => ({ ...prevForm, kauforte: selectedOptions }));
+    setForm((prevForm) => ({ ...prevForm, imageUrl: '', imageFileId: '' }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -224,40 +192,22 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
     setLoading(true);
     setError(null);
 
-    const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
-    
-    if (useMockData) {
-      const mockIndex = mockWines.findIndex((w: Wine) => w._id.$oid === wineId);
-      if (mockIndex !== -1) {
-        mockWines[mockIndex] = {
-          ...mockWines[mockIndex],
-          ...form,
-          _id: { $oid: wineId },
-          timestamp: { $date: new Date().toISOString() }
-        };
-      }
+    try {
+      await axios.put(`${apiUrl}/wine/${wineId}`, {
+        ...form,
+        _id: { $oid: wineId }
+      });
       setSuccessMessage('Änderungen erfolgreich gespeichert!');
       setTimeout(() => {
         setSuccessMessage('');
         onBack(true);
       }, 1500);
-    } else {
-      try {
-        await axios.put(`${apiUrl}/wine/${wineId}`, {
-          ...form,
-          _id: { $oid: wineId }
-        });
-        setSuccessMessage('Änderungen erfolgreich gespeichert!');
-        setTimeout(() => {
-          setSuccessMessage('');
-          onBack(true);
-        }, 1500);
-      } catch (err) {
-        setError('Fehler beim Speichern der Änderungen');
-        setTimeout(() => setError(null), 2000);
-      }
+    } catch (err) {
+      setError('Fehler beim Speichern der Änderungen');
+      setTimeout(() => setError(null), 2000);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleDelete = async () => {
@@ -268,49 +218,56 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
     setLoading(true);
     setError(null);
 
-    const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
-    
-    if (useMockData) {
-      const mockIndex = mockWines.findIndex((w: Wine) => w._id.$oid === wineId);
-      if (mockIndex === -1) {
-        setError('Wein nicht gefunden');
-        setLoading(false);
-        setTimeout(() => setError(null), 2000);
-        return;
+    try {
+      // Bild in Imagekit löschen, falls imageFileId vorhanden
+      if (form.imageFileId) {
+        const privateKey = process.env.REACT_APP_IMAGEKIT_PRIVATE_KEY;
+        if (!privateKey) {
+          throw new Error('REACT_APP_IMAGEKIT_PRIVATE_KEY ist nicht definiert');
+        }
+        const url = `https://api.imagekit.io/v1/files/${form.imageFileId}`;
+        const options = {
+          method: 'DELETE',
+          headers: {
+            Accept: 'application/json',
+            Authorization: `Basic ${btoa(privateKey + ':')}`
+          }
+        };
+
+        try {
+          const response = await fetch(url, options);
+          if (!response.ok) {
+            throw new Error(`Imagekit Delete Fehler: ${response.statusText}`);
+          }
+          console.log(`Bild ${form.imageFileId} erfolgreich aus Imagekit gelöscht`);
+        } catch (imageError: any) {
+          console.error('Imagekit Delete Fehler:', imageError.message);
+          // Weiter mit Wein-Löschung, um Benutzererfahrung nicht zu beeinträchtigen
+        }
       }
-      mockWines.splice(mockIndex, 1);
+
+      // Wein aus MongoDB löschen
+      await axios.delete(`${apiUrl}/wine/${wineId}`, {
+        headers: { 'Content-Type': 'application/json' }
+      });
       setSuccessMessage('Wein erfolgreich gelöscht!');
       setTimeout(() => {
         setSuccessMessage('');
         onBack(true);
       }, 1500);
-      setLoading(false);
-    } else {
-      try {
-        await axios.delete(`${apiUrl}/wine/${wineId}`, {
-          headers: { 
-            'Content-Type': 'application/json'
-          }
-        });
-        setSuccessMessage('Wein erfolgreich gelöscht!');
-        setTimeout(() => {
-          setSuccessMessage('');
-          onBack(true);
-        }, 1500);
-      } catch (err: any) {
-        let errorMessage = 'Fehler beim Löschen des Weins';
-        if (err.response?.data?.message) {
-          errorMessage = err.response.data.message;
-        } else if (err.response?.status === 404) {
-          errorMessage = 'Wein nicht gefunden';
-        } else if (err.response?.status === 400) {
-          errorMessage = 'Ungültige Wein-ID';
-        }
-        setError(errorMessage);
-        setTimeout(() => setError(null), 3000);
-      } finally {
-        setLoading(false);
+    } catch (err: any) {
+      let errorMessage = 'Fehler beim Löschen des Weins';
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.response?.status === 404) {
+        errorMessage = 'Wein nicht gefunden';
+      } else if (err.response?.status === 400) {
+        errorMessage = 'Ungültige Wein-ID';
       }
+      setError(errorMessage);
+      setTimeout(() => setError(null), 3000);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -393,7 +350,10 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
           <select
             multiple
             value={form.kauforte}
-            onChange={handleKauforteChange}
+            onChange={(e) => {
+              const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+              setForm((prev) => ({ ...prev, kauforte: selectedOptions }));
+            }}
             className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff] mt-1"
           >
             <option value="Rewe">Rewe</option>
@@ -454,7 +414,16 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
                   <input
                     type="checkbox"
                     checked={form.geschmack.includes(g)}
-                    onChange={() => handleGeschmackChange(g)}
+                    onChange={() => {
+                      setForm((prevForm) => {
+                        if (prevForm.geschmack.includes(g)) {
+                          return { ...prevForm, geschmack: prevForm.geschmack.filter(item => item !== g) };
+                        } else if (prevForm.geschmack.length < 3) {
+                          return { ...prevForm, geschmack: [...prevForm.geschmack, g] };
+                        }
+                        return prevForm;
+                      });
+                    }}
                     className="w-4 h-4 rounded-full accent-[#baddff]"
                   />
                   <span className="text-base">{g}</span>
@@ -467,7 +436,16 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
                   <input
                     type="checkbox"
                     checked={form.geschmack.includes(g)}
-                    onChange={() => handleGeschmackChange(g)}
+                    onChange={() => {
+                      setForm((prevForm) => {
+                        if (prevForm.geschmack.includes(g)) {
+                          return { ...prevForm, geschmack: prevForm.geschmack.filter(item => item !== g) };
+                        } else if (prevForm.geschmack.length < 3) {
+                          return { ...prevForm, geschmack: [...prevForm.geschmack, g] };
+                        }
+                        return prevForm;
+                      });
+                    }}
                     className="w-4 h-4 rounded-full accent-[#baddff]"
                   />
                   <span className="text-base">{g}</span>
@@ -483,7 +461,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
               <div
                 key={k}
                 className={`category-tile flex items-center justify-center rounded-lg cursor-pointer ${form.kategorie === k ? 'selected' : ''}`}
-                onClick={() => handleKategorieChange(k)}
+                onClick={() => setForm((prev) => ({ ...prev, kategorie: k, unterkategorie: '' }))}
               >
                 <span className="text-base font-medium text-center">{k}</span>
               </div>
@@ -499,7 +477,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
                       type="radio"
                       name="unterkategorie"
                       checked={form.unterkategorie === u}
-                      onChange={() => handleUnterkategorieChange(u)}
+                      onChange={() => setForm((prev) => ({ ...prev, unterkategorie: u }))}
                       className="w-4 h-4 rounded-full accent-[#baddff]"
                     />
                     <span className="text-base">{u}</span>
@@ -517,7 +495,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
                 key={star}
                 className={`w-4 h-4 cursor-pointer flex-shrink-0`}
                 style={{ fill: star <= form.bewertung ? '#baddff' : 'none', stroke: star <= form.bewertung ? '#baddff' : '#496580', strokeWidth: 2 }}
-                onClick={() => handleBewertungChange(star)}
+                onClick={() => setForm((prev) => ({ ...prev, bewertung: star }))}
                 viewBox="0 0 24 24"
                 xmlns="http://www.w3.org/2000/svg"
               >
