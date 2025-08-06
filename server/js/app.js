@@ -15,7 +15,7 @@ app.use(cors({
 }));
 app.use(express.json());
 
-//Auth für ImageKit
+// Auth für ImageKit
 app.use('/imagekit-auth', imagekitAuth);
 
 // Multer für Dateiuploads
@@ -29,25 +29,6 @@ app.get('/health', (req, res) => {
     message: 'Server is awake and ready',
   });
 });
-
-// ImageKit Authentifizierung
-const imagekit = new ImageKit({
-  publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
-  privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
-  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT
-});
-
-router.get('/imagekit-auth', (req, res) => {
-  try {
-    const authParams = imagekit.getAuthenticationParameters();
-    res.json(authParams);
-  } catch (error) {
-    console.error('Imagekit Auth Fehler:', error.message);
-    res.status(500).json({ error: 'Authentifizierung fehlgeschlagen' });
-  }
-});
-
-module.exports = router;
 
 // MongoDB-Verbindung
 const uri = process.env.MONGODB_URI;
@@ -79,8 +60,7 @@ async function connectDB() {
   return db;
 }
 
-
-// Bestehende Endpunkte (POST /wine, GET /wines, etc.) bleiben unverändert...
+// Bestehende Endpunkte
 app.post('/wine', async (req, res) => {
   try {
     const db = await connectDB();
