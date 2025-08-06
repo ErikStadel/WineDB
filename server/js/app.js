@@ -3,8 +3,6 @@ const express = require('express');
 const { MongoClient, ObjectId, ServerApiVersion } = require('mongodb');
 const cors = require('cors');
 const multer = require('multer');
-const { pipeline, RawImage } = require('@xenova/transformers');
-const sharp = require('sharp');
 const imagekitAuth = require('./imagekitAuth');
 
 const app = express();
