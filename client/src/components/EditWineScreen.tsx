@@ -179,7 +179,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
   };
 
   const handleDeleteImage = () => {
-    setForm((prevForm) => ({ ...prevForm, imageUrl: '', imageFileId: '' }));
+    setForm((prevForm) => ({ ...prevForm, imageUrl: '' }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -219,7 +219,6 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
     setError(null);
 
     try {
-      // Bild in Imagekit löschen, falls imageFileId vorhanden
       if (form.imageFileId) {
         const privateKey = process.env.REACT_APP_IMAGEKIT_PRIVATE_KEY;
         if (!privateKey) {
@@ -242,11 +241,9 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
           console.log(`Bild ${form.imageFileId} erfolgreich aus Imagekit gelöscht`);
         } catch (imageError: any) {
           console.error('Imagekit Delete Fehler:', imageError.message);
-          // Weiter mit Wein-Löschung, um Benutzererfahrung nicht zu beeinträchtigen
         }
       }
 
-      // Wein aus MongoDB löschen
       await axios.delete(`${apiUrl}/wine/${wineId}`, {
         headers: { 'Content-Type': 'application/json' }
       });
