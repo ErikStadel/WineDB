@@ -75,6 +75,7 @@ app.post('/wine', async (req, res) => {
       notizen: req.body.notizen || '',
       bewertung: req.body.bewertung || 0,
       imageUrl: req.body.imageUrl || '',
+      imageFileId: req.body.imageFileId || '',
       timestamp: new Date(),
     };
     console.log('Eingehende Daten:', wineData);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import ImageKit from 'imagekit-javascript';
 import '../App.css';
@@ -20,6 +20,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
     unterkategorie: string;
     notizen: string;
     bewertung: number;
+    imageFile: File | null;
     imageUrl: string;
     imageFileId: string;
   }>({
@@ -33,30 +34,16 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
     unterkategorie: '',
     notizen: '',
     bewertung: 0,
+    imageFile: null,
     imageUrl: '',
     imageFileId: ''
   });
-  
   const [successMessage, setSuccessMessage] = useState(false);
   const [errorMessage, setErrorMessage] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  useEffect(() => {
-    const savedForm = localStorage.getItem('wineForm');
-    if (savedForm) {
-      setForm(JSON.parse(savedForm));
-    }
-  }, []);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      localStorage.setItem('wineForm', JSON.stringify(form));
-    }, 100);
-    return () => clearTimeout(timeout);
-  }, [form]);
-
-  const compressImage = (file: File): Promise<File> => {
+  const compressImage = async (file: File): Promise<File> => {
     return new Promise((resolve) => {
       const img = new Image();
       const reader = new FileReader();
@@ -106,12 +93,68 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
     });
   };
 
- const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setIsUploading(true);
       try {
         const compressedFile = await compressImage(file);
+        const previewUrl = URL.createObjectURL(compressedFile);
+        setForm((prevForm) => ({
+          ...prevForm,
+          imageFile: compressedFile,
+          imageUrl: previewUrl,
+          imageFileId: prevForm.imageFileId // Behalte bestehende imageFileId
+        }));
+      } catch (error: any) {
+        console.error('Bildkomprimierung Fehler:', error.message);
+        setErrorMessage(true);
+        setTimeout(() => setErrorMessage(false), 2000);
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
+  const handleDeleteImage = () => {
+    setForm((prevForm) => ({
+      ...prevForm,
+      imageFile: null,
+      imageUrl: ''
+      // imageFileId bleibt erhalten für Überschreibung
+    }));
+    if (form.imageUrl) {
+      URL.revokeObjectURL(form.imageUrl); // Speicher freigeben
+    }
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (
+      !form.name ||
+      !form.rebsorte ||
+      !form.farbe ||
+      !form.preis ||
+      form.kauforte.length === 0 ||
+      !form.kategorie ||
+      !form.unterkategorie ||
+      form.geschmack.length === 0 ||
+      form.bewertung === 0
+    ) {
+      setErrorMessage(true);
+      setTimeout(() => setErrorMessage(false), 2000);
+      return;
+    }
+
+    setIsSaving(true);
+    setErrorMessage(false);
+
+    try {
+      let imageUrl = form.imageUrl;
+      let imageFileId = form.imageFileId;
+
+      // Bild hochladen, falls vorhanden
+      if (form.imageFile) {
         const urlEndpoint = process.env.REACT_APP_IMAGEKIT_URL_ENDPOINT;
         if (!urlEndpoint) {
           throw new Error('REACT_APP_IMAGEKIT_URL_ENDPOINT ist nicht definiert');
@@ -123,19 +166,15 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
         });
 
         // Dateinamen aus form.name und form.rebsorte erstellen
-        let fileName = `wine_${Date.now()}.jpg`;
-        if (form.name && form.rebsorte) {
-          const cleanName = form.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-          const cleanRebsorte = form.rebsorte.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-          fileName = `${cleanName}_${cleanRebsorte}.jpg`;
-        }
+        const cleanName = form.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+        const cleanRebsorte = form.rebsorte.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+        const fileName = `${cleanName}_${cleanRebsorte}.jpg`;
 
-        // Authentifizierungsparameter abrufen
         const authResponse = await axios.get(`${apiUrl}/imagekit-auth`);
         const { token, expire, signature } = authResponse.data;
 
         const uploadOptions: any = {
-          file: compressedFile,
+          file: form.imageFile,
           fileName,
           folder: '/wines',
           token,
@@ -143,112 +182,56 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
           signature
         };
 
-        // Bestehendes Bild überschreiben, falls imageFileId vorhanden
         if (form.imageFileId) {
           uploadOptions.overwriteFile = true;
           uploadOptions.fileId = form.imageFileId;
         }
 
         const uploadResponse = await imagekit.upload(uploadOptions);
-
-        const imageUrl = uploadResponse.url;
-        const imageFileId = uploadResponse.fileId;
-        setForm((prevForm) => ({ ...prevForm, imageUrl, imageFileId }));
-      } catch (error: any) {
-        console.error('Imagekit Upload Fehler:', error.message);
-        setErrorMessage(true);
-        setTimeout(() => setErrorMessage(false), 2000);
-      } finally {
-        setIsUploading(false);
+        imageUrl = uploadResponse.url;
+        imageFileId = uploadResponse.fileId;
       }
-    }
-  };
 
+      // Wein in MongoDB speichern
+      await axios.post(`${apiUrl}/wine`, {
+        ...form,
+        imageUrl,
+        imageFileId
+      });
 
-  const handleGeschmackChange = (value: string) => {
-    setForm((prevForm) => {
-      if (prevForm.geschmack.includes(value)) {
-        return { ...prevForm, geschmack: prevForm.geschmack.filter(g => g !== value) };
-      } else if (prevForm.geschmack.length < 3) {
-        return { ...prevForm, geschmack: [...prevForm.geschmack, value] };
-      }
-      return prevForm;
-    });
-  };
-
-  const handleKategorieChange = (kategorie: string) => {
-    setForm((prevForm) => ({ ...prevForm, kategorie, unterkategorie: '' }));
-  };
-
-  const handleUnterkategorieChange = (unterkategorie: string) => {
-    setForm((prevForm) => ({ ...prevForm, unterkategorie }));
-  };
-
-  const handleBewertungChange = (bewertung: number) => {
-    setForm((prevForm) => ({ ...prevForm, bewertung }));
-  };
-
-  const handleKauforteChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
-    setForm((prevForm) => ({ ...prevForm, kauforte: selectedOptions }));
-  };
-
-  const handleSave = async () => {
-    if (!isFormValid()) {
-      setErrorMessage(true);
-      setTimeout(() => setErrorMessage(false), 2000);
-      return;
-    }
-    setIsSaving(true);
-    const wineData = {
-      ...form,
-      timestamp: new Date().toISOString(),
-    };
-    try {
-      await axios.post(`${apiUrl}/wine`, wineData, { headers: { 'Content-Type': 'application/json' } });
       setSuccessMessage(true);
-      localStorage.removeItem('wineForm');
       setTimeout(() => {
         setSuccessMessage(false);
-        setIsSaving(false);
+        setForm({
+          name: '',
+          rebsorte: '',
+          farbe: '',
+          preis: '',
+          kauforte: [],
+          geschmack: [],
+          kategorie: '',
+          unterkategorie: '',
+          notizen: '',
+          bewertung: 0,
+          imageFile: null,
+          imageUrl: '',
+          imageFileId: ''
+        });
         onBack();
-      }, 2000);
+      }, 1500);
     } catch (error: any) {
-      console.error('Speicherfehler:', error.response?.data || error.message);
+      console.error('Speichern Fehler:', error.message);
       setErrorMessage(true);
       setTimeout(() => setErrorMessage(false), 2000);
+    } finally {
       setIsSaving(false);
+      if (form.imageUrl && !form.imageFile) {
+        URL.revokeObjectURL(form.imageUrl); // Speicher freigeben
+      }
     }
   };
 
-  const handleDeleteImage = () => {
-    setForm((prevForm) => ({ ...prevForm, imageUrl: '', imageFileId: '' }));
-  };
-
-  const isFormValid = () => {
-    return (
-      form.name.trim() !== '' &&
-      form.rebsorte.trim() !== '' &&
-      form.farbe.trim() !== '' &&
-      form.preis.trim() !== '' &&
-      form.kauforte.length > 0 &&
-      form.kategorie.trim() !== '' &&
-      form.unterkategorie.trim() !== '' &&
-      form.geschmack.length > 0 &&
-      form.geschmack.length <= 3 &&
-      form.bewertung > 0
-    );
-  };
-
-  interface UnterkategorieOptions {
-    [key: string]: string[];
-    Evergreen: string[];
-    Weinstand: string[];
-    Kochwein: string[];
-    'Seltene Weine': string[];
-  }
-
-  const unterkategorieOptions: UnterkategorieOptions = {
+  const unterkategorieOptions: { [key: string]: string[] } = {
     Evergreen: ['schwer', 'leicht', 'Anlass'],
     Weinstand: ['schwer', 'leicht', 'Anlass'],
     Kochwein: ['auch trinkbar', 'Tafelwein', 'Fail'],
@@ -268,7 +251,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
   return (
     <div className="App">
       <header className="glass-header">
-        <h1 className="header-title">Wein Hinzufügen</h1>
+        <h1 className="header-title">Neuer Wein</h1>
         <span className="header-back" onClick={onBack}>Zurück</span>
       </header>
       <main className="flex-1 p-6 flex flex-col items-center gap-12">
@@ -309,7 +292,10 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
           <select
             multiple
             value={form.kauforte}
-            onChange={handleKauforteChange}
+            onChange={(e) => {
+              const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+              setForm((prev) => ({ ...prev, kauforte: selectedOptions }));
+            }}
             className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff] mt-1"
           >
             <option value="Rewe">Rewe</option>
@@ -370,7 +356,16 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
                   <input
                     type="checkbox"
                     checked={form.geschmack.includes(g)}
-                    onChange={() => handleGeschmackChange(g)}
+                    onChange={() => {
+                      setForm((prevForm) => {
+                        if (prevForm.geschmack.includes(g)) {
+                          return { ...prevForm, geschmack: prevForm.geschmack.filter(item => item !== g) };
+                        } else if (prevForm.geschmack.length < 3) {
+                          return { ...prevForm, geschmack: [...prevForm.geschmack, g] };
+                        }
+                        return prevForm;
+                      });
+                    }}
                     className="w-4 h-4 rounded-full accent-[#baddff]"
                   />
                   <span className="text-base">{g}</span>
@@ -383,7 +378,16 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
                   <input
                     type="checkbox"
                     checked={form.geschmack.includes(g)}
-                    onChange={() => handleGeschmackChange(g)}
+                    onChange={() => {
+                      setForm((prevForm) => {
+                        if (prevForm.geschmack.includes(g)) {
+                          return { ...prevForm, geschmack: prevForm.geschmack.filter(item => item !== g) };
+                        } else if (prevForm.geschmack.length < 3) {
+                          return { ...prevForm, geschmack: [...prevForm.geschmack, g] };
+                        }
+                        return prevForm;
+                      });
+                    }}
                     className="w-4 h-4 rounded-full accent-[#baddff]"
                   />
                   <span className="text-base">{g}</span>
@@ -399,7 +403,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
               <div
                 key={k}
                 className={`category-tile flex items-center justify-center rounded-lg cursor-pointer ${form.kategorie === k ? 'selected' : ''}`}
-                onClick={() => handleKategorieChange(k)}
+                onClick={() => setForm((prev) => ({ ...prev, kategorie: k, unterkategorie: '' }))}
               >
                 <span className="text-base font-medium text-center">{k}</span>
               </div>
@@ -415,7 +419,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
                       type="radio"
                       name="unterkategorie"
                       checked={form.unterkategorie === u}
-                      onChange={() => handleUnterkategorieChange(u)}
+                      onChange={() => setForm((prev) => ({ ...prev, unterkategorie: u }))}
                       className="w-4 h-4 rounded-full accent-[#baddff]"
                     />
                     <span className="text-base">{u}</span>
@@ -433,7 +437,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
                 key={star}
                 className={`w-4 h-4 cursor-pointer flex-shrink-0`}
                 style={{ fill: star <= form.bewertung ? '#baddff' : 'none', stroke: star <= form.bewertung ? '#baddff' : '#496580', strokeWidth: 2 }}
-                onClick={() => handleBewertungChange(star)}
+                onClick={() => setForm((prev) => ({ ...prev, bewertung: star }))}
                 viewBox="0 0 24 24"
                 xmlns="http://www.w3.org/2000/svg"
               >
@@ -455,23 +459,21 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
         </section>
       </main>
       <footer className="footer">
-        <button
-          className="footer-btn w-full text-base font-medium"
-          onClick={handleSave}
-          disabled={isSaving || successMessage}
-        >
-          Speichern
-        </button>
+        <div className="flex justify-end w-full">
+          <button
+            className="footer-btn"
+            onClick={handleSave}
+            disabled={isSaving || isUploading}
+          >
+            Speichern
+          </button>
+        </div>
       </footer>
       {successMessage && (
-        <div className="snackbar success">
-          Wein erfolgreich hinzugefügt!
-        </div>
+        <div className="snackbar success">Wein erfolgreich hinzugefügt!</div>
       )}
       {errorMessage && (
-        <div className="snackbar error">
-          Bitte fülle alle Pflichtfelder aus!
-        </div>
+        <div className="snackbar error">Bitte fülle alle Pflichtfelder aus!</div>
       )}
     </div>
   );
