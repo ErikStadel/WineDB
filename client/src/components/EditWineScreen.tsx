@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import ImageKit from 'imagekit-javascript';
 import { mockWines } from '../mocks/mockWines';
 import { Wine } from '../types/Wine';
 import '../App.css';
@@ -143,26 +144,43 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setIsUploading(true);
-      try {
-        const compressedFile = await compressImage(file);
-        const formData = new FormData();
-        formData.append('image', compressedFile);
-        const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
-          params: { key: process.env.REACT_APP_IMGBB_API_KEY},
-        });
-        const imageUrl = response.data.data.url;
-        setForm((prevForm) => ({ ...prevForm, imageUrl }));
-      } catch (error: any) {
-        setError('Fehler beim Bildupload');
-        setTimeout(() => setError(null), 2000);
-      } finally {
-        setIsUploading(false);
+  const file = e.target.files?.[0];
+  if (file) {
+    setIsUploading(true);
+    try {
+      const compressedFile = await compressImage(file);
+      const urlEndpoint = process.env.REACT_APP_IMAGEKIT_URL_ENDPOINT;
+      if (!urlEndpoint) {
+        throw new Error('REACT_APP_IMAGEKIT_URL_ENDPOINT ist nicht definiert');
       }
+      const publicKey = process.env.REACT_APP_IMAGEKIT_PUBLIC_KEY || '';
+      const imagekit = new ImageKit({
+        publicKey,
+        urlEndpoint
+      });
+
+      // Authentifizierungsparameter abrufen
+      const authResponse = await axios.get(`${apiUrl}/imagekit-auth`);
+      const { token, expire, signature } = authResponse.data;
+
+      const uploadResponse = await imagekit.upload({
+        file: compressedFile,
+        fileName: `wine_${Date.now()}.jpg`,
+        folder: '/wines',
+        token,
+        expire,
+        signature
+      });
+
+      const imageUrl = uploadResponse.url;
+      setForm((prevForm) => ({ ...prevForm, imageUrl }));
+    } catch (error: any) {
+      console.error('Imagekit Upload Fehler:', error.message);
+    } finally {
+      setIsUploading(false);
     }
-  };
+  }
+};
 
   const handleDeleteImage = () => {
     setForm((prevForm) => ({ ...prevForm, imageUrl: '' }));
@@ -197,120 +215,104 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!isFormValid()) {
-    setError('Bitte fülle alle Pflichtfelder aus!');
-    setTimeout(() => setError(null), 2000);
-    return;
-  }
-  setLoading(true);
-  setError(null);
-
-  const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
-  
-  if (useMockData) {
-    const mockIndex = mockWines.findIndex((w: Wine) => w._id.$oid === wineId);
-    if (mockIndex !== -1) {
-      mockWines[mockIndex] = {
-        ...mockWines[mockIndex],
-        ...form,
-        _id: { $oid: wineId },
-        timestamp: { $date: new Date().toISOString() }
-      };
-    }
-    setSuccessMessage('Änderungen erfolgreich gespeichert!');
-    setTimeout(() => {
-      setSuccessMessage('');
-      onBack(true); // Trigger refresh
-    }, 1500);
-  } else {
-    try {
-      await axios.put(`${apiUrl}/wine/${wineId}`, {
-        ...form,
-        _id: { $oid: wineId }
-      });
-      setSuccessMessage('Änderungen erfolgreich gespeichert!');
-      setTimeout(() => {
-        setSuccessMessage('');
-        onBack(true); // Trigger refresh
-      }, 1500);
-    } catch (err) {
-      setError('Fehler beim Speichern der Änderungen');
-      setTimeout(() => setError(null), 2000);
-    }
-  }
-  setLoading(false);
-};
-
-
-  const handleDelete = async () => {
-  if (!window.confirm('Möchten Sie diesen Wein wirklich löschen?')) {
-    return;
-  }
-
-  setLoading(true);
-  setError(null);
-
-  const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
-  
-  if (useMockData) {
-    const mockIndex = mockWines.findIndex((w: Wine) => w._id.$oid === wineId);
-    if (mockIndex === -1) {
-      setError('Wein nicht gefunden');
-      setLoading(false);
+    e.preventDefault();
+    if (!isFormValid()) {
+      setError('Bitte fülle alle Pflichtfelder aus!');
       setTimeout(() => setError(null), 2000);
       return;
     }
-    mockWines.splice(mockIndex, 1);
-    setSuccessMessage('Wein erfolgreich gelöscht!');
-    setTimeout(() => {
-      setSuccessMessage('');
-      onBack(true); // Trigger refresh
-    }, 1500);
-    setLoading(false);
-  } else {
-    try {
-      console.log('Lösche Wein mit ID:', wineId);
-      
-      const response = await axios.delete(`${apiUrl}/wine/${wineId}`, {
-        headers: { 
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      console.log('Lösch-Response:', response.data);
-      setSuccessMessage('Wein erfolgreich gelöscht!');
-      
+    setLoading(true);
+    setError(null);
+
+    const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
+    
+    if (useMockData) {
+      const mockIndex = mockWines.findIndex((w: Wine) => w._id.$oid === wineId);
+      if (mockIndex !== -1) {
+        mockWines[mockIndex] = {
+          ...mockWines[mockIndex],
+          ...form,
+          _id: { $oid: wineId },
+          timestamp: { $date: new Date().toISOString() }
+        };
+      }
+      setSuccessMessage('Änderungen erfolgreich gespeichert!');
       setTimeout(() => {
         setSuccessMessage('');
-        onBack(true); // Trigger refresh
+        onBack(true);
       }, 1500);
-      
-    } catch (err: any) {
-      console.error('Löschfehler Details:', {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
-        config: err.config
-      });
-      
-      let errorMessage = 'Fehler beim Löschen des Weins';
-      
-      if (err.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      } else if (err.response?.status === 404) {
-        errorMessage = 'Wein nicht gefunden';
-      } else if (err.response?.status === 400) {
-        errorMessage = 'Ungültige Wein-ID';
+    } else {
+      try {
+        await axios.put(`${apiUrl}/wine/${wineId}`, {
+          ...form,
+          _id: { $oid: wineId }
+        });
+        setSuccessMessage('Änderungen erfolgreich gespeichert!');
+        setTimeout(() => {
+          setSuccessMessage('');
+          onBack(true);
+        }, 1500);
+      } catch (err) {
+        setError('Fehler beim Speichern der Änderungen');
+        setTimeout(() => setError(null), 2000);
       }
-      
-      setError(errorMessage);
-      setTimeout(() => setError(null), 3000);
-    } finally {
-      setLoading(false);
     }
-  }
-};
+    setLoading(false);
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('Möchten Sie diesen Wein wirklich löschen?')) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
+    
+    if (useMockData) {
+      const mockIndex = mockWines.findIndex((w: Wine) => w._id.$oid === wineId);
+      if (mockIndex === -1) {
+        setError('Wein nicht gefunden');
+        setLoading(false);
+        setTimeout(() => setError(null), 2000);
+        return;
+      }
+      mockWines.splice(mockIndex, 1);
+      setSuccessMessage('Wein erfolgreich gelöscht!');
+      setTimeout(() => {
+        setSuccessMessage('');
+        onBack(true);
+      }, 1500);
+      setLoading(false);
+    } else {
+      try {
+        await axios.delete(`${apiUrl}/wine/${wineId}`, {
+          headers: { 
+            'Content-Type': 'application/json'
+          }
+        });
+        setSuccessMessage('Wein erfolgreich gelöscht!');
+        setTimeout(() => {
+          setSuccessMessage('');
+          onBack(true);
+        }, 1500);
+      } catch (err: any) {
+        let errorMessage = 'Fehler beim Löschen des Weins';
+        if (err.response?.data?.message) {
+          errorMessage = err.response.data.message;
+        } else if (err.response?.status === 404) {
+          errorMessage = 'Wein nicht gefunden';
+        } else if (err.response?.status === 400) {
+          errorMessage = 'Ungültige Wein-ID';
+        }
+        setError(errorMessage);
+        setTimeout(() => setError(null), 3000);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
 
   const isFormValid = () => {
     return (
@@ -555,10 +557,10 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
         </div>
       </footer>
       {successMessage && (
-  <div className="snackbar success">
-    {successMessage}
-  </div>
-)}
+        <div className="snackbar success">
+          {successMessage}
+        </div>
+      )}
       {error && (
         <div className="snackbar error">
           {error}

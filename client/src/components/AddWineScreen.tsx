@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import ImageKit from 'imagekit-javascript';
 import '../App.css';
 
 interface AddWineScreenProps {
@@ -46,7 +47,6 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
   }, []);
 
   useEffect(() => {
-    // Verzögerte Speicherung in localStorage, um zu viele Updates zu vermeiden
     const timeout = setTimeout(() => {
       localStorage.setItem('wineForm', JSON.stringify(form));
     }, 100);
@@ -104,28 +104,45 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setIsUploading(true);
-      try {
-        const compressedFile = await compressImage(file);
-        const formData = new FormData();
-        formData.append('image', compressedFile);
-        const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
-          params: { key: process.env.REACT_APP_IMGBB_API_KEY},
-        });
-        const imageUrl = response.data.data.url;
-        // Funktionale Zustandsaktualisierung, um den neuesten Zustand zu verwenden
-        setForm((prevForm) => ({ ...prevForm, imageUrl }));
-      } catch (error: any) {
-        console.error('imgbb Upload Fehler:', error.response?.data || error.message);
-        setErrorMessage(true);
-        setTimeout(() => setErrorMessage(false), 2000);
-      } finally {
-        setIsUploading(false);
+  const file = e.target.files?.[0];
+  if (file) {
+    setIsUploading(true);
+    try {
+      const compressedFile = await compressImage(file);
+      const urlEndpoint = process.env.REACT_APP_IMAGEKIT_URL_ENDPOINT;
+      if (!urlEndpoint) {
+        throw new Error('REACT_APP_IMAGEKIT_URL_ENDPOINT ist nicht definiert');
       }
+      const publicKey = process.env.REACT_APP_IMAGEKIT_PUBLIC_KEY || '';
+      const imagekit = new ImageKit({
+        publicKey,
+        urlEndpoint
+      });
+
+      // Authentifizierungsparameter abrufen
+      const authResponse = await axios.get(`${apiUrl}/imagekit-auth`);
+      const { token, expire, signature } = authResponse.data;
+
+      const uploadResponse = await imagekit.upload({
+        file: compressedFile,
+        fileName: `wine_${Date.now()}.jpg`,
+        folder: '/wines',
+        token,
+        expire,
+        signature
+      });
+
+      const imageUrl = uploadResponse.url;
+      setForm((prevForm) => ({ ...prevForm, imageUrl }));
+    } catch (error: any) {
+      console.error('Imagekit Upload Fehler:', error.message);
+      setErrorMessage(true);
+      setTimeout(() => setErrorMessage(false), 2000);
+    } finally {
+      setIsUploading(false);
     }
-  };
+  }
+};
 
   const handleGeschmackChange = (value: string) => {
     setForm((prevForm) => {
@@ -389,7 +406,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
         </section>
         <section className="glass-card bewertung-card">
           <h2 className="text-lg md:text-xl font-semibold mb-4">Bewertung <span className="text-red-500">*</span></h2>
-          <div className="flex flexivérow gap-2 flex-nowrap">
+          <div className="flex flex-row gap-2 flex-nowrap">
             {[1, 2, 3, 4, 5].map(star => (
               <svg
                 key={star}

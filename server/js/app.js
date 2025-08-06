@@ -5,6 +5,7 @@ const cors = require('cors');
 const multer = require('multer');
 const { pipeline, RawImage } = require('@xenova/transformers');
 const sharp = require('sharp');
+const imagekitAuth = require('./imagekitAuth');
 
 const app = express();
 
@@ -13,6 +14,9 @@ app.use(cors({
   origin: ['http://localhost:3000', 'http://192.168.0.208:3000', 'https://wine-db.vercel.app', 'https://wine-db-git-dev-erikstadels-projects.vercel.app'],
 }));
 app.use(express.json());
+
+//Auth für ImageKit
+app.use('/imagekit-auth', imagekitAuth);
 
 // Multer für Dateiuploads
 const upload = multer({ storage: multer.memoryStorage() });
@@ -25,6 +29,25 @@ app.get('/health', (req, res) => {
     message: 'Server is awake and ready',
   });
 });
+
+// ImageKit Authentifizierung
+const imagekit = new ImageKit({
+  publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
+  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT
+});
+
+router.get('/imagekit-auth', (req, res) => {
+  try {
+    const authParams = imagekit.getAuthenticationParameters();
+    res.json(authParams);
+  } catch (error) {
+    console.error('Imagekit Auth Fehler:', error.message);
+    res.status(500).json({ error: 'Authentifizierung fehlgeschlagen' });
+  }
+});
+
+module.exports = router;
 
 // MongoDB-Verbindung
 const uri = process.env.MONGODB_URI;
