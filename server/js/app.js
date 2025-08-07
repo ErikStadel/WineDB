@@ -109,15 +109,15 @@ app.delete('/imagekit-file', async (req, res) => {
       console.error('ImageKit API Fehler:', response.status, errorText);
       return res.status(response.status).json({ error: 'Fehler beim Abrufen der fileId', message: errorText });
     }
-    const files = await response.json();
-    console.log('ImageKit API Antwort:', files);
+    const fileData = await response.json();
+console.log('ImageKit API Antwort:', fileData);
 
-    if (files.length === 0) {
-      console.warn('Kein Bild mit diesem Dateinamen gefunden:', fileName);
-      return res.status(404).json({ error: 'Bild nicht gefunden' });
-    }
+if (!fileData.fileId) {
+  console.warn('Kein Bild mit diesem Dateinamen gefunden:', fileName);
+  return res.status(404).json({ error: 'Bild nicht gefunden' });
+}
 
-    const fileId = files[0].fileId;
+    const fileId = fileData.fileId;
     console.log('Lösche Bild mit fileId:', fileId);
     const deleteResponse = await fetch(
       `https://api.imagekit.io/v1/files/${fileId}`,
