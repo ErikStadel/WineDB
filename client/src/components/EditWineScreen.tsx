@@ -213,7 +213,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
   }
 };
 
-  const handleDeleteImage = async () => {
+const handleDeleteImage = async () => {
   if (!form.imageUrl) return;
 
   const privateKey = process.env.REACT_APP_IMAGEKIT_PRIVATE_KEY;
@@ -225,16 +225,10 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
   }
 
   try {
-    const fileName = form.imageUrl.split('/').pop() || '';
-    if (!fileName) {
-      console.warn('Kein Dateiname in imageUrl gefunden:', form.imageUrl);
-      setForm((prevForm) => ({ ...prevForm, imageUrl: '' }));
-      return;
-    }
-
-    console.log('Versuche fileId für Bild:', fileName);
+    // Alle Dateien abrufen, um fileId basierend auf imageUrl zu finden
+    console.log('Suche fileId für imageUrl:', form.imageUrl);
     const response = await fetch(
-      `https://api.imagekit.io/v1/files?path=/wines/${fileName}`,
+      `https://api.imagekit.io/v1/files`,
       {
         method: 'GET',
         headers: {
@@ -249,26 +243,30 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
     const files = await response.json();
     console.log('Imagekit API Antwort:', files);
 
-    if (files.length > 0) {
-      const fileId = files[0].fileId;
-      console.log('Lösche Bild mit fileId:', fileId);
-      const deleteResponse = await fetch(
-        `https://api.imagekit.io/v1/files/${fileId}`,
-        {
-          method: 'DELETE',
-          headers: {
-            Accept: 'application/json',
-            Authorization: `Basic ${btoa(privateKey + ':')}`
-          }
-        }
-      );
-      if (!deleteResponse.ok) {
-        throw new Error(`Imagekit Delete Fehler: ${deleteResponse.statusText}`);
-      }
-      console.log(`Bild ${fileId} erfolgreich gelöscht`);
-    } else {
-      console.warn('Kein Bild mit diesem Dateinamen gefunden:', fileName);
+    // Finde die fileId für die imageUrl
+    const file = files.find((f: any) => f.url === form.imageUrl);
+    if (!file) {
+      console.warn('Kein Bild mit dieser imageUrl gefunden:', form.imageUrl);
+      setForm((prevForm) => ({ ...prevForm, imageUrl: '' }));
+      return;
     }
+
+    const fileId = file.fileId;
+    console.log('Lösche Bild mit fileId:', fileId);
+    const deleteResponse = await fetch(
+      `https://api.imagekit.io/v1/files/${fileId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Basic ${btoa(privateKey + ':')}`
+        }
+      }
+    );
+    if (!deleteResponse.ok) {
+      throw new Error(`Imagekit Delete Fehler: ${deleteResponse.statusText}`);
+    }
+    console.log(`Bild ${fileId} erfolgreich gelöscht`);
 
     setForm((prevForm) => ({ ...prevForm, imageUrl: '' }));
   } catch (error: any) {
