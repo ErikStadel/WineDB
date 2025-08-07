@@ -86,7 +86,6 @@ app.delete('/imagekit-file', async (req, res) => {
   }
 
   try {
-    // Dateinamen aus imageUrl extrahieren
     const fileName = imageUrl.split('/').pop();
     if (!fileName) {
       console.warn('Kein Dateiname in imageUrl gefunden:', imageUrl);
@@ -95,7 +94,7 @@ app.delete('/imagekit-file', async (req, res) => {
 
     console.log('Suche fileId für Dateiname:', fileName);
     const response = await fetch(
-      `https://api.imagekit.io/v1/files?path=/wines/${fileName}`,
+      `https://api.imagekit.io/v1/files?name=${encodeURIComponent(fileName)}`,
       {
         method: 'GET',
         headers: {
@@ -104,21 +103,25 @@ app.delete('/imagekit-file', async (req, res) => {
         }
       }
     );
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('ImageKit API Fehler:', response.status, errorText);
-      return res.status(response.status).json({ error: 'Fehler beim Abrufen der fileId', message: errorText });
+      return res.status(response.status).json({ error: 'Fehler beim Abrufen der Datei', message: errorText });
     }
-    const fileData = await response.json();
-console.log('ImageKit API Antwort:', fileData);
 
-if (!fileData.fileId) {
-  console.warn('Kein Bild mit diesem Dateinamen gefunden:', fileName);
-  return res.status(404).json({ error: 'Bild nicht gefunden' });
-}
+    const result = await response.json();
+    console.log('ImageKit API Antwort:', result);
 
-    const fileId = fileData.fileId;
+    const file = result.find(f => f.name === fileName && f.filePath.startsWith('/wines/'));
+    if (!file) {
+      console.warn('Kein passendes Bild gefunden:', fileName);
+      return res.status(404).json({ error: 'Bild nicht gefunden' });
+    }
+
+    const fileId = file.fileId;
     console.log('Lösche Bild mit fileId:', fileId);
+
     const deleteResponse = await fetch(
       `https://api.imagekit.io/v1/files/${fileId}`,
       {
@@ -129,11 +132,13 @@ if (!fileData.fileId) {
         }
       }
     );
+
     if (!deleteResponse.ok) {
       const errorText = await deleteResponse.text();
       console.error('ImageKit Delete Fehler:', deleteResponse.status, errorText);
       return res.status(deleteResponse.status).json({ error: 'Fehler beim Löschen des Bildes', message: errorText });
     }
+
     console.log(`Bild ${fileId} erfolgreich gelöscht`);
     res.status(200).json({ message: 'Bild erfolgreich gelöscht' });
   } catch (err) {
@@ -141,6 +146,7 @@ if (!fileData.fileId) {
     return res.status(500).json({ error: 'Fehler beim Löschen des Bildes', message: err.message });
   }
 });
+
 
 // Bestehende Endpunkte
 app.post('/wine', async (req, res) => {
