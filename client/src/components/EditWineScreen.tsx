@@ -161,174 +161,122 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setIsUploading(true);
-      try {
-        const compressedFile = await compressImage(file);
-        const urlEndpoint = process.env.REACT_APP_IMAGEKIT_URL_ENDPOINT;
-        if (!urlEndpoint) {
-          throw new Error('REACT_APP_IMAGEKIT_URL_ENDPOINT ist nicht definiert');
-        }
-        const publicKey = process.env.REACT_APP_IMAGEKIT_PUBLIC_KEY || '';
-        const privateKey = process.env.REACT_APP_IMAGEKIT_PRIVATE_KEY;
-        if (!privateKey) {
-          throw new Error('REACT_APP_IMAGEKIT_PRIVATE_KEY ist nicht definiert');
-        }
-        const imagekit = new ImageKit({
-          publicKey,
-          urlEndpoint
-        });
-
-        // Alten Dateinamen aus imageUrl extrahieren
-        let oldFileName = '';
-        if (form.imageUrl) {
-          const urlParts = form.imageUrl.split('/');
-          oldFileName = urlParts[urlParts.length - 1];
-        }
-
-        // Alten Bild löschen, falls vorhanden
-        if (oldFileName) {
-          try {
-            console.log('Versuche fileId für altes Bild:', oldFileName);
-            const response = await fetch(
-              `https://api.imagekit.io/v1/files?path=/wines/${oldFileName}`,
-              {
-                method: 'GET',
-                headers: {
-                  Accept: 'application/json',
-                  Authorization: `Basic ${btoa(privateKey + ':')}`
-                }
-              }
-            );
-            if (!response.ok) {
-              throw new Error(`Imagekit API Fehler: ${response.statusText}`);
-            }
-            const files = await response.json();
-            console.log('Imagekit API Antwort:', files);
-            if (files.length > 0) {
-              const fileId = files[0].fileId;
-              console.log('Lösche altes Bild mit fileId:', fileId);
-              const deleteResponse = await fetch(
-                `https://api.imagekit.io/v1/files/${fileId}`,
-                {
-                  method: 'DELETE',
-                  headers: {
-                    Accept: 'application/json',
-                    Authorization: `Basic ${btoa(privateKey + ':')}`
-                  }
-                }
-              );
-              if (!deleteResponse.ok) {
-                throw new Error(`Imagekit Delete Fehler: ${deleteResponse.statusText}`);
-              }
-              console.log(`Altes Bild ${fileId} erfolgreich gelöscht`);
-            } else {
-              console.warn('Kein Bild mit diesem Dateinamen gefunden:', oldFileName);
-            }
-          } catch (imageError: any) {
-            console.error('Fehler beim Löschen des alten Bildes:', imageError.message);
-            // Fortfahren, auch wenn Löschung fehlschlägt
-          }
-        }
-
-        // Neuen Dateinamen erstellen
-        const fileName = createUrlSafeFileName(form.name, form.rebsorte);
-
-        const authResponse = await axios.get(`${apiUrl}/imagekit-auth`);
-        const { token, expire, signature } = authResponse.data;
-
-        const uploadOptions: any = {
-          file: compressedFile,
-          fileName,
-          folder: '/wines',
-          token,
-          expire,
-          signature
-        };
-
-        console.log('Upload mit fileName:', fileName);
-
-        const uploadResponse = await imagekit.upload(uploadOptions);
-        
-        const imageUrl = uploadResponse.url;
-        setForm((prevForm) => ({ ...prevForm, imageUrl }));
-        
-        console.log('Bild erfolgreich hochgeladen:', imageUrl);
-      } catch (error: any) {
-        console.error('Imagekit Upload Fehler:', error.message, error.response?.data);
-        setError('Fehler beim Bildupload');
-        setTimeout(() => setError(null), 2000);
-      } finally {
-        setIsUploading(false);
+  const file = e.target.files?.[0];
+  if (file) {
+    setIsUploading(true);
+    try {
+      const compressedFile = await compressImage(file);
+      const urlEndpoint = process.env.REACT_APP_IMAGEKIT_URL_ENDPOINT;
+      if (!urlEndpoint) {
+        throw new Error('REACT_APP_IMAGEKIT_URL_ENDPOINT ist nicht definiert');
       }
+      const publicKey = process.env.REACT_APP_IMAGEKIT_PUBLIC_KEY || '';
+      const privateKey = process.env.REACT_APP_IMAGEKIT_PRIVATE_KEY;
+      if (!privateKey) {
+        throw new Error('REACT_APP_IMAGEKIT_PRIVATE_KEY ist nicht definiert');
+      }
+      const imagekit = new ImageKit({
+        publicKey,
+        urlEndpoint
+      });
+
+      // Neuen Dateinamen erstellen
+      const fileName = createUrlSafeFileName(form.name, form.rebsorte);
+
+      const authResponse = await axios.get(`${apiUrl}/imagekit-auth`);
+      const { token, expire, signature } = authResponse.data;
+
+      const uploadOptions: any = {
+        file: compressedFile,
+        fileName,
+        folder: '/wines',
+        token,
+        expire,
+        signature
+      };
+
+      console.log('Upload mit fileName:', fileName);
+
+      const uploadResponse = await imagekit.upload(uploadOptions);
+      
+      const imageUrl = uploadResponse.url;
+      setForm((prevForm) => ({ ...prevForm, imageUrl }));
+      
+      console.log('Bild erfolgreich hochgeladen:', imageUrl);
+    } catch (error: any) {
+      console.error('Imagekit Upload Fehler:', error.message, error.response?.data);
+      setError('Fehler beim Bildupload');
+      setTimeout(() => setError(null), 2000);
+    } finally {
+      setIsUploading(false);
     }
-  };
+  }
+};
 
   const handleDeleteImage = async () => {
-    if (!form.imageUrl) return;
+  if (!form.imageUrl) return;
 
-    const privateKey = process.env.REACT_APP_IMAGEKIT_PRIVATE_KEY;
-    if (!privateKey) {
-      console.error('REACT_APP_IMAGEKIT_PRIVATE_KEY ist nicht definiert');
-      setError('Fehler beim Löschen des Bildes');
-      setTimeout(() => setError(null), 2000);
+  const privateKey = process.env.REACT_APP_IMAGEKIT_PRIVATE_KEY;
+  if (!privateKey) {
+    console.error('REACT_APP_IMAGEKIT_PRIVATE_KEY ist nicht definiert');
+    setError('Fehler beim Löschen des Bildes');
+    setTimeout(() => setError(null), 2000);
+    return;
+  }
+
+  try {
+    const fileName = form.imageUrl.split('/').pop() || '';
+    if (!fileName) {
+      console.warn('Kein Dateiname in imageUrl gefunden:', form.imageUrl);
+      setForm((prevForm) => ({ ...prevForm, imageUrl: '' }));
       return;
     }
 
-    try {
-      const fileName = form.imageUrl.split('/').pop() || '';
-      if (!fileName) {
-        console.warn('Kein Dateiname in imageUrl gefunden:', form.imageUrl);
-        setForm((prevForm) => ({ ...prevForm, imageUrl: '' }));
-        return;
+    console.log('Versuche fileId für Bild:', fileName);
+    const response = await fetch(
+      `https://api.imagekit.io/v1/files?path=/wines/${fileName}`,
+      {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Basic ${btoa(privateKey + ':')}`
+        }
       }
+    );
+    if (!response.ok) {
+      throw new Error(`Imagekit API Fehler: ${response.statusText}`);
+    }
+    const files = await response.json();
+    console.log('Imagekit API Antwort:', files);
 
-      console.log('Versuche fileId für Bild:', fileName);
-      const response = await fetch(
-        `https://api.imagekit.io/v1/files?path=/wines/${fileName}`,
+    if (files.length > 0) {
+      const fileId = files[0].fileId;
+      console.log('Lösche Bild mit fileId:', fileId);
+      const deleteResponse = await fetch(
+        `https://api.imagekit.io/v1/files/${fileId}`,
         {
-          method: 'GET',
+          method: 'DELETE',
           headers: {
             Accept: 'application/json',
             Authorization: `Basic ${btoa(privateKey + ':')}`
           }
         }
       );
-      if (!response.ok) {
-        throw new Error(`Imagekit API Fehler: ${response.statusText}`);
+      if (!deleteResponse.ok) {
+        throw new Error(`Imagekit Delete Fehler: ${deleteResponse.statusText}`);
       }
-      const files = await response.json();
-      console.log('Imagekit API Antwort:', files);
-
-      if (files.length > 0) {
-        const fileId = files[0].fileId;
-        console.log('Lösche Bild mit fileId:', fileId);
-        const deleteResponse = await fetch(
-          `https://api.imagekit.io/v1/files/${fileId}`,
-          {
-            method: 'DELETE',
-            headers: {
-              Accept: 'application/json',
-              Authorization: `Basic ${btoa(privateKey + ':')}`
-            }
-          }
-        );
-        if (!deleteResponse.ok) {
-          throw new Error(`Imagekit Delete Fehler: ${deleteResponse.statusText}`);
-        }
-        console.log(`Bild ${fileId} erfolgreich gelöscht`);
-      } else {
-        console.warn('Kein Bild mit diesem Dateinamen gefunden:', fileName);
-      }
-
-      setForm((prevForm) => ({ ...prevForm, imageUrl: '' }));
-    } catch (error: any) {
-      console.error('Fehler beim Löschen des Bildes:', error.message);
-      setError('Fehler beim Löschen des Bildes');
-      setTimeout(() => setError(null), 2000);
+      console.log(`Bild ${fileId} erfolgreich gelöscht`);
+    } else {
+      console.warn('Kein Bild mit diesem Dateinamen gefunden:', fileName);
     }
-  };
+
+    setForm((prevForm) => ({ ...prevForm, imageUrl: '' }));
+  } catch (error: any) {
+    console.error('Fehler beim Löschen des Bildes:', error.message);
+    setError('Fehler beim Löschen des Bildes');
+    setTimeout(() => setError(null), 2000);
+  }
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
