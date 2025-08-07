@@ -41,7 +41,6 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
-  const [imageKey, setImageKey] = useState<number>(Date.now());
 
   const createUrlSafeFileName = (name: string, rebsorte: string): string => {
     const transliterate = (text: string): string => {
@@ -79,13 +78,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
     const finalName = cleanName || 'unnamed';
     const finalRebsorte = cleanRebsorte || 'unknown';
     
-    return `${finalName}_${finalRebsorte}_${Date.now()}.jpg`;
-  };
-
-  const getCacheBustedImageUrl = (url: string): string => {
-    if (!url) return '';
-    const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}v=${imageKey}`;
+    return `${finalName}_${finalRebsorte}.jpg`;
   };
 
   useEffect(() => {
@@ -258,9 +251,6 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
 
         const uploadResponse = await imagekit.upload(uploadOptions);
         
-        const newImageKey = Date.now();
-        setImageKey(newImageKey);
-        
         const imageUrl = uploadResponse.url;
         setForm((prevForm) => ({ ...prevForm, imageUrl }));
         
@@ -275,9 +265,69 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
     }
   };
 
-  const handleDeleteImage = () => {
-    setForm((prevForm) => ({ ...prevForm, imageUrl: '' }));
-    setImageKey(Date.now());
+  const handleDeleteImage = async () => {
+    if (!form.imageUrl) return;
+
+    const privateKey = process.env.REACT_APP_IMAGEKIT_PRIVATE_KEY;
+    if (!privateKey) {
+      console.error('REACT_APP_IMAGEKIT_PRIVATE_KEY ist nicht definiert');
+      setError('Fehler beim Löschen des Bildes');
+      setTimeout(() => setError(null), 2000);
+      return;
+    }
+
+    try {
+      const fileName = form.imageUrl.split('/').pop() || '';
+      if (!fileName) {
+        console.warn('Kein Dateiname in imageUrl gefunden:', form.imageUrl);
+        setForm((prevForm) => ({ ...prevForm, imageUrl: '' }));
+        return;
+      }
+
+      console.log('Versuche fileId für Bild:', fileName);
+      const response = await fetch(
+        `https://api.imagekit.io/v1/files?path=/wines/${fileName}`,
+        {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+            Authorization: `Basic ${btoa(privateKey + ':')}`
+          }
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`Imagekit API Fehler: ${response.statusText}`);
+      }
+      const files = await response.json();
+      console.log('Imagekit API Antwort:', files);
+
+      if (files.length > 0) {
+        const fileId = files[0].fileId;
+        console.log('Lösche Bild mit fileId:', fileId);
+        const deleteResponse = await fetch(
+          `https://api.imagekit.io/v1/files/${fileId}`,
+          {
+            method: 'DELETE',
+            headers: {
+              Accept: 'application/json',
+              Authorization: `Basic ${btoa(privateKey + ':')}`
+            }
+          }
+        );
+        if (!deleteResponse.ok) {
+          throw new Error(`Imagekit Delete Fehler: ${deleteResponse.statusText}`);
+        }
+        console.log(`Bild ${fileId} erfolgreich gelöscht`);
+      } else {
+        console.warn('Kein Bild mit diesem Dateinamen gefunden:', fileName);
+      }
+
+      setForm((prevForm) => ({ ...prevForm, imageUrl: '' }));
+    } catch (error: any) {
+      console.error('Fehler beim Löschen des Bildes:', error.message);
+      setError('Fehler beim Löschen des Bildes');
+      setTimeout(() => setError(null), 2000);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -463,7 +513,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
           ) : (
             <div className="relative">
               <img
-                src={getCacheBustedImageUrl(form.imageUrl)}
+                src={form.imageUrl}
                 alt="Vorschau"
                 className="image-preview"
               />
