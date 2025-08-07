@@ -247,7 +247,7 @@ const handleDeleteImage = async () => {
     const file = files.find((f: any) => f.url === form.imageUrl);
     if (!file) {
       console.warn('Kein Bild mit dieser imageUrl gefunden:', form.imageUrl);
-      setForm((prevForm) => ({ ...prevForm, imageUrl: '' }));
+      setForm((prevForm) => ({ ...prevForm, imageUrl: form.imageUrl }));
       return;
     }
 
