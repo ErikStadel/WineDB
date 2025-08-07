@@ -3,6 +3,7 @@ const express = require('express');
 const { MongoClient, ObjectId, ServerApiVersion } = require('mongodb');
 const cors = require('cors');
 const multer = require('multer');
+const fetch = require('node-fetch');
 const imagekitAuth = require('./imagekitAuth');
 
 const app = express();
@@ -57,6 +58,77 @@ async function connectDB() {
   }
   return db;
 }
+
+// Neuer Endpunkt zum Löschen eines ImageKit-Bildes
+app.delete('/imagekit-file', async (req, res) => {
+  const { imageUrl } = req.body;
+  if (!imageUrl) {
+    console.warn('Keine imageUrl im Request-Body');
+    return res.status(400).json({ error: 'imageUrl ist erforderlich' });
+  }
+
+  const privateKey = process.env.IMAGEKIT_PRIVATE_KEY;
+  if (!privateKey) {
+    console.error('IMAGEKIT_PRIVATE_KEY ist nicht definiert');
+    return res.status(500).json({ error: 'Server-Konfigurationsfehler' });
+  }
+
+  try {
+    // Dateinamen aus imageUrl extrahieren
+    const fileName = imageUrl.split('/').pop();
+    if (!fileName) {
+      console.warn('Kein Dateiname in imageUrl gefunden:', imageUrl);
+      return res.status(400).json({ error: 'Ungültige imageUrl' });
+    }
+
+    console.log('Suche fileId für Dateiname:', fileName);
+    const response = await fetch(
+      `https://api.imagekit.io/v1/files?path=/wines/${fileName}`,
+      {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Basic ${Buffer.from(`${privateKey}:`).toString('base64')}`
+        }
+      }
+    );
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('ImageKit API Fehler:', response.status, errorText);
+      return res.status(response.status).json({ error: 'Fehler beim Abrufen der fileId', message: errorText });
+    }
+    const files = await response.json();
+    console.log('ImageKit API Antwort:', files);
+
+    if (files.length === 0) {
+      console.warn('Kein Bild mit diesem Dateinamen gefunden:', fileName);
+      return res.status(404).json({ error: 'Bild nicht gefunden' });
+    }
+
+    const fileId = files[0].fileId;
+    console.log('Lösche Bild mit fileId:', fileId);
+    const deleteResponse = await fetch(
+      `https://api.imagekit.io/v1/files/${fileId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Basic ${Buffer.from(`${privateKey}:`).toString('base64')}`
+        }
+      }
+    );
+    if (!deleteResponse.ok) {
+      const errorText = await deleteResponse.text();
+      console.error('ImageKit Delete Fehler:', deleteResponse.status, errorText);
+      return res.status(deleteResponse.status).json({ error: 'Fehler beim Löschen des Bildes', message: errorText });
+    }
+    console.log(`Bild ${fileId} erfolgreich gelöscht`);
+    res.status(200).json({ message: 'Bild erfolgreich gelöscht' });
+  } catch (err) {
+    console.error('Fehler beim Löschen des Bildes:', err.message, err.stack);
+    return res.status(500).json({ error: 'Fehler beim Löschen des Bildes', message: err.message });
+  }
+});
 
 // Bestehende Endpunkte
 app.post('/wine', async (req, res) => {
