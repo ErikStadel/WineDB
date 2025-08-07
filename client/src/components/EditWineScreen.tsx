@@ -41,9 +41,8 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
-  const [imageKey, setImageKey] = useState<number>(Date.now()); // Für Re-render der Bilder
+  const [imageKey, setImageKey] = useState<number>(Date.now());
 
-  // URL-sichere Dateinamen erstellen (gleiche Funktion wie in AddWineScreen)
   const createUrlSafeFileName = (name: string, rebsorte: string): string => {
     const transliterate = (text: string): string => {
       const map: { [key: string]: string } = {
@@ -62,7 +61,6 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
         '"': '', "'": '', '`': '', '´': '', '^': '', '~': '',
         '*': '', '#': '', '@': '', '$': '', '€': 'euro'
       };
-      
       return text.replace(/./g, char => map[char] || char);
     };
     
@@ -81,10 +79,9 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
     const finalName = cleanName || 'unnamed';
     const finalRebsorte = cleanRebsorte || 'unknown';
     
-    return `${finalName}_${finalRebsorte}.jpg`;
+    return `${finalName}_${finalRebsorte}_${Date.now()}.jpg`;
   };
 
-  // Cache-Busting URL erstellen
   const getCacheBustedImageUrl = (url: string): string => {
     if (!url) return '';
     const separator = url.includes('?') ? '&' : '?';
@@ -96,7 +93,6 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
       try {
         const response = await axios.get(`${apiUrl}/wine/${wineId}`);
         const wineData = response.data;
-        
         setForm({
           name: wineData.name || '',
           rebsorte: wineData.rebsorte || '',
@@ -182,12 +178,68 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
           throw new Error('REACT_APP_IMAGEKIT_URL_ENDPOINT ist nicht definiert');
         }
         const publicKey = process.env.REACT_APP_IMAGEKIT_PUBLIC_KEY || '';
+        const privateKey = process.env.REACT_APP_IMAGEKIT_PRIVATE_KEY;
+        if (!privateKey) {
+          throw new Error('REACT_APP_IMAGEKIT_PRIVATE_KEY ist nicht definiert');
+        }
         const imagekit = new ImageKit({
           publicKey,
           urlEndpoint
         });
 
-        // URL-sicheren Dateinamen erstellen (konsistent mit AddWineScreen)
+        // Alten Dateinamen aus imageUrl extrahieren
+        let oldFileName = '';
+        if (form.imageUrl) {
+          const urlParts = form.imageUrl.split('/');
+          oldFileName = urlParts[urlParts.length - 1];
+        }
+
+        // Alten Bild löschen, falls vorhanden
+        if (oldFileName) {
+          try {
+            console.log('Versuche fileId für altes Bild:', oldFileName);
+            const response = await fetch(
+              `https://api.imagekit.io/v1/files?path=/wines/${oldFileName}`,
+              {
+                method: 'GET',
+                headers: {
+                  Accept: 'application/json',
+                  Authorization: `Basic ${btoa(privateKey + ':')}`
+                }
+              }
+            );
+            if (!response.ok) {
+              throw new Error(`Imagekit API Fehler: ${response.statusText}`);
+            }
+            const files = await response.json();
+            console.log('Imagekit API Antwort:', files);
+            if (files.length > 0) {
+              const fileId = files[0].fileId;
+              console.log('Lösche altes Bild mit fileId:', fileId);
+              const deleteResponse = await fetch(
+                `https://api.imagekit.io/v1/files/${fileId}`,
+                {
+                  method: 'DELETE',
+                  headers: {
+                    Accept: 'application/json',
+                    Authorization: `Basic ${btoa(privateKey + ':')}`
+                  }
+                }
+              );
+              if (!deleteResponse.ok) {
+                throw new Error(`Imagekit Delete Fehler: ${deleteResponse.statusText}`);
+              }
+              console.log(`Altes Bild ${fileId} erfolgreich gelöscht`);
+            } else {
+              console.warn('Kein Bild mit diesem Dateinamen gefunden:', oldFileName);
+            }
+          } catch (imageError: any) {
+            console.error('Fehler beim Löschen des alten Bildes:', imageError.message);
+            // Fortfahren, auch wenn Löschung fehlschlägt
+          }
+        }
+
+        // Neuen Dateinamen erstellen
         const fileName = createUrlSafeFileName(form.name, form.rebsorte);
 
         const authResponse = await axios.get(`${apiUrl}/imagekit-auth`);
@@ -199,16 +251,13 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
           folder: '/wines',
           token,
           expire,
-          signature,
-          overwriteFile: true,
-          useUniqueFileName: false
+          signature
         };
 
         console.log('Upload mit fileName:', fileName);
 
         const uploadResponse = await imagekit.upload(uploadOptions);
         
-        // Neuen Cache-Key für sofortige Aktualisierung
         const newImageKey = Date.now();
         setImageKey(newImageKey);
         
@@ -228,7 +277,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
 
   const handleDeleteImage = () => {
     setForm((prevForm) => ({ ...prevForm, imageUrl: '' }));
-    setImageKey(Date.now()); // Cache-Key aktualisieren
+    setImageKey(Date.now());
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -249,7 +298,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
       setSuccessMessage('Änderungen erfolgreich gespeichert!');
       setTimeout(() => {
         setSuccessMessage('');
-        onBack(true); // Mit refresh=true für Aktualisierung der Hauptliste
+        onBack(true);
       }, 1500);
     } catch (err: any) {
       console.error('Fehler beim Speichern:', err.message, err.response?.data);
@@ -269,14 +318,16 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
     setError(null);
 
     try {
-      // Bild aus ImageKit löschen (optional, da overwrite verwendet wird)
-      if (form.imageUrl && form.name && form.rebsorte) {
-        try {
-          const fileName = createUrlSafeFileName(form.name, form.rebsorte);
-          const privateKey = process.env.REACT_APP_IMAGEKIT_PRIVATE_KEY;
-          
-          if (privateKey) {
-            // Hole fileId dynamisch
+      if (form.imageUrl) {
+        const privateKey = process.env.REACT_APP_IMAGEKIT_PRIVATE_KEY;
+        if (!privateKey) {
+          throw new Error('REACT_APP_IMAGEKIT_PRIVATE_KEY ist nicht definiert');
+        }
+        let fileId = '';
+        const fileName = form.imageUrl.split('/').pop() || '';
+        if (fileName) {
+          try {
+            console.log('Versuche fileId für:', fileName);
             const response = await fetch(
               `https://api.imagekit.io/v1/files?path=/wines/${fileName}`,
               {
@@ -287,31 +338,44 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
                 }
               }
             );
-            
-            if (response.ok) {
-              const files = await response.json();
-              if (files.length > 0) {
-                const fileId = files[0].fileId;
-                
-                // Lösche das Bild
-                await fetch(`https://api.imagekit.io/v1/files/${fileId}`, {
-                  method: 'DELETE',
-                  headers: {
-                    Accept: 'application/json',
-                    Authorization: `Basic ${btoa(privateKey + ':')}`
-                  }
-                });
-                console.log(`Bild ${fileName} erfolgreich aus ImageKit gelöscht`);
+            if (!response.ok) {
+              throw new Error(`Imagekit API Fehler: ${response.statusText}`);
+            }
+            const files = await response.json();
+            console.log('Imagekit API Antwort:', files);
+            if (files.length > 0) {
+              fileId = files[0].fileId;
+            } else {
+              console.warn('Kein Bild mit diesem Dateinamen gefunden:', fileName);
+            }
+          } catch (imageError: any) {
+            console.error('Fehler beim Abrufen der fileId:', imageError.message);
+          }
+
+          if (fileId) {
+            const url = `https://api.imagekit.io/v1/files/${fileId}`;
+            const options = {
+              method: 'DELETE',
+              headers: {
+                Accept: 'application/json',
+                Authorization: `Basic ${btoa(privateKey + ':')}`
               }
+            };
+
+            try {
+              console.log('Lösche Bild mit fileId:', fileId);
+              const response = await fetch(url, options);
+              if (!response.ok) {
+                throw new Error(`Imagekit Delete Fehler: ${response.statusText}`);
+              }
+              console.log(`Bild ${fileId} erfolgreich aus Imagekit gelöscht`);
+            } catch (imageError: any) {
+              console.error('Imagekit Delete Fehler:', imageError.message);
             }
           }
-        } catch (imageError: any) {
-          console.error('Fehler beim Löschen des Bildes aus ImageKit:', imageError.message);
-          // Fortfahren mit Wein-Löschung auch wenn Bild-Löschung fehlschlägt
         }
       }
 
-      // Wein aus MongoDB löschen
       console.log('Lösche Wein aus MongoDB:', wineId);
       await axios.delete(`${apiUrl}/wine/${wineId}`, {
         headers: { 'Content-Type': 'application/json' }
@@ -399,7 +463,6 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
           ) : (
             <div className="relative">
               <img
-                key={imageKey} // Forciert Re-render bei Cache-Busting
                 src={getCacheBustedImageUrl(form.imageUrl)}
                 alt="Vorschau"
                 className="image-preview"
