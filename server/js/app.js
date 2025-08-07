@@ -3,8 +3,15 @@ const express = require('express');
 const { MongoClient, ObjectId, ServerApiVersion } = require('mongodb');
 const cors = require('cors');
 const multer = require('multer');
-const fetch = require('node-fetch');
 const imagekitAuth = require('./imagekitAuth');
+
+// Dynamischer Import für node-fetch (für CommonJS-Kompatibilität)
+let fetch;
+try {
+  fetch = require('node-fetch');
+} catch (err) {
+  console.error('Fehler beim Laden von node-fetch:', err.message);
+}
 
 const app = express();
 
@@ -71,6 +78,11 @@ app.delete('/imagekit-file', async (req, res) => {
   if (!privateKey) {
     console.error('IMAGEKIT_PRIVATE_KEY ist nicht definiert');
     return res.status(500).json({ error: 'Server-Konfigurationsfehler' });
+  }
+
+  if (!fetch) {
+    console.error('node-fetch ist nicht verfügbar');
+    return res.status(500).json({ error: 'Server-Konfigurationsfehler', message: 'fetch is not available' });
   }
 
   try {
