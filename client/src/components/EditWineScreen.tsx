@@ -21,7 +21,7 @@ interface FormWine {
   notizen: string;
   bewertung: number;
   imageUrl: string;
-  imageFileId: string;
+  imageFileName: string;
 }
 
 const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl }) => {
@@ -37,7 +37,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
     notizen: '',
     bewertung: 0,
     imageUrl: '',
-    imageFileId: ''
+    imageFileName: ''
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,6 +49,12 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
       try {
         const response = await axios.get(`${apiUrl}/wine/${wineId}`);
         const wineData = response.data;
+        // Extrahiere Dateinamen aus imageUrl oder verwende Fallback
+        let imageFileName = '';
+        if (wineData.imageUrl) {
+          const urlParts = wineData.imageUrl.split('/');
+          imageFileName = urlParts[urlParts.length - 1] || `wine_${Date.now()}.jpg`;
+        }
         setForm({
           name: wineData.name || '',
           rebsorte: wineData.rebsorte || '',
@@ -61,7 +67,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
           notizen: wineData.notizen || '',
           bewertung: wineData.bewertung || 0,
           imageUrl: wineData.imageUrl || '',
-          imageFileId: '' // imageFileId wird nicht aus DB geladen
+          imageFileName
         });
         setLoading(false);
       } catch (err: any) {
@@ -139,12 +145,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
           urlEndpoint
         });
 
-        let fileName = `wine_${Date.now()}.jpg`;
-        if (form.name && form.rebsorte) {
-          const cleanName = form.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-          const cleanRebsorte = form.rebsorte.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-          fileName = `${cleanName}_${cleanRebsorte}.jpg`;
-        }
+        const fileName = form.imageFileName || `wine_${Date.now()}.jpg`;
 
         const authResponse = await axios.get(`${apiUrl}/imagekit-auth`);
         const { token, expire, signature } = authResponse.data;
@@ -155,19 +156,14 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
           folder: '/wines',
           token,
           expire,
-          signature
+          signature,
+          overwriteFile: true
         };
-
-        if (form.imageFileId) {
-          uploadOptions.overwriteFile = true;
-          uploadOptions.fileId = form.imageFileId;
-        }
 
         const uploadResponse = await imagekit.upload(uploadOptions);
 
         const imageUrl = uploadResponse.url;
-        const imageFileId = uploadResponse.fileId;
-        setForm((prevForm) => ({ ...prevForm, imageUrl, imageFileId }));
+        setForm((prevForm) => ({ ...prevForm, imageUrl, imageFileName: fileName }));
       } catch (error: any) {
         console.error('Imagekit Upload Fehler:', error.message);
         setError('Fehler beim Bildupload');
@@ -195,7 +191,8 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
     try {
       await axios.put(`${apiUrl}/wine/${wineId}`, {
         ...form,
-        _id: { $oid: wineId }
+        _id: { $oid: wineId },
+        imageFileName: undefined // Nicht in MongoDB speichern
       });
       setSuccessMessage('Änderungen erfolgreich gespeichert!');
       setTimeout(() => {
@@ -219,28 +216,54 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
     setError(null);
 
     try {
-      if (form.imageFileId) {
+      if (form.imageFileName && form.imageUrl) {
         const privateKey = process.env.REACT_APP_IMAGEKIT_PRIVATE_KEY;
         if (!privateKey) {
           throw new Error('REACT_APP_IMAGEKIT_PRIVATE_KEY ist nicht definiert');
         }
-        const url = `https://api.imagekit.io/v1/files/${form.imageFileId}`;
-        const options = {
-          method: 'DELETE',
-          headers: {
-            Accept: 'application/json',
-            Authorization: `Basic ${btoa(privateKey + ':')}`
-          }
-        };
-
+        // Hole fileId dynamisch
+        let fileId = '';
         try {
-          const response = await fetch(url, options);
+          const response = await fetch(
+            `https://api.imagekit.io/v1/files?path=/wines/${form.imageFileName}`,
+            {
+              method: 'GET',
+              headers: {
+                Accept: 'application/json',
+                Authorization: `Basic ${btoa(privateKey + ':')}`
+              }
+            }
+          );
           if (!response.ok) {
-            throw new Error(`Imagekit Delete Fehler: ${response.statusText}`);
+            throw new Error(`Imagekit API Fehler: ${response.statusText}`);
           }
-          console.log(`Bild ${form.imageFileId} erfolgreich aus Imagekit gelöscht`);
+          const files = await response.json();
+          if (files.length > 0) {
+            fileId = files[0].fileId;
+          }
         } catch (imageError: any) {
-          console.error('Imagekit Delete Fehler:', imageError.message);
+          console.error('Fehler beim Abrufen der fileId:', imageError.message);
+        }
+
+        if (fileId) {
+          const url = `https://api.imagekit.io/v1/files/${fileId}`;
+          const options = {
+            method: 'DELETE',
+            headers: {
+              Accept: 'application/json',
+              Authorization: `Basic ${btoa(privateKey + ':')}`
+            }
+          };
+
+          try {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+              throw new Error(`Imagekit Delete Fehler: ${response.statusText}`);
+            }
+            console.log(`Bild ${fileId} erfolgreich aus Imagekit gelöscht`);
+          } catch (imageError: any) {
+            console.error('Imagekit Delete Fehler:', imageError.message);
+          }
         }
       }
 

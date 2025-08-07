@@ -22,7 +22,6 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
     bewertung: number;
     imageFile: File | null;
     imageUrl: string;
-    imageFileId: string;
   }>({
     name: '',
     rebsorte: '',
@@ -35,13 +34,53 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
     notizen: '',
     bewertung: 0,
     imageFile: null,
-    imageUrl: '',
-    imageFileId: ''
+    imageUrl: ''
   });
   const [successMessage, setSuccessMessage] = useState(false);
   const [errorMessage, setErrorMessage] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  // URL-sichere Dateinamen erstellen
+  const createUrlSafeFileName = (name: string, rebsorte: string): string => {
+    const transliterate = (text: string): string => {
+      const map: { [key: string]: string } = {
+        'ä': 'ae', 'ö': 'oe', 'ü': 'ue', 'ß': 'ss',
+        'Ä': 'Ae', 'Ö': 'Oe', 'Ü': 'Ue',
+        'á': 'a', 'à': 'a', 'â': 'a', 'ã': 'a', 'å': 'a',
+        'é': 'e', 'è': 'e', 'ê': 'e', 'ë': 'e',
+        'í': 'i', 'ì': 'i', 'î': 'i', 'ï': 'i',
+        'ó': 'o', 'ò': 'o', 'ô': 'o', 'õ': 'o',
+        'ú': 'u', 'ù': 'u', 'û': 'u',
+        'ç': 'c', 'ñ': 'n',
+        ' ': '_', '-': '_', '/': '_', '\\': '_',
+        '(': '', ')': '', '[': '', ']': '', '{': '', '}': '',
+        '&': 'und', '+': 'plus', '%': 'prozent',
+        '!': '', '?': '', '.': '', ',': '', ';': '', ':': '',
+        '"': '', "'": '', '`': '', '´': '', '^': '', '~': '',
+        '*': '', '#': '', '@': '', '$': '', '€': 'euro'
+      };
+      
+      return text.replace(/./g, char => map[char] || char);
+    };
+    
+    const cleanName = transliterate(name)
+      .replace(/[^a-zA-Z0-9_]/g, '')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '')
+      .toLowerCase();
+    
+    const cleanRebsorte = transliterate(rebsorte)
+      .replace(/[^a-zA-Z0-9_]/g, '')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '')
+      .toLowerCase();
+    
+    const finalName = cleanName || 'unnamed';
+    const finalRebsorte = cleanRebsorte || 'unknown';
+    
+    return `${finalName}_${finalRebsorte}.jpg`;
+  };
 
   const compressImage = async (file: File): Promise<File> => {
     return new Promise((resolve) => {
@@ -103,8 +142,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
         setForm((prevForm) => ({
           ...prevForm,
           imageFile: compressedFile,
-          imageUrl: previewUrl,
-          imageFileId: prevForm.imageFileId // Behalte bestehende imageFileId
+          imageUrl: previewUrl
         }));
       } catch (error: any) {
         console.error('Bildkomprimierung Fehler:', error.message);
@@ -117,15 +155,14 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
   };
 
   const handleDeleteImage = () => {
+    if (form.imageUrl) {
+      URL.revokeObjectURL(form.imageUrl);
+    }
     setForm((prevForm) => ({
       ...prevForm,
       imageFile: null,
       imageUrl: ''
-      // imageFileId bleibt erhalten für Überschreibung
     }));
-    if (form.imageUrl) {
-      URL.revokeObjectURL(form.imageUrl); // Speicher freigeben
-    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -151,7 +188,6 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
 
     try {
       let imageUrl = form.imageUrl;
-      let imageFileId = form.imageFileId;
 
       // Bild hochladen, falls vorhanden
       if (form.imageFile) {
@@ -165,38 +201,39 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
           urlEndpoint
         });
 
-        // Dateinamen aus form.name und form.rebsorte erstellen
-        const cleanName = form.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-        const cleanRebsorte = form.rebsorte.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-        const fileName = `${cleanName}_${cleanRebsorte}.jpg`;
+        // URL-sicheren Dateinamen erstellen
+        const fileName = createUrlSafeFileName(form.name, form.rebsorte);
 
         const authResponse = await axios.get(`${apiUrl}/imagekit-auth`);
         const { token, expire, signature } = authResponse.data;
 
-        const uploadOptions: any = {
+        const uploadOptions = {
           file: form.imageFile,
           fileName,
           folder: '/wines',
           token,
           expire,
-          signature
+          signature,
+          overwriteFile: true // Überschreibt Datei mit gleichem Namen automatisch
         };
-
-        if (form.imageFileId) {
-          uploadOptions.overwriteFile = true;
-          uploadOptions.fileId = form.imageFileId;
-        }
 
         const uploadResponse = await imagekit.upload(uploadOptions);
         imageUrl = uploadResponse.url;
-        imageFileId = uploadResponse.fileId;
       }
 
-      // Wein in MongoDB speichern
+      // Wein in MongoDB speichern (ohne imageFileId)
       await axios.post(`${apiUrl}/wine`, {
-        ...form,
-        imageUrl,
-        imageFileId
+        name: form.name,
+        rebsorte: form.rebsorte,
+        farbe: form.farbe,
+        preis: form.preis,
+        kauforte: form.kauforte,
+        geschmack: form.geschmack,
+        kategorie: form.kategorie,
+        unterkategorie: form.unterkategorie,
+        notizen: form.notizen,
+        bewertung: form.bewertung,
+        imageUrl
       });
 
       setSuccessMessage(true);
@@ -214,8 +251,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
           notizen: '',
           bewertung: 0,
           imageFile: null,
-          imageUrl: '',
-          imageFileId: ''
+          imageUrl: ''
         });
         onBack();
       }, 1500);
@@ -226,7 +262,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
     } finally {
       setIsSaving(false);
       if (form.imageUrl && !form.imageFile) {
-        URL.revokeObjectURL(form.imageUrl); // Speicher freigeben
+        URL.revokeObjectURL(form.imageUrl);
       }
     }
   };
