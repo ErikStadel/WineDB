@@ -214,7 +214,8 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
           token,
           expire,
           signature,
-          overwriteFile: true // Überschreibt Datei mit gleichem Namen automatisch
+          overwriteFile: true,
+          useUniqueFileName: false
         };
 
         const uploadResponse = await imagekit.upload(uploadOptions);

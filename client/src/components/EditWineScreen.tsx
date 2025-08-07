@@ -71,6 +71,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
         });
         setLoading(false);
       } catch (err: any) {
+        console.error('Fehler beim Laden des Weins:', err.message, err.response?.data);
         setError('Fehler beim Laden des Weins');
         setTimeout(() => setError(null), 2000);
         setLoading(false);
@@ -145,7 +146,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
           urlEndpoint
         });
 
-        const fileName = form.imageFileName || `wine_${Date.now()}.jpg`;
+        const fileName = form.imageFileName || `${form.name.replace(/\s+/g, '_').toLowerCase()}_${form.rebsorte.replace(/\s+/g, '_').toLowerCase()}_${Date.now()}.jpg`;
 
         const authResponse = await axios.get(`${apiUrl}/imagekit-auth`);
         const { token, expire, signature } = authResponse.data;
@@ -157,15 +158,18 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
           token,
           expire,
           signature,
-          overwriteFile: true
+          overwriteFile: true,
+          useUniqueFileName: false
         };
+
+        console.log('Upload mit fileName:', fileName);
 
         const uploadResponse = await imagekit.upload(uploadOptions);
 
         const imageUrl = uploadResponse.url;
         setForm((prevForm) => ({ ...prevForm, imageUrl, imageFileName: fileName }));
       } catch (error: any) {
-        console.error('Imagekit Upload Fehler:', error.message);
+        console.error('Imagekit Upload Fehler:', error.message, error.response?.data);
         setError('Fehler beim Bildupload');
         setTimeout(() => setError(null), 2000);
       } finally {
@@ -199,7 +203,8 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
         setSuccessMessage('');
         onBack(true);
       }, 1500);
-    } catch (err) {
+    } catch (err: any) {
+      console.error('Fehler beim Speichern:', err.message, err.response?.data);
       setError('Fehler beim Speichern der Änderungen');
       setTimeout(() => setError(null), 2000);
     } finally {
@@ -224,6 +229,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
         // Hole fileId dynamisch
         let fileId = '';
         try {
+          console.log('Versuche fileId für:', form.imageFileName);
           const response = await fetch(
             `https://api.imagekit.io/v1/files?path=/wines/${form.imageFileName}`,
             {
@@ -238,8 +244,11 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
             throw new Error(`Imagekit API Fehler: ${response.statusText}`);
           }
           const files = await response.json();
+          console.log('Imagekit API Antwort:', files);
           if (files.length > 0) {
             fileId = files[0].fileId;
+          } else {
+            console.warn('Kein Bild mit diesem Dateinamen gefunden:', form.imageFileName);
           }
         } catch (imageError: any) {
           console.error('Fehler beim Abrufen der fileId:', imageError.message);
@@ -256,6 +265,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
           };
 
           try {
+            console.log('Lösche Bild mit fileId:', fileId);
             const response = await fetch(url, options);
             if (!response.ok) {
               throw new Error(`Imagekit Delete Fehler: ${response.statusText}`);
@@ -265,17 +275,22 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
             console.error('Imagekit Delete Fehler:', imageError.message);
           }
         }
+      } else {
+        console.log('Kein Bild zum Löschen vorhanden oder imageFileName fehlt');
       }
 
+      console.log('Lösche Wein aus MongoDB:', wineId);
       await axios.delete(`${apiUrl}/wine/${wineId}`, {
         headers: { 'Content-Type': 'application/json' }
       });
+      console.log('Wein erfolgreich aus MongoDB gelöscht');
       setSuccessMessage('Wein erfolgreich gelöscht!');
       setTimeout(() => {
         setSuccessMessage('');
         onBack(true);
       }, 1500);
     } catch (err: any) {
+      console.error('Fehler beim Löschen des Weins:', err.message, err.response?.data);
       let errorMessage = 'Fehler beim Löschen des Weins';
       if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
