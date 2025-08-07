@@ -244,7 +244,8 @@ const handleDeleteImage = async () => {
     console.log('Imagekit API Antwort:', files);
 
     // Finde die fileId für die imageUrl
-    const file = files.find((f: any) => f.url === form.imageUrl);
+    const fileName = form.imageUrl.split('/').pop();
+    const file = files.find((f: any) => f.name === fileName);
     if (!file) {
       console.warn('Kein Bild mit dieser imageUrl gefunden:', form.imageUrl);
       setForm((prevForm) => ({ ...prevForm, imageUrl: form.imageUrl }));
