@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "cloud_job.js",
   "scripts": {
-    "start": "npx functions-framework --target=imageSearch --signature-type=http"
+    "start": "npx functions-framework --target=imageSearch --signature-type=http --port $PORT"
   },
   "dependencies": {
     "@google-cloud/functions-framework": "^3.0.0",
@@ -17,6 +17,6 @@
     "node": "20.x"
   },
   "functions": {
-  "source": "cloud_job.js"
-}
+    "source": "cloud_job.js"
+  }
 }
