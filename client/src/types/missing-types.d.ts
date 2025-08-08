@@ -30,11 +30,6 @@ declare module 'prettier' {
   export {};
 }
 
-declare module 'react' {
-  export * from 'react'; // falls du wirklich React nutzt
-  export default any;
-}
-
 declare module 'trusted-types' {
   export {};
 }
