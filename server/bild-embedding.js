@@ -79,7 +79,12 @@ async function updateEmbeddings() {
 
     console.log("🚀 Lade CLIP Modell...");
     const imageExtractor = await pipeline("image-feature-extraction", "Xenova/clip-vit-base-patch32");
-    console.log("✅ Modell geladen");
+    const textExtractor = await pipeline("feature-extraction", "Xenova/clip-vit-base-patch32");
+    console.log("✅ Modelle geladen");
+
+    // Debugging: Prüfe Weine mit imageUrl
+    const totalWinesWithImage = await collection.countDocuments({ imageUrl: { $exists: true } });
+    console.log(`🔍 Insgesamt Weine mit imageUrl: ${totalWinesWithImage}`);
 
     // Weine für ImageEmbedding
     const imageWines = await collection
@@ -168,7 +173,7 @@ async function updateEmbeddings() {
         const processed = postProcessOCR(fullText);
         const ocrText = processed.map(line => line.text).join(" ") || "";
 
-        const textEmbedding = await imageExtractor(ocrText, {
+        const textEmbedding = await textExtractor(ocrText, {
           pooling: "mean",
           normalize: true,
         });
@@ -178,7 +183,7 @@ async function updateEmbeddings() {
           {
             $set: {
               ocrText,
-              TextEmbedding: Array.from(textEmbedding.data),
+              TextEmbedding: Array.from(textEmbedding.data[0]), // Text-Embedding ist nested
               PreviousImageUrl: wein.imageUrl,
             },
           }
