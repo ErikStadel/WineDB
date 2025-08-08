@@ -83,7 +83,7 @@ async function initializeModels() {
     console.log('✅ Modelle geladen');
   } catch (error) {
     console.error('❌ Modell-Ladefehler:', error.message);
-    throw error;
+    throw error; // Wichtig, damit der Prozess bei einem Fehler fehlschlägt
   } finally {
     isModelLoading = false;
   }
@@ -151,6 +151,13 @@ async function updateEmbedding(wine, collection) {
   }
 }
 
+// ***KORREKTUR***: Modelle direkt beim Start des Containers laden.
+initializeModels().catch(err => {
+  console.error("Konnte Modelle beim Start nicht initialisieren:", err);
+  process.exit(1); // Prozess beenden, wenn die Modelle (essentiell) nicht laden
+});
+
+
 functions.http('imageSearch', async (req, res) => {
   const allowedOrigins = [
     'https://wine-db.vercel.app',
@@ -165,12 +172,17 @@ functions.http('imageSearch', async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Nur POST erlaubt' });
 
   try {
+    // ***KORREKTUR***: Prüfen, ob Modelle bereit sind, bevor die Anfrage bearbeitet wird.
+    if (!model || isModelLoading) {
+      return res.status(503).json({ error: 'Dienst ist nicht bereit, Modelle werden geladen. Bitte versuchen Sie es in einem Moment erneut.' });
+    }
+  
     const { imageUrl, imageWeight = 0.7, textWeight = 0.3 } = req.body;
     if (!imageUrl) return res.status(400).json({ error: 'Keine Bild-URL angegeben' });
     if (imageWeight + textWeight !== 1) return res.status(400).json({ error: 'Gewichtungen müssen 1 ergeben' });
 
     console.log('🔍 Verarbeite Bildsuche:', imageUrl);
-    await initializeModels();
+    // Der Aufruf von initializeModels() wird hier entfernt, da er jetzt global erfolgt.
     const db = await connectDB();
     const collection = db.collection('wines');
 
