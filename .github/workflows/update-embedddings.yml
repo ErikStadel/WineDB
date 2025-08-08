@@ -1,13 +1,13 @@
-name: Update Wine Image Embeddings
+name: Update Wine Embeddings
 on:
   schedule:
     - cron: "0 0 * * *" # Täglich um Mitternacht UTC
   workflow_dispatch: # Manuelle Ausführung möglich
 
 jobs:
-  bild-embedding:
-    timeout-minutes: 30
+  update-embeddings:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node.js
@@ -15,10 +15,16 @@ jobs:
         with:
           node-version: "20.x"
       - name: Install Dependencies
-        run: npm install mongodb @xenova/transformers sharp dotenv
+        run: npm install mongodb @xenova/transformers sharp @google-cloud/vision axios dotenv
       - name: Install System Dependencies
         run: sudo apt-get update && sudo apt-get install -y libvips-dev
+      - name: Cache Xenova Models
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/xenova
+          key: ${{ runner.os }}-xenova-${{ hashFiles('package.json') }}
       - name: Run Update Embeddings
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
-        run: node bild-embedding.js
+          GOOGLE_CLOUD_KEY: ${{ secrets.GOOGLE_CLOUD_KEY }}
+        run: node bild-embeddings.js
