@@ -24,7 +24,7 @@ async function initializeModel() {
   isModelLoading = true;
   console.log('🚀 Lade CLIP Modell...');
   try {
-    imageExtractor = await pipeline('image-feature-extraction', 'Xenova/clip-vit-base-patch32');
+    imageExtractor = await pipeline('image-feature-extraction', 'Xenova/clip-vit-large-patch14');
     console.log('✅ Modell geladen');
     isModelLoading = false;
     return imageExtractor;
