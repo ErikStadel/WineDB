@@ -33,6 +33,7 @@ async function updateEmbeddings() {
         imageUrl: { $exists: true },
         $or: [
           { ImageEmbedding: { $exists: false } },
+          {ImageEmbedding: {"$eq": ""} },
           { $expr: { $ne: ["$imageUrl", "$PreviousImageUrl"] } },
         ],
       })
