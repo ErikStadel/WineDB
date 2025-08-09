@@ -129,7 +129,7 @@ const App: React.FC = () => {
           )}
       </main>
       <footer className="footer">
-        <p className="text-sm">Entwickelt mit Liebe zum Wein</p>
+        <p className="text-sm">❤️ Entwickelt mit Liebe zum Wein ❤️</p>
       </footer>
     </div>
   );
