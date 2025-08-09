@@ -15,8 +15,5 @@
   },
   "engines": {
     "node": "20.x"
-  },
-  "functions": {
-    "source": "cloud_job.js"
   }
 }
