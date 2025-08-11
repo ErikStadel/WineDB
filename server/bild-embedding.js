@@ -28,16 +28,15 @@ async function updateEmbeddings() {
     const imageExtractor = await pipeline("image-feature-extraction", "Xenova/clip-vit-large-patch14");
     console.log("✅ Modell geladen");
 
-    const wines = await collection
-      .find({
-        imageUrl: { $exists: true },
-        $or: [
-          { ImageEmbedding: { $exists: false } },
-          { Kategorie: { $ne: "Weinstand" } },
-          {ImageEmbedding: {"$eq": ""} },
-          { $expr: { $ne: ["$imageUrl", "$PreviousImageUrl"] } },
-        ],
-      })
+    const wines = await collection.find({
+  imageUrl: { $exists: true },
+  Kategorie: { $ne: "Weinstand" },
+  $or: [
+    { ImageEmbedding: { $exists: false } },
+    { ImageEmbedding: "" },
+    { $expr: { $ne: ["$imageUrl", "$PreviousImageUrl"] } }
+  ]
+})
       .toArray();
     console.log(`🔍 Gefundene Weine: ${wines.length}`);
 
