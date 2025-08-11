@@ -33,6 +33,7 @@ async function updateEmbeddings() {
         imageUrl: { $exists: true },
         $or: [
           { ImageEmbedding: { $exists: false } },
+          { Kategorie: { $ne: "Weinstand" } },
           {ImageEmbedding: {"$eq": ""} },
           { $expr: { $ne: ["$imageUrl", "$PreviousImageUrl"] } },
         ],

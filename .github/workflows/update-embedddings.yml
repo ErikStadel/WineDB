@@ -27,4 +27,4 @@ jobs:
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
           GOOGLE_CLOUD_KEY: ${{ secrets.GOOGLE_CLOUD_KEY }}
-        run: node bild-embeddings.js
+        run: node bild-embedding.js
