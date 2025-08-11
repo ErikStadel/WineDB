@@ -1,8 +1,8 @@
 name: Update Wine Embeddings
 on:
   schedule:
-    - cron: "0 0 * * *" # Täglich um Mitternacht UTC
-  workflow_dispatch: # Manuelle Ausführung möglich
+    - cron: "0 0 * * *"
+  workflow_dispatch:
 
 jobs:
   update-embeddings:
@@ -14,16 +14,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20.x"
-      - name: Install Dependencies
-        run: npm install mongodb @xenova/transformers sharp @google-cloud/vision axios dotenv
       - name: Install System Dependencies
         run: sudo apt-get update && sudo apt-get install -y libvips-dev
+      - name: Install server dependencies
+        working-directory: ./server
+        run: npm install
       - name: Cache Xenova Models
         uses: actions/cache@v3
         with:
           path: ~/.cache/xenova
-          key: ${{ runner.os }}-xenova-${{ hashFiles('package.json') }}
+          key: ${{ runner.os }}-xenova-${{ hashFiles('server/package.json') }}
       - name: Run Update Embeddings
+        working-directory: ./server
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
           GOOGLE_CLOUD_KEY: ${{ secrets.GOOGLE_CLOUD_KEY }}
