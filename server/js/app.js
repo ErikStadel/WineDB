@@ -254,6 +254,7 @@ app.get('/wines/search', async (req, res) => {
     const db = await connectDB();
     const collection = db.collection('wines');
     const pipeline = [];
+
     if (q && q.trim() !== '') {
       pipeline.push({
         $search: {
@@ -263,7 +264,7 @@ app.get('/wines/search', async (req, res) => {
               {
                 text: {
                   query: q.trim(),
-                  path: ['name', 'rebsorte', 'notizen'],
+                  path: ['name', 'rebsorte', 'notizen', 'ocrRawText'], // Hinzugefügt: ocrRawText
                   fuzzy: { maxEdits: 2 },
                 },
               },
@@ -281,6 +282,13 @@ app.get('/wines/search', async (req, res) => {
                   fuzzy: { maxEdits: 2 },
                 },
               },
+              {
+                autocomplete: {
+                  query: q.trim(),
+                  path: 'ocrRawText_autocomplete', // Hinzugefügt: ocrRawText_autocomplete
+                  fuzzy: { maxEdits: 2 },
+                },
+              },
             ],
             minimumShouldMatch: 1,
           },
@@ -292,6 +300,7 @@ app.get('/wines/search', async (req, res) => {
         },
       });
     }
+
     const matchConditions = {};
     if (farbe && farbe !== '') {
       matchConditions.farbe = { $regex: `^${farbe}$`, $options: 'i' };
@@ -305,18 +314,23 @@ app.get('/wines/search', async (req, res) => {
     if (Object.keys(matchConditions).length > 0) {
       pipeline.push({ $match: matchConditions });
     }
+
     pipeline.push({
       $sort: q && q.trim() !== '' ? { score: -1, timestamp: -1 } : { timestamp: -1 },
     });
     pipeline.push({ $skip: parseInt(skip) });
     pipeline.push({ $limit: parseInt(limit) });
+
     console.log('Search Query:', { q, farbe, kauforte, kategorie, limit, skip });
     console.log('Search Pipeline:', JSON.stringify(pipeline, null, 2));
+
     const wines = await collection.aggregate(pipeline).toArray();
     console.log('Search Results:', { count: wines.length, wines });
+
     const totalCount = wines.length === parseInt(limit)
       ? parseInt(skip) + wines.length + 1
       : parseInt(skip) + wines.length;
+
     res.json({
       wines,
       totalCount,
