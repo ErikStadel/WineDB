@@ -29,8 +29,8 @@ async function updateEmbeddings() {
     console.log("✅ Modell geladen");
 
     const wines = await collection.find({
+  Kategorie: { $ne: "Weinstand" }, // Dieser Ausschluss wird IMMER angewendet
   imageUrl: { $exists: true },
-  Kategorie: { $ne: "Weinstand" },
   $or: [
     { ImageEmbedding: { $exists: false } },
     { ImageEmbedding: "" },
