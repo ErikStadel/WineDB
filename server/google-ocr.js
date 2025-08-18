@@ -83,7 +83,7 @@ async function processOCRForWines() {
   try {
     console.log("🔌 Connecting to MongoDB...");
     await mongoClient.connect();
-    const db = mongoClient.db();
+    const db = mongoClient.db("wineDB");
     const collection = db.collection("wines");
     
     // Gleiche Bedingungen wie beim Embedding
