@@ -15,20 +15,19 @@ on:
 jobs:
   ocr-processing:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
     
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
-        cache: 'npm'
+        node-version: "20.x"
     
-    - name: Install dependencies
+    - name: Install server dependencies
       working-directory: ./server
-      run: npm ci
+      run: npm install
     
     - name: Run OCR Processing
       working-directory: ./server
