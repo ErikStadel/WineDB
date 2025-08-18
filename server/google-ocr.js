@@ -130,7 +130,6 @@ async function processOCRForWines() {
             { 
               $set: { 
                 ocrText: [],
-                ocrProcessedAt: new Date(),
                 PreviousImageUrl: wine.imageUrl
               } 
             }
@@ -150,7 +149,6 @@ async function processOCRForWines() {
             $set: { 
               ocrText: processedLines,
               ocrRawText: fullText.text,
-              ocrProcessedAt: new Date(),
               PreviousImageUrl: wine.imageUrl
             } 
           }
@@ -172,7 +170,6 @@ async function processOCRForWines() {
           { 
             $set: { 
               ocrError: error.message,
-              ocrProcessedAt: new Date(),
               PreviousImageUrl: wine.imageUrl
             } 
           }
