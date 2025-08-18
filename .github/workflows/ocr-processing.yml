@@ -1,0 +1,45 @@
+# .github/workflows/ocr-processing.yml
+name: Wine OCR Processing
+
+on:
+  schedule:
+    # Läuft täglich um 2:00 UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Manuell auslösbar
+    inputs:
+      force_run:
+        description: 'Force run even if no new wines found'
+        required: false
+        default: 'false'
+
+jobs:
+  ocr-processing:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      working-directory: ./server
+      run: npm ci
+    
+    - name: Run OCR Processing
+      working-directory: ./server
+      env:
+        MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        GOOGLE_CLOUD_KEY: ${{ secrets.GOOGLE_CLOUD_KEY }}
+        GITHUB_ACTIONS: true
+      run: node ocr-processor.js
+    
+    - name: Notify on failure
+      if: failure()
+      run: |
+        echo "OCR processing failed! Check the logs."
+        # Hier könnten Sie zusätzlich Slack/Discord/Email Notifications hinzufügen
