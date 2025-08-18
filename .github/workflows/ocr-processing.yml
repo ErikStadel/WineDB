@@ -35,7 +35,7 @@ jobs:
         MONGODB_URI: ${{ secrets.MONGODB_URI }}
         GOOGLE_CLOUD_KEY: ${{ secrets.GOOGLE_CLOUD_KEY }}
         GITHUB_ACTIONS: true
-      run: node ocr-processor.js
+      run: node google-ocr.js
     
     - name: Notify on failure
       if: failure()
