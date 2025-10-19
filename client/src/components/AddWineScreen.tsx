@@ -18,6 +18,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
     geschmack: string[];
     kategorie: string;
     unterkategorie: string;
+    saison: string;
     notizen: string;
     bewertung: number;
     imageFile: File | null;
@@ -31,6 +32,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
     geschmack: [],
     kategorie: '',
     unterkategorie: '',
+    saison: '',
     notizen: '',
     bewertung: 0,
     imageFile: null,
@@ -220,7 +222,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
         imageUrl = uploadResponse.url;
       }
 
-      // Wein in MongoDB speichern (ohne imageFileId)
+      // Wein in MongoDB speichern
       await axios.post(`${apiUrl}/wine`, {
         name: form.name,
         rebsorte: form.rebsorte,
@@ -230,6 +232,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
         geschmack: form.geschmack,
         kategorie: form.kategorie,
         unterkategorie: form.unterkategorie,
+        saison: form.saison,
         notizen: form.notizen,
         bewertung: form.bewertung,
         imageUrl
@@ -247,6 +250,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
           geschmack: [],
           kategorie: '',
           unterkategorie: '',
+          saison: '',
           notizen: '',
           bewertung: 0,
           imageFile: null,
@@ -463,6 +467,28 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
               </div>
             </div>
           )}
+        </section>
+        <section className="glass-card">
+          <h2 className="text-lg md:text-xl font-semibold mb-4">Saison</h2>
+          <div className="flex flex-col gap-4">
+            {['Sommer', 'Winter'].map((s) => (
+              <label key={s} className="unterkategorie-label text-[#496580]">
+                <input
+                  type="radio"
+                  name="saison"
+                  checked={form.saison === s}
+                  onChange={() => {
+                    setForm((prev) => ({
+                      ...prev,
+                      saison: prev.saison === s ? '' : s
+                    }));
+                  }}
+                  className="w-4 h-4 rounded-full accent-[#baddff]"
+                />
+                <span className="text-base">{s}</span>
+              </label>
+            ))}
+          </div>
         </section>
         <section className="glass-card bewertung-card">
           <h2 className="text-lg md:text-xl font-semibold mb-4">Bewertung <span className="text-red-500">*</span></h2>

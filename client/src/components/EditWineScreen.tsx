@@ -18,6 +18,7 @@ interface FormWine {
   geschmack: string[];
   kategorie: string;
   unterkategorie: string;
+  saison: string;
   notizen: string;
   bewertung: number;
   imageUrl: string;
@@ -33,6 +34,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
     geschmack: [],
     kategorie: '',
     unterkategorie: '',
+    saison: '',
     notizen: '',
     bewertung: 0,
     imageUrl: ''
@@ -62,22 +64,22 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
       };
       return text.replace(/./g, char => map[char] || char);
     };
-    
+
     const cleanName = transliterate(name)
       .replace(/[^a-zA-Z0-9_]/g, '')
       .replace(/_+/g, '_')
       .replace(/^_|_$/g, '')
       .toLowerCase();
-    
+
     const cleanRebsorte = transliterate(rebsorte)
       .replace(/[^a-zA-Z0-9_]/g, '')
       .replace(/_+/g, '_')
       .replace(/^_|_$/g, '')
       .toLowerCase();
-    
+
     const finalName = cleanName || 'unnamed';
     const finalRebsorte = cleanRebsorte || 'unknown';
-    
+
     return `${finalName}_${finalRebsorte}.jpg`;
   };
 
@@ -95,6 +97,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
           geschmack: wineData.geschmack || [],
           kategorie: wineData.kategorie || '',
           unterkategorie: wineData.unterkategorie || '',
+          saison: wineData.saison || '',
           notizen: wineData.notizen || '',
           bewertung: wineData.bewertung || 0,
           imageUrl: wineData.imageUrl || ''
@@ -194,10 +197,10 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
         console.log('Upload mit fileName:', fileName);
 
         const uploadResponse = await imagekit.upload(uploadOptions);
-        
+
         const imageUrl = uploadResponse.url;
         setForm((prevForm) => ({ ...prevForm, imageUrl }));
-        
+
         console.log('Bild erfolgreich hochgeladen:', imageUrl);
       } catch (error: any) {
         console.error('Imagekit Upload Fehler:', error.message, error.response?.data);
@@ -514,6 +517,28 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
               </div>
             </div>
           )}
+        </section>
+        <section className="glass-card">
+          <h2 className="text-lg md:text-xl font-semibold mb-4">Saison</h2>
+          <div className="flex flex-col gap-4">
+            {['Sommer', 'Winter'].map((s) => (
+              <label key={s} className="unterkategorie-label text-[#496580]">
+                <input
+                  type="radio"
+                  name="saison"
+                  checked={form.saison === s}
+                  onChange={() => {
+                    setForm((prev) => ({
+                      ...prev,
+                      saison: prev.saison === s ? '' : s
+                    }));
+                  }}
+                  className="w-4 h-4 rounded-full accent-[#baddff]"
+                />
+                <span className="text-base">{s}</span>
+              </label>
+            ))}
+          </div>
         </section>
         <section className="glass-card bewertung-card">
           <h2 className="text-lg md:text-xl font-semibold mb-4">Bewertung <span className="text-red-500">*</span></h2>

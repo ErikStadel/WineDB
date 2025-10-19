@@ -12,6 +12,7 @@ export interface Wine {
   unterkategorie?: string;
   notizen?: string;
   bewertung?: number;
+  saison?: string;
   imageUrl?: string;
   timestamp: {
     $date: string;

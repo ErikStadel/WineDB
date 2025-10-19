@@ -162,6 +162,7 @@ app.post('/wine', async (req, res) => {
       geschmack: req.body.geschmack || [],
       kategorie: req.body.kategorie || '',
       unterkategorie: req.body.unterkategorie || '',
+      saison: req.body.saison || '',
       notizen: req.body.notizen || '',
       bewertung: req.body.bewertung || 0,
       imageUrl: req.body.imageUrl || '',

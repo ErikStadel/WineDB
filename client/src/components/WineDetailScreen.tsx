@@ -85,6 +85,12 @@ const WineDetailScreen: React.FC<WineDetailScreenProps> = ({ wineId, onBack, api
             <p><strong>Unterkategorie:</strong> {wine.unterkategorie || 'N/A'}</p>
           </div>
         </section>
+        {wine.saison && (
+          <section className="glass-card">
+            <h2 className="text-lg md:text-xl font-semibold mb-4">Saison</h2>
+            <p>{wine.saison}</p>
+          </section>
+        )}
         <section className="glass-card">
           <h2 className="text-lg md:text-xl font-semibold mb-4">Geschmack</h2>
           {wine.geschmack?.length ? (
