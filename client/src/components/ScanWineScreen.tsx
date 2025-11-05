@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import ReactDOM from 'react-dom';
 import WineDetailScreen from './WineDetailScreen';
+import EditWineScreen from './EditWineScreen';
 import '../App.css';
 
 interface Wine {
@@ -29,6 +30,7 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedWineId, setSelectedWineId] = useState<string | null>(null);
+  const [editingWineId, setEditingWineId] = useState<string | null>(null);
 
   const compressImage = (file: File): Promise<File> => {
     return new Promise((resolve) => {
@@ -131,13 +133,35 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
     }
   };
 
+  const handleEdit = (wineId: string) => {
+    setEditingWineId(wineId);
+  };
+
   const handleViewDetails = (wineId: string) => {
     setSelectedWineId(wineId);
+  };
+
+  const handleEditBack = (refresh: boolean = false) => {
+    setEditingWineId(null);
+    if (refresh) {
+      // Optional: Ergebnisse neu laden wenn gewünscht
+      setResults([]);
+    }
   };
 
   const handleDetailBack = () => {
     setSelectedWineId(null);
   };
+
+  if (editingWineId) {
+    return (
+      <EditWineScreen
+        wineId={editingWineId}
+        onBack={handleEditBack}
+        apiUrl={apiUrl}
+      />
+    );
+  }
 
   if (selectedWineId) {
     return (
@@ -216,6 +240,21 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
                     <p>Bewertung: {wine.bewertung || 0}/5</p>
                   </div>
                 </div>
+                <svg
+                  onClick={() => handleEdit(wine._id)}
+                  className="edit-icon"
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#496580"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
                 <svg
                   onClick={() => handleViewDetails(wine._id)}
                   className="view-icon"
