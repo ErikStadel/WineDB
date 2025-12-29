@@ -287,7 +287,7 @@ app.get('/wines/search', async (req, res) => {
             autocomplete: {
               query: q.trim(),
               path: 'rebsorte_autocomplete',
-              synonyms: 'Rebsorten'
+              fuzzy: { maxEdits: 2 }
             },
           },
           {
