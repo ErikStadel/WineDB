@@ -267,6 +267,7 @@ app.get('/wines/search', async (req, res) => {
                   query: q.trim(),
                   path: ['name', 'rebsorte', 'notizen', 'ocrRawText'], // Hinzugefügt: ocrRawText
                   fuzzy: { maxEdits: 2 },
+                  synonyms: 'Rebsorten'
                 },
               },
               {
@@ -281,6 +282,7 @@ app.get('/wines/search', async (req, res) => {
                   query: q.trim(),
                   path: 'rebsorte_autocomplete',
                   fuzzy: { maxEdits: 2 },
+                  synonyms: 'Rebsorten'
                 },
               },
               {
