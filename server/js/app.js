@@ -273,7 +273,6 @@ app.get('/wines/search', async (req, res) => {
             text: {
               query: q.trim(),
               path: 'rebsorte',
-              fuzzy: { maxEdits: 2 },
               synonyms: 'Rebsorten'
             },
           },
