@@ -257,46 +257,52 @@ app.get('/wines/search', async (req, res) => {
     const pipeline = [];
 
     if (q && q.trim() !== '') {
-      pipeline.push({
-        $search: {
-          index: 'WineSearch',
-          compound: {
-            should: [
-              {
-                text: {
-                  query: q.trim(),
-                  path: ['name', 'rebsorte', 'notizen', 'ocrRawText'], // Hinzugefügt: ocrRawText
-                  fuzzy: { maxEdits: 2 },
-                  synonyms: 'Rebsorten'
-                },
-              },
-              {
-                autocomplete: {
-                  query: q.trim(),
-                  path: 'name_autocomplete',
-                  fuzzy: { maxEdits: 2 },
-                },
-              },
-              {
-                autocomplete: {
-                  query: q.trim(),
-                  path: 'rebsorte_autocomplete',
-                  fuzzy: { maxEdits: 2 },
-                  synonyms: 'Rebsorten'
-                },
-              },
-              {
-                autocomplete: {
-                  query: q.trim(),
-                  path: 'ocrRawText_autocomplete', // Hinzugefügt: ocrRawText_autocomplete
-                  fuzzy: { maxEdits: 2 },
-                },
-              },
-            ],
-            minimumShouldMatch: 1,
+  pipeline.push({
+    $search: {
+      index: 'WineSearch',
+      compound: {
+        should: [
+          {
+            text: {
+              query: q.trim(),
+              path: ['name', 'notizen', 'ocrRawText'],
+              fuzzy: { maxEdits: 2 }
+            },
           },
-        },
-      });
+          {
+            text: {
+              query: q.trim(),
+              path: 'rebsorte',
+              fuzzy: { maxEdits: 2 },
+              synonyms: 'Rebsorten'
+            },
+          },
+          {
+            autocomplete: {
+              query: q.trim(),
+              path: 'name_autocomplete',
+              fuzzy: { maxEdits: 2 }
+            },
+          },
+          {
+            autocomplete: {
+              query: q.trim(),
+              path: 'rebsorte_autocomplete',
+              fuzzy: { maxEdits: 2 }
+            },
+          },
+          {
+            autocomplete: {
+              query: q.trim(),
+              path: 'ocrRawText_autocomplete',
+              fuzzy: { maxEdits: 2 }
+            },
+          },
+        ],
+        minimumShouldMatch: 1,
+      },
+    },
+  });
       pipeline.push({
         $addFields: {
           score: { $meta: 'searchScore' },
