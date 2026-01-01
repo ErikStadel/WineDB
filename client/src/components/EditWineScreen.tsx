@@ -515,18 +515,20 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
           <h2 className="text-lg md:text-xl font-semibold mb-4">Saison</h2>
           <div className="flex flex-col gap-4">
             {['Sommer', 'Winter'].map((s) => (
-              <label key={s} className="unterkategorie-label text-[#496580]">
+              <label key={s} className="unterkategorie-label text-[#496580] cursor-pointer">
                 <input
                   type="radio"
                   name="saison"
                   checked={form.saison === s}
                   onChange={() => {
+                    // Wenn bereits ausgewählt -> abwählen (leer setzen)
+                    // Wenn nicht ausgewählt -> auswählen
                     setForm((prev) => ({
                       ...prev,
                       saison: prev.saison === s ? '' : s
                     }));
                   }}
-                  className="w-4 h-4 rounded-full accent-[#baddff]"
+                  className="w-4 h-4 rounded-full accent-[#baddff] cursor-pointer"
                 />
                 <span className="text-base">{s}</span>
               </label>
