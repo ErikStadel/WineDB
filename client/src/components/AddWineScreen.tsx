@@ -465,22 +465,39 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
           <h2 className="text-lg md:text-xl font-semibold mb-4">Saison</h2>
           <div className="flex flex-col gap-4">
             {['Sommer', 'Winter'].map((s) => (
-              <label key={s} className="unterkategorie-label text-[#496580] cursor-pointer">
-                <input
-                  type="radio"
-                  name="saison"
-                  checked={form.saison === s}
-                  onChange={() => {
-                    // Wenn bereits ausgewählt -> abwählen (leer setzen)
-                    // Wenn nicht ausgewählt -> auswählen
+              <label
+                key={s}
+                className="unterkategorie-label text-[#496580] cursor-pointer flex items-center gap-3"
+              >
+                {/* Visueller "Radio"-Button, aber eigentlich ein div oder ein custom checkbox */}
+                <div
+                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
+            ${form.saison === s
+                      ? 'border-[#baddff] bg-[#baddff]'
+                      : 'border-gray-400 bg-transparent'
+                    }`}
+                  onClick={() => {
                     setForm((prev) => ({
                       ...prev,
-                      saison: prev.saison === s ? '' : s
+                      saison: prev.saison === s ? '' : s,
                     }));
                   }}
-                  className="w-4 h-4 rounded-full accent-[#baddff] cursor-pointer"
-                />
-                <span className="text-base">{s}</span>
+                >
+                  {form.saison === s && (
+                    <div className="w-2 h-2 rounded-full bg-white" />
+                  )}
+                </div>
+                <span
+                  className="text-base select-none"
+                  onClick={() => {
+                    setForm((prev) => ({
+                      ...prev,
+                      saison: prev.saison === s ? '' : s,
+                    }));
+                  }}
+                >
+                  {s}
+                </span>
               </label>
             ))}
           </div>
