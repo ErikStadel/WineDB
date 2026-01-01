@@ -1,6 +1,6 @@
 // Speichere diese Komponente als: client/src/components/PriceSlider.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface PriceSliderProps {
   value: string;
@@ -34,13 +34,43 @@ const PriceSlider: React.FC<PriceSliderProps> = ({ value, onChange }) => {
     '>12 €'
   ];
 
-  // Finde den Index des aktuellen Werts
+  // Konvertiert alte Preiswerte zu neuem Format
+  const convertLegacyPrice = (oldPrice: string): string => {
+    const legacyMap: { [key: string]: string } = {
+      '5-8 €': '6 €',      // Mittelpunkt von 5-8
+      '8-12 €': '10 €',    // Mittelpunkt von 8-12
+      '12-15 €': '12 €',   // Am oberen Ende
+      'ueber 15 €': 'ueber 12 €',
+      // Bereits neue Werte bleiben unverändert
+      'unter 5 €': 'unter 5 €',
+      '5 €': '5 €',
+      '6 €': '6 €',
+      '7 €': '7 €',
+      '8 €': '8 €',
+      '9 €': '9 €',
+      '10 €': '10 €',
+      '11 €': '11 €',
+      '12 €': '12 €',
+      'ueber 12 €': 'ueber 12 €'
+    };
+    
+    return legacyMap[oldPrice] || 'unter 5 €';
+  };
+
+  // Finde den Index des aktuellen Werts (mit Legacy-Support)
   const getCurrentIndex = () => {
-    const index = priceOptions.findIndex(p => p === value);
+    const convertedValue = convertLegacyPrice(value);
+    const index = priceOptions.findIndex(p => p === convertedValue);
     return index !== -1 ? index : 0;
   };
 
   const [sliderValue, setSliderValue] = useState(getCurrentIndex());
+
+  // Update slider wenn value sich ändert (z.B. beim Laden eines Weins)
+  useEffect(() => {
+    const newIndex = getCurrentIndex();
+    setSliderValue(newIndex);
+  }, [value]);
 
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newIndex = parseInt(e.target.value);
