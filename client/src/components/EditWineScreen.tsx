@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ImageKit from 'imagekit-javascript';
+import PriceSlider from './PriceSlider';
 import '../App.css';
 
 interface EditWineScreenProps {
@@ -423,18 +424,10 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
             <option value="Rosé">Rosé</option>
           </select>
           <label className="block font-semibold text-[#496580] mb-1 mt-4">Preis <span className="text-red-500">*</span></label>
-          <select
+          <PriceSlider
             value={form.preis}
-            onChange={(e) => setForm((prev) => ({ ...prev, preis: e.target.value }))}
-            className="w-full p-2 border border-[#496580] rounded-lg bg-transparent text-[#496580] focus:outline-none focus:ring-2 focus:ring-[#baddff] mt-1"
-          >
-            <option value="" disabled>Preis auswählen</option>
-            <option value="unter 5 €">{'<5 €'}</option>
-            <option value="5-8 €">5-8 €</option>
-            <option value="8-12 €">8-12 €</option>
-            <option value="12-15 €">12-15 €</option>
-            <option value="ueber 15 €">{'>15 €'}</option>
-          </select>
+            onChange={(newPrice) => setForm((prev) => ({ ...prev, preis: newPrice }))}
+          />
         </section>
         <section className="glass-card geschmack-card">
           <h2 className="text-lg md:text-xl font-semibold mb-4">Geschmack <span className="text-red-500">*</span></h2>
