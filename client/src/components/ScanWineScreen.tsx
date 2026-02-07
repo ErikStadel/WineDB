@@ -31,6 +31,7 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedWineId, setSelectedWineId] = useState<string | null>(null);
   const [editingWineId, setEditingWineId] = useState<string | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<string>('');
 
   const compressImage = (file: File): Promise<File> => {
     return new Promise((resolve) => {
@@ -92,13 +93,14 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
 
       setIsUploading(true);
       setError(null);
+      setUploadStatus('Bild wird komprimiert...');
 
       const compressedFile = await compressImage(file);
       console.log('Komprimierte Datei:', compressedFile.name, compressedFile.size, compressedFile.type);
 
+      setUploadStatus('Bild wird hochgeladen...');
       const formData = new FormData();
       formData.append('image', compressedFile);
-      console.log('FormData:', Array.from(formData.entries()));
 
       const imgbbResponse = await axios.post(
         'https://api.imgbb.com/1/upload',
@@ -112,22 +114,57 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
       const imageUrl = imgbbResponse.data.data.url;
       console.log('Bild hochgeladen zu ImgBB:', imageUrl);
 
-      const response = await axios.post<{ wines: Wine[]; totalCount: number; hasMore: boolean }>(
-        'https://cloud-job-608509602627.europe-west3.run.app/searchImage',
-        { imageUrl },
-        {
-          headers: { 'Content-Type': 'application/json' },
-          timeout: 15000,
-        }
-      );
+      setUploadStatus('KI analysiert das Bild...');
+      
+      let retryCount = 0;
+      const maxRetries = 2;
+      
+      while (retryCount <= maxRetries) {
+        try {
+          const response = await axios.post<{ wines: Wine[]; totalCount: number; hasMore: boolean }>(
+            'https://cloud-job-608509602627.europe-west3.run.app/imageSearch',
+            { imageUrl },
+            {
+              headers: { 'Content-Type': 'application/json' },
+              timeout: 60000, // 60 Sekunden Timeout (erhöht von 15s!)
+            }
+          );
 
-      setResults(response.data.wines);
-      setError(null);
-      console.log('Suchergebnisse:', response.data.wines);
+          setResults(response.data.wines);
+          setError(null);
+          setUploadStatus('');
+          console.log('Suchergebnisse:', response.data.wines);
+          break; // Erfolg, Schleife verlassen
+          
+        } catch (err: any) {
+          // 503 = Service Unavailable (Modelle laden noch)
+          if (err.response?.status === 503 && retryCount < maxRetries) {
+            retryCount++;
+            console.log(`Dienst noch nicht bereit, Versuch ${retryCount}/${maxRetries}...`);
+            setUploadStatus(`KI-Modelle werden geladen... (Versuch ${retryCount}/${maxRetries})`);
+            // 10 Sekunden warten bevor Retry
+            await new Promise(resolve => setTimeout(resolve, 10000));
+            continue;
+          }
+          
+          // Alle anderen Fehler oder max Retries erreicht
+          throw err;
+        }
+      }
+
     } catch (err: any) {
-      const errorMessage = err.response?.data?.error?.message || err.message || 'Unbekannter Fehler';
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'Unbekannter Fehler';
       console.error('Fehler bei der Bildsuche:', errorMessage, err.response?.data);
-      setError(`Fehler bei der Bildsuche: ${errorMessage}`);
+      
+      // Benutzerfreundliche Fehlermeldungen
+      if (err.code === 'ECONNABORTED') {
+        setError('Timeout: Die Bildanalyse dauert zu lange. Bitte versuche es erneut.');
+      } else if (err.response?.status === 503) {
+        setError('Die KI-Dienste starten gerade. Bitte warte 30 Sekunden und versuche es erneut.');
+      } else {
+        setError(`Fehler bei der Bildsuche: ${errorMessage}`);
+      }
+      setUploadStatus('');
     } finally {
       setIsUploading(false);
     }
@@ -144,7 +181,6 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
   const handleEditBack = (refresh: boolean = false) => {
     setEditingWineId(null);
     if (refresh) {
-      // Optional: Ergebnisse neu laden wenn gewünscht
       setResults([]);
     }
   };
@@ -185,7 +221,12 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
         <section className="glass-card image-upload bg-white bg-opacity-80 rounded-lg shadow-lg p-6 w-full max-w-md">
           <h2 className="text-lg md:text-xl font-semibold mb-4 text-gray-800">Wein Scannen</h2>
           {isUploading ? (
-            <div className="loader" />
+            <div className="flex flex-col items-center gap-4">
+              <div className="loader" />
+              {uploadStatus && (
+                <p className="text-sm text-gray-600 text-center">{uploadStatus}</p>
+              )}
+            </div>
           ) : (
             <label className="upload-plus flex items-center justify-center w-full h-32 bg-gray-200 rounded-lg cursor-pointer hover:bg-gray-300 transition">
               <span className="plus-symbol text-4xl text-gray-600">+</span>
@@ -198,7 +239,11 @@ const ScanWineScreen: React.FC<ScanWineScreenProps> = ({ onBack, apiUrl }) => {
               />
             </label>
           )}
-          {error && <p className="text-red-600 mt-4">{error}</p>}
+          {error && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600 text-sm">{error}</p>
+            </div>
+          )}
         </section>
         {results.length > 0 && (
           <section className="flex flex-col gap-4 w-full max-w-3xl">

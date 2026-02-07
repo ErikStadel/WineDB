@@ -12,6 +12,7 @@ const App: React.FC = () => {
   const [showWineDB, setShowWineDB] = useState(false);
   const [showScanWine, setShowScanWine] = useState(false);
   const [serverReady, setServerReady] = useState(false);
+  const [cloudFunctionReady, setCloudFunctionReady] = useState(false);
   const [isWakingUp, setIsWakingUp] = useState(false);
   
   // Scroll-Position für WineDBScreen speichern
@@ -21,53 +22,82 @@ const App: React.FC = () => {
   const apiUrl = process.env.REACT_APP_API_URL || 
     (window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'http://192.168.0.208:3001');
 
-  // Server beim App-Start "aufwecken"
+  const cloudFunctionUrl = 'https://cloud-job-608509602627.europe-west3.run.app';
+
+  // Server und Cloud Function beim App-Start "aufwecken"
   useEffect(() => {
-    const wakeUpServer = async () => {
-      
+    const wakeUpServices = async () => {
       // Nur wenn nicht localhost (d.h. in Produktion)
       if (window.location.hostname === 'localhost') {
         setServerReady(true);
+        setCloudFunctionReady(true);
         return;
       }
 
       setIsWakingUp(true);
-      try {
-        // Einfacher Health-Check Endpoint
-        const response = await axios.get(`${apiUrl}/health`, { 
-          timeout: 30000 // 30 Sekunden Timeout
-        });
-        console.log('Server ist bereit:', response.data);
-        setServerReady(true);
-      } catch (error) {
-        console.log('Server noch nicht bereit, versuche Fallback...');
-        // Fallback: Versuche /wines endpoint
+
+      // Parallel beide Services aufwecken
+      const wakeUpServer = async () => {
         try {
-          await axios.get(`${apiUrl}/wines`, { timeout: 30000 });
-          console.log('Server über /wines endpoint erreicht');
+          const response = await axios.get(`${apiUrl}/health`, { 
+            timeout: 30000 
+          });
+          console.log('✅ Server ist bereit:', response.data);
           setServerReady(true);
-        } catch (fallbackError) {
-          console.error('Server nicht erreichbar:', fallbackError);
-          // App trotzdem laden, aber mit Warnung
-          setServerReady(true);
+        } catch (error) {
+          console.log('Server noch nicht bereit, versuche Fallback...');
+          try {
+            await axios.get(`${apiUrl}/wines`, { timeout: 30000 });
+            console.log('✅ Server über /wines endpoint erreicht');
+            setServerReady(true);
+          } catch (fallbackError) {
+            console.error('❌ Server nicht erreichbar:', fallbackError);
+            setServerReady(true); // App trotzdem laden
+          }
         }
-      } finally {
-        setIsWakingUp(false);
-      }
+      };
+
+      const wakeUpCloudFunction = async () => {
+        try {
+          console.log('🚀 Wecke Cloud Function auf...');
+          // Dummy-Request um die Cloud Function zu starten
+          // OPTIONS request für CORS preflight - löst Kaltstart aus
+          await axios.options(`${cloudFunctionUrl}/imageSearch`, {
+            timeout: 45000, // 45 Sekunden für Kaltstart
+            headers: {
+              'Origin': window.location.origin
+            }
+          });
+          console.log('✅ Cloud Function ist bereit');
+          setCloudFunctionReady(true);
+        } catch (error: any) {
+          // 204 No Content ist OK bei OPTIONS
+          if (error.response?.status === 204) {
+            console.log('✅ Cloud Function ist bereit (OPTIONS 204)');
+            setCloudFunctionReady(true);
+          } else {
+            console.warn('⚠️ Cloud Function Warmup fehlgeschlagen, wird beim ersten Scan nachgeholt');
+            setCloudFunctionReady(true); // Trotzdem weitermachen
+          }
+        }
+      };
+
+      // Beide parallel starten
+      await Promise.all([wakeUpServer(), wakeUpCloudFunction()]);
+      
+      setIsWakingUp(false);
     };
 
-    wakeUpServer();
+    wakeUpServices();
   }, [apiUrl]);
 
   const handleWineDBBack = () => {
-    // Scroll-Position zurücksetzen beim Verlassen
     wineDBScrollPosition.current = 0;
     setShowWineDB(false);
   };
 
   const handleWineDBOpen = () => {
     setShowWineDB(true);
-    // Optional: Nochmal einen sanften Preload
     if (serverReady) {
       axios.get(`${apiUrl}/wines`).catch(() => {});
     }
@@ -113,23 +143,36 @@ const App: React.FC = () => {
             <button 
               className="btn-outline text-base font-medium w-full" 
               onClick={() => setShowScanWine(true)}
+              disabled={isWakingUp}
             >
               Wein Scannen
+              {!cloudFunctionReady && !isWakingUp && (
+                <span className="text-sm opacity-75"> (KI lädt...)</span>
+              )}
             </button>
           </div>
         </section>
-        {/* Loading State während Server aufwacht */}
-          {isWakingUp && (
-            <div className="glass-alert mb-4 mt-6 p-4 flex items-center gap-3">
+        
+        {/* Loading State während Services aufwachen */}
+        {isWakingUp && (
+          <div className="glass-alert mb-4 mt-6 p-4">
+            <div className="flex flex-col gap-2">
               <div className="flex items-center gap-3">
                 <div className="loader"></div>
-                <span>Server wird gestartet...</span>
+                <span className="font-medium">Dienste werden gestartet...</span>
+              </div>
+              <div className="text-sm opacity-75 ml-8">
+                {!serverReady && '⏳ Server startet...'}
+                {serverReady && !cloudFunctionReady && '⏳ Bild-KI lädt Modelle...'}
+                {serverReady && cloudFunctionReady && '✅ Alles bereit!'}
               </div>
             </div>
-          )}
+          </div>
+        )}
       </main>
       <footer className="footer">
         <p className="text-sm">❤️ We Love Wein ❤️</p>
+        <p className="text-xs">v 2.1</p>
       </footer>
     </div>
   );
