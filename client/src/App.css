@@ -263,7 +263,6 @@ input[type="range"] {
 /* Footer */
 .footer {
   background-color: #496580;
-  color: #ffffff;
   text-align: center;
   padding: 1rem;
   font-size: 0.9rem;
@@ -272,6 +271,10 @@ input[type="range"] {
   bottom: 0;
   z-index: 10;
   width: 100%;
+}
+
+.footer p {
+  color: #ffffff;
 }
 
 /* Utilities */
