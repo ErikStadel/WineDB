@@ -14,12 +14,12 @@ const App: React.FC = () => {
   const [serverReady, setServerReady] = useState(false);
   const [cloudFunctionReady, setCloudFunctionReady] = useState(false);
   const [isWakingUp, setIsWakingUp] = useState(false);
-  
+
   // Scroll-Position für WineDBScreen speichern
   const wineDBScrollPosition = useRef<number>(0);
 
   // API-URL basierend auf Umgebungsvariable oder Fallback für lokale Tests
-  const apiUrl = process.env.REACT_APP_API_URL || 
+  const apiUrl = process.env.REACT_APP_API_URL ||
     (window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'http://192.168.0.208:3001');
 
   const cloudFunctionUrl = 'https://cloud-job-608509602627.europe-west3.run.app';
@@ -39,8 +39,8 @@ const App: React.FC = () => {
       // Parallel beide Services aufwecken
       const wakeUpServer = async () => {
         try {
-          const response = await axios.get(`${apiUrl}/health`, { 
-            timeout: 30000 
+          const response = await axios.get(`${apiUrl}/health`, {
+            timeout: 30000
           });
           console.log('✅ Server ist bereit:', response.data);
           setServerReady(true);
@@ -84,7 +84,7 @@ const App: React.FC = () => {
 
       // Beide parallel starten
       await Promise.all([wakeUpServer(), wakeUpCloudFunction()]);
-      
+
       setIsWakingUp(false);
     };
 
@@ -99,7 +99,7 @@ const App: React.FC = () => {
   const handleWineDBOpen = () => {
     setShowWineDB(true);
     if (serverReady) {
-      axios.get(`${apiUrl}/wines`).catch(() => {});
+      axios.get(`${apiUrl}/wines`).catch(() => { });
     }
   };
 
@@ -107,8 +107,8 @@ const App: React.FC = () => {
   if (showScanWine) return <ScanWineScreen onBack={() => setShowScanWine(false)} apiUrl={apiUrl} />;
   if (showInspiration) return <InspirationScreen onBack={() => setShowInspiration(false)} />;
   if (showWineDB) return (
-    <WineDBScreen 
-      onBack={handleWineDBBack} 
+    <WineDBScreen
+      onBack={handleWineDBBack}
       apiUrl={apiUrl}
       scrollPosition={wineDBScrollPosition}
     />
@@ -121,17 +121,17 @@ const App: React.FC = () => {
       </header>
       <main className="flex-1 p-6 flex flex-col items-center gap-12">
         <section className="glass-card">
-          <h2 className="text-lg md:text-xl font-semibold text-[#baddff] mb-4">Willkommen</h2>  
+          <h2 className="text-lg md:text-xl font-semibold text-[#baddff] mb-4">Willkommen</h2>
           <div className="flex flex-col gap-4 w-full max-w-xs mx-auto">
-            <button 
-              className="btn-primary text-base font-medium w-full" 
+            <button
+              className="btn-primary text-base font-medium w-full"
               onClick={() => setShowAddWine(true)}
               disabled={isWakingUp}
             >
               Wein hinzufügen
             </button>
-            <button 
-              className="btn-primary text-base font-medium w-full" 
+            <button
+              className="btn-primary text-base font-medium w-full"
               onClick={handleWineDBOpen}
               disabled={isWakingUp}
             >
@@ -140,8 +140,8 @@ const App: React.FC = () => {
                 <span className="text-sm opacity-75"> (Server startet...)</span>
               )}
             </button>
-            <button 
-              className="btn-outline text-base font-medium w-full" 
+            <button
+              className="btn-outline text-base font-medium w-full"
               onClick={() => setShowScanWine(true)}
               disabled={isWakingUp}
             >
@@ -152,7 +152,7 @@ const App: React.FC = () => {
             </button>
           </div>
         </section>
-        
+
         {/* Loading State während Services aufwachen */}
         {isWakingUp && (
           <div className="glass-alert mb-4 mt-6 p-4">
@@ -171,9 +171,9 @@ const App: React.FC = () => {
         )}
       </main>
       <footer className="footer">
-  <p className="text-sm">❤️ We Love Wein ❤️</p>
-  <p className="text-xs text-gray-400">v 2.4</p>
-</footer>
+        <p className="text-sm">❤️ We Love Wein ❤️</p>
+        <p className="text-xs !text-gray-400">v 2.1</p>
+      </footer>
     </div>
   );
 };
