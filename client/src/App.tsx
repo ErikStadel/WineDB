@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
+import { Analytics } from '@vercel/analytics/react';
 import AddWineScreen from './components/AddWineScreen';
 import InspirationScreen from './components/InspirationScreen';
 import WineDBScreen from './components/WineDBScreen';
@@ -115,66 +116,69 @@ const App: React.FC = () => {
   );
 
   return (
-    <div className="App">
-      <header className="glass-header">
-        <h1 className="header-title">Wein Bewertung</h1>
-      </header>
-      <main className="flex-1 p-6 flex flex-col items-center gap-12">
-        <section className="glass-card">
-          <h2 className="text-lg md:text-xl font-semibold text-[#baddff] mb-4">Willkommen</h2>
-          <div className="flex flex-col gap-4 w-full max-w-xs mx-auto">
-            <button
-              className="btn-primary text-base font-medium w-full"
-              onClick={() => setShowAddWine(true)}
-              disabled={isWakingUp}
-            >
-              Wein hinzufügen
-            </button>
-            <button
-              className="btn-primary text-base font-medium w-full"
-              onClick={handleWineDBOpen}
-              disabled={isWakingUp}
-            >
-              Datenbank
-              {!serverReady && !isWakingUp && (
-                <span className="text-sm opacity-75"> (Server startet...)</span>
-              )}
-            </button>
-            <button
-              className="btn-outline text-base font-medium w-full"
-              onClick={() => setShowScanWine(true)}
-              disabled={isWakingUp}
-            >
-              Wein Scannen
-              {!cloudFunctionReady && !isWakingUp && (
-                <span className="text-sm opacity-75"> (KI lädt...)</span>
-              )}
-            </button>
-          </div>
-        </section>
-
-        {/* Loading State während Services aufwachen */}
-        {isWakingUp && (
-          <div className="glass-alert mb-4 mt-6 p-4">
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-3">
-                <div className="loader"></div>
-                <span className="font-medium">Dienste werden gestartet...</span>
-              </div>
-              <div className="text-sm opacity-75 ml-8">
-                {!serverReady && '⏳ Server startet...'}
-                {serverReady && !cloudFunctionReady && '⏳ Bild-KI lädt Modelle...'}
-                {serverReady && cloudFunctionReady && '✅ Alles bereit!'}
+    <>
+      <Analytics />
+      <div className="App">
+        <header className="glass-header">
+          <h1 className="header-title">Wein Bewertung</h1>
+        </header>
+        <main className="flex-1 p-6 flex flex-col items-center gap-12">
+          <section className="glass-card">
+            <h2 className="text-lg md:text-xl font-semibold text-[#baddff] mb-4">Willkommen</h2>  
+            <div className="flex flex-col gap-4 w-full max-w-xs mx-auto">
+              <button 
+                className="btn-primary text-base font-medium w-full" 
+                onClick={() => setShowAddWine(true)}
+                disabled={isWakingUp}
+              >
+                Wein hinzufügen
+              </button>
+              <button 
+                className="btn-primary text-base font-medium w-full" 
+                onClick={handleWineDBOpen}
+                disabled={isWakingUp}
+              >
+                Datenbank
+                {!serverReady && !isWakingUp && (
+                  <span className="text-sm opacity-75"> (Server startet...)</span>
+                )}
+              </button>
+              <button 
+                className="btn-outline text-base font-medium w-full" 
+                onClick={() => setShowScanWine(true)}
+                disabled={isWakingUp}
+              >
+                Wein Scannen
+                {!cloudFunctionReady && !isWakingUp && (
+                  <span className="text-sm opacity-75"> (KI lädt...)</span>
+                )}
+              </button>
+            </div>
+          </section>
+          
+          {/* Loading State während Services aufwachen */}
+          {isWakingUp && (
+            <div className="glass-alert mb-4 mt-6 p-4">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-3">
+                  <div className="loader"></div>
+                  <span className="font-medium">Dienste werden gestartet...</span>
+                </div>
+                <div className="text-sm opacity-75 ml-8">
+                  {!serverReady && '⏳ Server startet...'}
+                  {serverReady && !cloudFunctionReady && '⏳ Bild-KI lädt Modelle...'}
+                  {serverReady && cloudFunctionReady && '✅ Alles bereit!'}
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </main>
+          )}
+        </main>
       <footer className="footer">
         <p className="text-sm">❤️ We Love Wein ❤️</p>
-        <p className="version-text">v 2.4</p>
+        <p className="version-text">v 2.5</p>
       </footer>
     </div>
+       </>
   );
 };
 
