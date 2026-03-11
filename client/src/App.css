@@ -148,7 +148,7 @@ body::before {
   
   background-image: radial-gradient(
   ellipse 120% 100% at 50% 50%, /* Übergroße Ellipse für weichen Effekt */
-  rgba(201, 169, 110, 0.15) 0%,  /* Etwas weniger Deckkraft für mehr Eleganz */
+  rgba(201, 169, 110, 0.10) 0%,  /* Etwas weniger Deckkraft für mehr Eleganz */
   rgba(22, 32, 48, 0.4) 50%,     /* Der dunkle Ton beginnt sanft */
   transparent 100%               /* Läuft ganz weich nach außen aus */
 );
