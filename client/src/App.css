@@ -140,12 +140,6 @@ body {
       rgba(201, 169, 110, 0.2) 0%,   /* Deutlich erhöhte Deckkraft */
       rgba(22, 32, 48, 0.6) 45%,      /* Sanfterer Übergang ins Dunkle */
       transparent 100%
-    ),
-    /* Akzent: Ein heller Lichtkegel von oben */
-    radial-gradient(
-      ellipse 60% 40% at 50% 0%,
-      rgba(255, 230, 180, 0.25) 0%,   /* Fast weiß-goldener "Hotspot" */
-      transparent 75%
     );
 
   /* Der entscheidende Modus für das Leuchten */
