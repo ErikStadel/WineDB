@@ -313,15 +313,17 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
 
           {displayedWines.map(wine => (
             <div key={wine._id.$oid}
-                 className="glass-card wine-entry wine-entry-editable"
-                 style={{ padding:'1rem 1.25rem', display:'flex', gap:'0.75rem', alignItems:'flex-start' }}>
+                 className="glass-card wine-entry"
+                 style={{ padding:'1.1rem 1.1rem 1.1rem 0', display:'flex',
+                          gap:0, alignItems:'stretch', overflow:'hidden' }}>
 
-              {/* Colour stripe */}
-              <div style={{ width:3, alignSelf:'stretch', borderRadius:2, flexShrink:0,
-                            background: wineStripeColor(wine.farbe) }} />
+              {/* ① Colour stripe */}
+              <div style={{ width:4, flexShrink:0, borderRadius:'6px 0 0 6px',
+                            background: wineStripeColor(wine.farbe),
+                            marginRight:'0.9rem' }} />
 
-              {/* Thumbnail */}
-              <div style={{ width:52, height:52, flexShrink:0,
+              {/* ② Thumbnail */}
+              <div style={{ width:64, height:64, flexShrink:0, alignSelf:'flex-start', marginTop:2,
                             background:'var(--color-glass-bg)',
                             border:'1px solid var(--color-glass-border)',
                             borderRadius:4, overflow:'hidden',
@@ -334,55 +336,78 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
                 )}
               </div>
 
-              {/* Info */}
-              <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ display:'flex', justifyContent:'space-between', flexWrap:'wrap', gap:'0.25rem' }}>
-                  <div>
-                    <h3 style={{ fontFamily:'Cormorant Garamond,serif', fontSize:'1.1rem', fontWeight:500,
-                                 color:'var(--color-text-primary)', margin:0 }}>
-                      {wine.name}
-                      {wine.score && (
-                        <span style={{ fontSize:'0.68rem', color:'var(--color-accent)', marginLeft:6, opacity:0.65 }}>
-                          ({Math.round(wine.score * 100) / 100})
-                        </span>
-                      )}
-                    </h3>
-                    <p style={{ fontSize:'0.72rem', color:'var(--color-accent)', letterSpacing:'0.06em', marginTop:2 }}>
-                      {wine.rebsorte || 'N/A'} · {wine.farbe || 'N/A'}
-                    </p>
-                  </div>
-                  <div style={{ textAlign:'right' }}>
-                    <p style={{ fontSize:'0.78rem', color:'var(--color-text-secondary)' }}>{wine.kategorie || 'N/A'}</p>
-                    <p style={{ fontSize:'0.72rem', color:'var(--color-text-muted)' }}>{wine.unterkategorie || 'N/A'}</p>
-                  </div>
-                </div>
-                <div style={{ display:'flex', justifyContent:'space-between', marginTop:'0.5rem',
-                              fontSize:'0.8rem', color:'var(--color-text-secondary)', flexWrap:'wrap', gap:'0.25rem' }}>
-                  <span>{wine.preis || 'N/A'}</span>
-                  <span>
-                    <span style={{ color:'var(--color-star-active)', letterSpacing:2 }}>
+              {/* ③ Main info — fills remaining space */}
+              <div style={{ flex:1, minWidth:0, paddingLeft:'0.85rem', display:'flex', flexDirection:'column', gap:'0.3rem' }}>
+
+                {/* Row 1: Name */}
+                <h3 style={{ fontFamily:'Cormorant Garamond,serif', fontSize:'1.15rem', fontWeight:500,
+                             color:'var(--color-text-primary)', margin:0, lineHeight:1.25 }}>
+                  {wine.name}
+                  {wine.score && (
+                    <span style={{ fontSize:'0.65rem', color:'var(--color-accent)', marginLeft:6, opacity:0.6 }}>
+                      ({Math.round(wine.score * 100) / 100})
+                    </span>
+                  )}
+                </h3>
+
+                {/* Row 2: Rebsorte · Farbe */}
+                <p style={{ fontSize:'0.72rem', color:'var(--color-accent)',
+                            letterSpacing:'0.06em', margin:0 }}>
+                  {wine.rebsorte || 'N/A'} · {wine.farbe || 'N/A'}
+                </p>
+
+                {/* Row 3: Kategorie + Unterkategorie */}
+                <p style={{ fontSize:'0.78rem', color:'var(--color-text-secondary)', margin:0 }}>
+                  {wine.kategorie || 'N/A'}
+                  {wine.unterkategorie && (
+                    <span style={{ color:'var(--color-text-muted)', marginLeft:6 }}>
+                      · {wine.unterkategorie}
+                    </span>
+                  )}
+                </p>
+
+                {/* Row 4: Preis + Sterne */}
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center',
+                              marginTop:'0.2rem' }}>
+                  <span style={{ fontSize:'0.85rem', color:'var(--color-text-primary)',
+                                 fontFamily:'DM Sans,sans-serif' }}>
+                    {wine.preis || 'N/A'}
+                  </span>
+                  <span style={{ fontSize:'1rem', letterSpacing:2 }}>
+                    <span style={{ color:'var(--color-star-active)' }}>
                       {'★'.repeat(wine.bewertung || 0)}
                     </span>
-                    <span style={{ color:'var(--color-star-inactive)', letterSpacing:2 }}>
+                    <span style={{ color:'var(--color-star-inactive)' }}>
                       {'★'.repeat(5 - (wine.bewertung || 0))}
                     </span>
                   </span>
                 </div>
               </div>
 
-              {/* Icons */}
-              <svg onClick={() => handleEdit(wine._id)} className="edit-icon"
-                   width="20" height="20" viewBox="0 0 24 24" fill="none"
-                   stroke="var(--color-accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-              </svg>
-              <svg onClick={() => handleViewDetails(wine._id)} className="view-icon"
-                   width="20" height="20" viewBox="0 0 24 24" fill="none"
-                   stroke="var(--color-accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
+              {/* ④ Icon column — fixed width, never overlaps content */}
+              <div style={{ display:'flex', flexDirection:'column', justifyContent:'space-between',
+                            alignItems:'center', paddingLeft:'0.75rem',
+                            flexShrink:0, width:28 }}>
+                <svg onClick={() => handleEdit(wine._id)}
+                     style={{ cursor:'pointer', opacity:0.55, transition:'opacity 0.2s' }}
+                     width="18" height="18" viewBox="0 0 24 24" fill="none"
+                     stroke="var(--color-accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+                     onMouseEnter={e => (e.currentTarget.style.opacity='1')}
+                     onMouseLeave={e => (e.currentTarget.style.opacity='0.55')}>
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+                <svg onClick={() => handleViewDetails(wine._id)}
+                     style={{ cursor:'pointer', opacity:0.55, transition:'opacity 0.2s' }}
+                     width="18" height="18" viewBox="0 0 24 24" fill="none"
+                     stroke="var(--color-accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+                     onMouseEnter={e => (e.currentTarget.style.opacity='1')}
+                     onMouseLeave={e => (e.currentTarget.style.opacity='0.55')}>
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </div>
+
             </div>
           ))}
 
