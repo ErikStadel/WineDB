@@ -147,9 +147,9 @@ body::before {
   z-index: -1; /* Hinter den Content legen */
   
   background-image: radial-gradient(
-    ellipse 80% 80% at 50% 50%,
+    circle 80% 80% at 50% 50%,
     rgba(201, 169, 110, 0.2) 0%,
-    rgba(22, 32, 48, 0.6) 45%,
+    rgba(22, 32, 48, 0.6) 60%,
     transparent 100%
   );
   
