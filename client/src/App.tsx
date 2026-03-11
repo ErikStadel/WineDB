@@ -175,7 +175,7 @@ const App: React.FC = () => {
         </main>
       <footer className="footer">
         <p className="text-sm">❤️ We Love Wein ❤️</p>
-        <p className="version-text">v 2.5</p>
+        <p className="version-text">v 2.5.1</p>
       </footer>
     </div>
        </>
