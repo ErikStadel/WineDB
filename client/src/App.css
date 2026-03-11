@@ -1,7 +1,127 @@
-/* Font Import */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+/* ============================================================
+   WEIN BEWERTUNG — Design System
+   Elegant & Kühl · Dark Wine Magazine Aesthetic
+   ============================================================ */
 
-/* Global Reset and Base Styles */
+/* ------------------------------------------------------------
+   1. FONT IMPORTS
+   ------------------------------------------------------------ */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+/* ------------------------------------------------------------
+   2. COLOR TOKENS
+   Alle Farben der App sind hier zentral definiert.
+   Zum Anpassen nur diese Tabelle ändern — nirgendwo sonst.
+
+   HINTERGRÜNDE
+   --color-bg-base        Haupt-Hintergrund (tiefes Marineblau)
+   --color-bg-mid         Mittlerer Gradient-Stop
+   --color-bg-deep        Dunkelster Gradient-Stop
+
+   GLASSKARTEN
+   --color-glass-bg       Karten-Hintergrund (halbtransparent)
+   --color-glass-border   Karten-Rahmen
+   --color-glass-shadow   Karten-Schatten
+
+   HEADER & FOOTER
+   --color-header-bg      Header-Hintergrund
+   --color-header-border  Header-Trennlinie
+
+   TYPOGRAFIE
+   --color-text-primary   Haupttext (warm-crème)
+   --color-text-secondary Sekundärtext (gedämpft)
+   --color-text-muted     Hilfstext (sehr gedämpft)
+   --color-heading        Überschriften (Serif-Font)
+
+   AKZENT (Gold)
+   --color-accent         Goldakzent (Hauptfarbe für Icons, Labels)
+   --color-accent-light   Heller Gold (Hover, Highlights)
+   --color-accent-dim     Gedämpftes Gold (Borders, Hintergründe)
+
+   INTERAKTION
+   --color-btn-primary-bg       Button Primär Hintergrund
+   --color-btn-primary-text     Button Primär Text
+   --color-btn-primary-hover    Button Primär Hover
+   --color-btn-secondary-bg     Button Sekundär Hintergrund
+   --color-btn-secondary-text   Button Sekundär Text
+   --color-btn-danger-bg        Löschen-Button
+   --color-btn-danger-hover     Löschen-Button Hover
+
+   INPUTS
+   --color-input-border   Input-Rahmen
+   --color-input-focus    Input Fokus-Rahmen
+   --color-input-bg       Input-Hintergrund
+
+   BEWERTUNG & STATUS
+   --color-star-active    Aktiver Stern
+   --color-star-inactive  Inaktiver Stern
+   --color-wine-red       Farbpunkt für Rotwein
+   --color-wine-rose      Farbpunkt für Rosé
+   --color-wine-white     Farbpunkt für Weißwein
+   --color-success        Erfolgs-Snackbar
+   --color-success-text   Erfolgs-Snackbar Text
+   --color-error          Fehler-Snackbar
+
+   OVERLAY
+   --color-overlay-bg     Bild-Overlay Hintergrund
+   ------------------------------------------------------------ */
+:root {
+  /* Hintergründe */
+  --color-bg-base:         #1a2332;
+  --color-bg-mid:          #0f1a27;
+  --color-bg-deep:         #162030;
+
+  /* Glasskarten */
+  --color-glass-bg:        rgba(255, 255, 255, 0.04);
+  --color-glass-border:    rgba(201, 169, 110, 0.2);
+  --color-glass-shadow:    rgba(0, 0, 0, 0.25);
+
+  /* Header & Footer */
+  --color-header-bg:       rgba(15, 26, 39, 0.92);
+  --color-header-border:   rgba(201, 169, 110, 0.25);
+
+  /* Typografie */
+  --color-text-primary:    #e8dcc8;
+  --color-text-secondary:  rgba(232, 220, 200, 0.65);
+  --color-text-muted:      rgba(232, 220, 200, 0.35);
+  --color-heading:         #e8dcc8;
+
+  /* Akzent Gold */
+  --color-accent:          #c9a96e;
+  --color-accent-light:    #dfc28e;
+  --color-accent-dim:      rgba(201, 169, 110, 0.15);
+
+  /* Buttons */
+  --color-btn-primary-bg:    #c9a96e;
+  --color-btn-primary-text:  #0f1a27;
+  --color-btn-primary-hover: #dfc28e;
+  --color-btn-secondary-bg:  rgba(201, 169, 110, 0.12);
+  --color-btn-secondary-text: #c9a96e;
+  --color-btn-danger-bg:     rgba(180, 50, 50, 0.7);
+  --color-btn-danger-hover:  rgba(200, 60, 60, 0.9);
+
+  /* Inputs */
+  --color-input-border:    rgba(201, 169, 110, 0.35);
+  --color-input-focus:     rgba(201, 169, 110, 0.7);
+  --color-input-bg:        rgba(255, 255, 255, 0.04);
+
+  /* Bewertung & Status */
+  --color-star-active:     #c9a96e;
+  --color-star-inactive:   rgba(232, 220, 200, 0.2);
+  --color-wine-red:        #8b1a2a;
+  --color-wine-rose:       #c4687a;
+  --color-wine-white:      #d4c4a0;
+  --color-success:         rgba(180, 210, 160, 0.15);
+  --color-success-text:    #a8d090;
+  --color-error:           rgba(180, 50, 50, 0.85);
+
+  /* Overlay */
+  --color-overlay-bg:      rgba(0, 0, 0, 0.92);
+}
+
+/* ------------------------------------------------------------
+   3. GLOBAL RESET & BASE
+   ------------------------------------------------------------ */
 * {
   margin: 0;
   padding: 0;
@@ -9,23 +129,55 @@
 }
 
 body {
-  font-family: 'Inter', sans-serif;
-  background-color: #ffdbbb;
-  color: #496580;
+  font-family: 'DM Sans', sans-serif;
+  background-color: var(--color-bg-mid);
+  background-image:
+    linear-gradient(145deg, var(--color-bg-base) 0%, var(--color-bg-mid) 50%, var(--color-bg-deep) 100%),
+    url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIiA/Pgo8IURPQ1RZUEUgc3ZnIFBVQkxJQyAiLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4iICJodHRwOi8vd3d3LnczLm9yZy9HcmFwaGljcy9TVkcvMS4xL0RURC9zdmcxMS5kdGQiPgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHZlcnNpb249IjEuMSIgd2lkdGg9IjEwODAiIGhlaWdodD0iMTA4MCIgdmlld0JveD0iMCAwIDEwODAgMTA4MCIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxkZXNjPkNyZWF0ZWQgd2l0aCBGYWJyaWMuanMgNS4yLjQ8L2Rlc2M+CjxkZWZzPgo8L2RlZnM+CjxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InRyYW5zcGFyZW50Ij48L3JlY3Q+CjxnIHRyYW5zZm9ybT0ibWF0cml4KDEgMCAwIDEgNTQwIDU0MCkiIGlkPSJmYjhhNTFhYS1lYzM5LTQyZTUtYTVhOC05NmZlZjQ2M2Y2MWEiICA+CjxyZWN0IHN0eWxlPSJzdHJva2U6IG5vbmU7IHN0cm9rZS13aWR0aDogMTsgc3Ryb2tlLWRhc2hhcnJheTogbm9uZTsgc3Ryb2tlLWxpbmVjYXA6IGJ1dHQ7IHN0cm9rZS1kYXNob2Zmc2V0OiAwOyBzdHJva2UtbGluZWpvaW46IG1pdGVyOyBzdHJva2UtbWl0ZXJsaW1pdDogNDsgZmlsbDogcmdiKDI1NSwyNTUsMjU1KTsgZmlsbC1ydWxlOiBub256ZXJvOyBvcGFjaXR5OiAxOyB2aXNpYmlsaXR5OiBoaWRkZW47IiB2ZWN0b3ItZWZmZWN0PSJub24tc2NhbGluZy1zdHJva2UiICB4PSItNTQwIiB5PSItNTQwIiByeD0iMCIgcnk9IjAiIHdpZHRoPSIxMDgwIiBoZWlnaHQ9IjEwODAiIC8+CjwvZz4KPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSAwIDAgMSA1NDAgNTQwKSIgaWQ9IjgzOGFjYjdjLTkyMDctNDJjOC1iYzQwLWNhYTljY2Y2ZDcwNiIgID4KPC9nPgo8ZyB0cmFuc2Zvcm09Im1hdHJpeCgzLjE2IDAgMCAzLjE2IDU0MCA5MTIuOTQpIiBpZD0iNjUxMjI3ZjAtYTA2MC00NjM5LWI1NmItZDZlMmE3NjBiYTNmIiAgPgo8Y2lyY2xlIHN0eWxlPSJzdHJva2U6IHJnYigwLDAsMCk7IHN0cm9rZS13aWR0aDogMDsgc3Ryb2tlLWRhc2hhcnJheTogbm9uZTsgc3Ryb2tlLWxpbmVjYXA6IGJ1dHQ7IHN0cm9rZS1kYXNob2Zmc2V0OiAwOyBzdHJva2UtbGluZWpvaW46IG1pdGVyOyBzdHJva2UtbWl0ZXJsaW1pdDogNDsgZmlsbDogcmdiKDIwMSwxNjksMTEwKTsgZmlsbC1ydWxlOiBub256ZXJvOyBvcGFjaXR5OiAwLjA2OyIgdmVjdG9yLWVmZmVjdD0ibm9uLXNjYWxpbmctc3Ryb2tlIiAgY3g9IjAiIGN5PSIwIiByPSIzNSIgLz4KPC9nPgo8ZyB0cmFuc2Zvcm09Im1hdHJpeCgzLjE2IDAgMCAzLjE2IDY1NS45NyA4MTIuMjQpIiBpZD0iNjUxMjI3ZjAtYTA2MC00NjM5LWI1NmItZDZlMmE3NjBiYTNmIiAgPgo8Y2lyY2xlIHN0eWxlPSJzdHJva2U6IHJnYigwLDAsMCk7IHN0cm9rZS13aWR0aDogMDsgc3Ryb2tlLWRhc2hhcnJheTogbm9uZTsgc3Ryb2tlLWxpbmVjYXA6IGJ1dHQ7IHN0cm9rZS1kYXNob2Zmc2V0OiAwOyBzdHJva2UtbGluZWpvaW46IG1pdGVyOyBzdHJva2UtbWl0ZXJsaW1pdDogNDsgZmlsbDogcmdiKDIwMSwxNjksMTEwKTsgZmlsbC1ydWxlOiBub256ZXJvOyBvcGFjaXR5OiAwLjA2OyIgdmVjdG9yLWVmZmVjdD0ibm9uLXNjYWxpbmctc3Ryb2tlIiAgY3g9IjAiIGN5PSIwIiByPSIzNSIgLz4KPC9nPgo8ZyB0cmFuc2Zvcm09Im1hdHJpeCgzLjE2IDAgMCAzLjE2IDQ2Ni42NCA3ODQuMTkpIiBpZD0iNjUxMjI3ZjAtYTA2MC00NjM5LWI1NmItZDZlMmE3NjBiYTNmIiAgPgo8Y2lyY2xlIHN0eWxlPSJzdHJva2U6IHJnYigwLDAsMCk7IHN0cm9rZS13aWR0aDogMDsgc3Ryb2tlLWRhc2hhcnJheTogbm9uZTsgc3Ryb2tlLWxpbmVjYXA6IGJ1dHQ7IHN0cm9rZS1kYXNob2Zmc2V0OiAwOyBzdHJva2UtbGluZWpvaW46IG1pdGVyOyBzdHJva2UtbWl0ZXJsaW1pdDogNDsgZmlsbDogcmdiKDIwMSwxNjksMTEwKTsgZmlsbC1ydWxlOiBub256ZXJvOyBvcGFjaXR5OiAwLjA1OyIgdmVjdG9yLWVmZmVjdD0ibm9uLXNjYWxpbmctc3Ryb2tlIiAgY3g9IjAiIGN5PSIwIiByPSIzNSIgLz4KPC9nPgo8ZyB0cmFuc2Zvcm09Im1hdHJpeCgzLjE2IDAgMCAzLjE2IDU3OC4xMiA2OTIuNzIpIiBpZD0iNjUxMjI3ZjAtYTA2MC00NjM5LWI1NmItZDZlMmE3NjBiYTNmIiAgPgo8Y2lyY2xlIHN0eWxlPSJzdHJva2U6IHJnYigwLDAsMCk7IHN0cm9rZS13aWR0aDogMDsgc3Ryb2tlLWRhc2hhcnJheTogbm9uZTsgc3Ryb2tlLWxpbmVjYXA6IGJ1dHQ7IHN0cm9rZS1kYXNob2Zmc2V0OiAwOyBzdHJva2UtbGluZWpvaW46IG1pdGVyOyBzdHJva2UtbWl0ZXJsaW1pdDogNDsgZmlsbDogcmdiKDIwMSwxNjksMTEwKTsgZmlsbC1ydWxlOiBub256ZXJvOyBvcGFjaXR5OiAwLjA0OyIgdmVjdG9yLWVmZmVjdD0ibm9uLXNjYWxpbmctc3Ryb2tlIiAgY3g9IjAiIGN5PSIwIiByPSIzNSIgLz4KPC9nPgo8ZyB0cmFuc2Zvcm09Im1hdHJpeCgzLjE2IDAgMCAzLjE2IDcyOS40NyA2NDEuMTEpIiBpZD0iNjUxMjI3ZjAtYTA2MC00NjM5LWI1NmItZDZlMmE3NjBiYTNmIiAgPgo8Y2lyY2xlIHN0eWxlPSJzdHJva2U6IHJnYigwLDAsMCk7IHN0cm9rZS13aWR0aDogMDsgc3Ryb2tlLWRhc2hhcnJheTogbm9uZTsgc3Ryb2tlLWxpbmVjYXA6IGJ1dHQ7IHN0cm9rZS1kYXNob2Zmc2V0OiAwOyBzdHJva2UtbGluZWpvaW46IG1pdGVyOyBzdHJva2UtbWl0ZXJsaW1pdDogNDsgZmlsbDogcmdiKDIwMSwxNjksMTEwKTsgZmlsbC1ydWxlOiBub256ZXJvOyBvcGFjaXR5OiAwLjA3OyIgdmVjdG9yLWVmZmVjdD0ibm9uLXNjYWxpbmctc3Ryb2tlIiAgY3g9IjAiIGN5PSIwIiByPSIzNSIgLz4KPC9nPgo8L3N2Zz4=');
+  background-blend-mode: normal, overlay;
+  background-size: auto, 700px 700px;
+  background-repeat: no-repeat, repeat;
+  background-position: center, center;
+  background-attachment: fixed, fixed;
+  color: var(--color-text-primary);
   line-height: 1.6;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: none;
-  background-image:url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIiA/Pgo8IURPQ1RZUEUgc3ZnIFBVQkxJQyAiLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4iICJodHRwOi8vd3d3LnczLm9yZy9HcmFwaGljcy9TVkcvMS4xL0RURC9zdmcxMS5kdGQiPgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHZlcnNpb249IjEuMSIgd2lkdGg9IjEwODAiIGhlaWdodD0iMTA4MCIgdmlld0JveD0iMCAwIDEwODAgMTA4MCIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxkZXNjPkNyZWF0ZWQgd2l0aCBGYWJyaWMuanMgNS4yLjQ8L2Rlc2M+CjxkZWZzPgo8L2RlZnM+CjxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InRyYW5zcGFyZW50Ij48L3JlY3Q+CjxnIHRyYW5zZm9ybT0ibWF0cml4KDEgMCAwIDEgNTQwIDU0MCkiIGlkPSJmYjhhNTFhYS1lYzM5LTQyZTUtYTVhOC05NmZlZjQ2M2Y2MWEiICA+CjxyZWN0IHN0eWxlPSJzdHJva2U6IG5vbmU7IHN0cm9rZS13aWR0aDogMTsgc3Ryb2tlLWRhc2hhcnJheTogbm9uZTsgc3Ryb2tlLWxpbmVjYXA6IGJ1dHQ7IHN0cm9rZS1kYXNob2Zmc2V0OiAwOyBzdHJva2UtbGluZWpvaW46IG1pdGVyOyBzdHJva2UtbWl0ZXJsaW1pdDogNDsgZmlsbDogcmdiKDI1NSwyNTUsMjU1KTsgZmlsbC1ydWxlOiBub256ZXJvOyBvcGFjaXR5OiAxOyB2aXNpYmlsaXR5OiBoaWRkZW47IiB2ZWN0b3ItZWZmZWN0PSJub24tc2NhbGluZy1zdHJva2UiICB4PSItNTQwIiB5PSItNTQwIiByeD0iMCIgcnk9IjAiIHdpZHRoPSIxMDgwIiBoZWlnaHQ9IjEwODAiIC8+CjwvZz4KPGcgdHJhbnNmb3JtPSJtYXRyaXgoMSAwIDAgMSA1NDAgNTQwKSIgaWQ9IjgzOGFjYjdjLTkyMDctNDJjOC1iYzQwLWNhYTljY2Y2ZDcwNiIgID4KPC9nPgo8ZyB0cmFuc2Zvcm09Im1hdHJpeCgzLjE2IDAgMCAzLjE2IDU0MCA5MTIuOTQpIiBpZD0iNjUxMjI3ZjAtYTA2MC00NjM5LWI1NmItZDZlMmE3NjBiYTNmIiAgPgo8Y2lyY2xlIHN0eWxlPSJzdHJva2U6IHJnYigwLDAsMCk7IHN0cm9rZS13aWR0aDogMDsgc3Ryb2tlLWRhc2hhcnJheTogbm9uZTsgc3Ryb2tlLWxpbmVjYXA6IGJ1dHQ7IHN0cm9rZS1kYXNob2Zmc2V0OiAwOyBzdHJva2UtbGluZWpvaW46IG1pdGVyOyBzdHJva2UtbWl0ZXJsaW1pdDogNDsgZmlsbDogcmdiKDEwMSwxMDEsMTAxKTsgZmlsbC1ydWxlOiBub256ZXJvOyBvcGFjaXR5OiAwLjI7IiB2ZWN0b3ItZWZmZWN0PSJub24tc2NhbGluZy1zdHJva2UiICBjeD0iMCIgY3k9IjAiIHI9IjM1IiAvPgo8L2c+CjxnIHRyYW5zZm9ybT0ibWF0cml4KDMuMTYgMCAwIDMuMTYgNjU1Ljk3IDgxMi4yNCkiIGlkPSI2NTEyMjdmMC1hMDYwLTQ2MzktYjU2Yi1kNmUyYTc2MGJhM2YiICA+CjxjaXJjbGUgc3R5bGU9InN0cm9rZTogcmdiKDAsMCwwKTsgc3Ryb2tlLXdpZHRoOiAwOyBzdHJva2UtZGFzaGFycmF5OiBub25lOyBzdHJva2UtbGluZWNhcDogYnV0dDsgc3Ryb2tlLWRhc2hvZmZzZXQ6IDA7IHN0cm9rZS1saW5lam9pbjogbWl0ZXI7IHN0cm9rZS1taXRlcmxpbWl0OiA0OyBmaWxsOiByZ2IoMTAxLDEwMSwxMDEpOyBmaWxsLXJ1bGU6IG5vbnplcm87IG9wYWNpdHk6IDAuMjE7IiB2ZWN0b3ItZWZmZWN0PSJub24tc2NhbGluZy1zdHJva2UiICBjeD0iMCIgY3k9IjAiIHI9IjM1IiAvPgo8L2c+CjxnIHRyYW5zZm9ybT0ibWF0cml4KDMuMTYgMCAwIDMuMTYgNDY2LjY0IDc4NC4xOSkiIGlkPSI2NTEyMjdmMC1hMDYwLTQ2MzktYjU2Yi1kNmUyYTc2MGJhM2YiICA+CjxjaXJjbGUgc3R5bGU9InN0cm9rZTogcmdiKDAsMCwwKTsgc3Ryb2tlLXdpZHRoOiAwOyBzdHJva2UtZGFzaGFycmF5OiBub25lOyBzdHJva2UtbGluZWNhcDogYnV0dDsgc3Ryb2tlLWRhc2hvZmZzZXQ6IDA7IHN0cm9rZS1saW5lam9pbjogbWl0ZXI7IHN0cm9rZS1taXRlcmxpbWl0OiA0OyBmaWxsOiByZ2IoMTAxLDEwMSwxMDEpOyBmaWxsLXJ1bGU6IG5vbnplcm87IG9wYWNpdHk6IDAuMTk7IiB2ZWN0b3ItZWZmZWN0PSJub24tc2NhbGluZy1zdHJva2UiICBjeD0iMCIgY3k9IjAiIHI9IjM1IiAvPgo8L2c+CjxnIHRyYW5zZm9ybT0ibWF0cml4KDMuMTYgMCAwIDMuMTYgNTc4LjEyIDY5Mi43MikiIGlkPSI2NTEyMjdmMC1hMDYwLTQ2MzktYjU2Yi1kNmUyYTc2MGJhM2YiICA+CjxjaXJjbGUgc3R5bGU9InN0cm9rZTogcmdiKDAsMCwwKTsgc3Ryb2tlLXdpZHRoOiAwOyBzdHJva2UtZGFzaGFycmF5OiBub25lOyBzdHJva2UtbGluZWNhcDogYnV0dDsgc3Ryb2tlLWRhc2hvZmZzZXQ6IDA7IHN0cm9rZS1saW5lam9pbjogbWl0ZXI7IHN0cm9rZS1taXRlcmxpbWl0OiA0OyBmaWxsOiByZ2IoMTAxLDEwMSwxMDEpOyBmaWxsLXJ1bGU6IG5vbnplcm87IG9wYWNpdHk6IDAuMTY7IiB2ZWN0b3ItZWZmZWN0PSJub24tc2NhbGluZy1zdHJva2UiICBjeD0iMCIgY3k9IjAiIHI9IjM1IiAvPgo8L2c+CjxnIHRyYW5zZm9ybT0ibWF0cml4KDMuMTYgMCAwIDMuMTYgNzI5LjQ3IDY0MS4xMSkiIGlkPSI2NTEyMjdmMC1hMDYwLTQ2MzktYjU2Yi1kNmUyYTc2MGJhM2YiICA+CjxjaXJjbGUgc3R5bGU9InN0cm9rZTogcmdiKDAsMCwwKTsgc3Ryb2tlLXdpZHRoOiAwOyBzdHJva2UtZGFzaGFycmF5OiBub25lOyBzdHJva2UtbGluZWNhcDogYnV0dDsgc3Ryb2tlLWRhc2hvZmZzZXQ6IDA7IHN0cm9rZS1saW5lam9pbjogbWl0ZXI7IHN0cm9rZS1taXRlcmxpbWl0OiA0OyBmaWxsOiByZ2IoMTAxLDEwMSwxMDEpOyBmaWxsLXJ1bGU6IG5vbnplcm87IG9wYWNpdHk6IDAuMzM7IiB2ZWN0b3ItZWZmZWN0PSJub24tc2NhbGluZy1zdHJva2UiICBjeD0iMCIgY3k9IjAiIHI9IjM1IiAvPgo8L2c+CjxnIHRyYW5zZm9ybT0ibWF0cml4KDMuMTYgMCAwIDMuMTYgNTAyLjA5IDU0MCkiIGlkPSI2NTEyMjdmMC1hMDYwLTQ2MzktYjU2Yi1kNmUyYTc2MGJhM2YiICA+CjxjaXJjbGUgc3R5bGU9InN0cm9rZTogcmdiKDAsMCwwKTsgc3Ryb2tlLXdpZHRoOiAwOyBzdHJva2UtZGFzaGFycmF5OiBub25lOyBzdHJva2UtbGluZWNhcDogYnV0dDsgc3Ryb2tlLWRhc2hvZmZzZXQ6IDA7IHN0cm9rZS1saW5lam9pbjogbWl0ZXI7IHN0cm9rZS1taXRlcmxpbWl0OiA0OyBmaWxsOiByZ2IoMTAxLDEwMSwxMDEpOyBmaWxsLXJ1bGU6IG5vbnplcm87IG9wYWNpdHk6IDAuMjsiIHZlY3Rvci1lZmZlY3Q9Im5vbi1zY2FsaW5nLXN0cm9rZSIgIGN4PSIwIiBjeT0iMCIgcj0iMzUiIC8+CjwvZz4KPGcgdHJhbnNmb3JtPSJtYXRyaXgoMy4xNiAwIDAgMy4xNiAzODEuNjIgNjM5LjM2KSIgaWQ9IjY1MTIyN2YwLWEwNjAtNDYzOS1iNTZiLWQ2ZTJhNzYwYmEzZiIgID4KPGNpcmNsZSBzdHlsZT0ic3Ryb2tlOiByZ2IoMCwwLDApOyBzdHJva2Utd2lkdGg6IDA7IHN0cm9rZS1kYXNoYXJyYXk6IG5vbmU7IHN0cm9rZS1saW5lY2FwOiBidXR0OyBzdHJva2UtZGFzaG9mZnNldDogMDsgc3Ryb2tlLWxpbmVqb2luOiBtaXRlcjsgc3Ryb2tlLW1pdGVybGltaXQ6IDQ7IGZpbGw6IHJnYigxMDEsMTAxLDEwMSk7IGZpbGwtcnVsZTogbm9uemVybzsgb3BhY2l0eTogMC4yMTsiIHZlY3Rvci1lZmZlY3Q9Im5vbi1zY2FsaW5nLXN0cm9rZSIgIGN4PSIwIiBjeT0iMCIgcj0iMzUiIC8+CjwvZz4KPGcgdHJhbnNmb3JtPSJtYXRyaXgoMy4xNiAwIDAgMy4xNiAzMjYuMzkgNDY4LjE1KSIgaWQ9IjY1MTIyN2YwLWEwNjAtNDYzOS1iNTZiLWQ2ZTJhNzYwYmEzZiIgID4KPGNpcmNsZSBzdHlsZT0ic3Ryb2tlOiByZ2IoMCwwLDApOyBzdHJva2Utd2lkdGg6IDA7IHN0cm9rZS1kYXNoYXJyYXk6IG5vbmU7IHN0cm9rZS1saW5lY2FwOiBidXR0OyBzdHJva2UtZGFzaG9mZnNldDogMDsgc3Ryb2tlLWxpbmVqb2luOiBtaXRlcjsgc3Ryb2tlLW1pdGVybGltaXQ6IDQ7IGZpbGw6IHJnYigxMDEsMTAxLDEwMSk7IGZpbGwtcnVsZTogbm9uemVybzsgb3BhY2l0eTogMC4xOTsiIHZlY3Rvci1lZmZlY3Q9Im5vbi1zY2FsaW5nLXN0cm9rZSIgIGN4PSIwIiBjeT0iMCIgcj0iMzUiIC8+CjwvZz4KPGcgdHJhbnNmb3JtPSJtYXRyaXgoMy4xNiAwIDAgMy4xNiA2NTUuMzEgNTEwLjc3KSIgaWQ9IjY1MTIyN2YwLWEwNjAtNDYzOS1iNTZiLWQ2ZTJhNzYwYmEzZiIgID4KPGNpcmNsZSBzdHlsZT0ic3Ryb2tlOiByZ2IoMCwwLDApOyBzdHJva2Utd2lkdGg6IDA7IHN0cm9rZS1kYXNoYXJyYXk6IG5vbmU7IHN0cm9rZS1saW5lY2FwOiBidXR0OyBzdHJva2UtZGFzaG9mZnNldDogMDsgc3Ryb2tlLWxpbmVqb2luOiBtaXRlcjsgc3Ryb2tlLW1pdGVybGltaXQ6IDQ7IGZpbGw6IHJnYigxMDEsMTAxLDEwMSk7IGZpbGwtcnVsZTogbm9uemVybzsgb3BhY2l0eTogMC4xODsiIHZlY3Rvci1lZmZlY3Q9Im5vbi1zY2FsaW5nLXN0cm9rZSIgIGN4PSIwIiBjeT0iMCIgcj0iMzUiIC8+CjwvZz4KPGcgdHJhbnNmb3JtPSJtYXRyaXgoMy4xNiAwIDAgMy4xNiA4MDQuODQgNDcwLjAzKSIgaWQ9IjY1MTIyN2YwLWEwNjAtNDYzOS1iNTZiLWQ2ZTJhNzYwYmEzZiIgID4KPGNpcmNsZSBzdHlsZT0ic3Ryb2tlOiByZ2IoMCwwLDApOyBzdHJva2Utd2lkdGg6IDA7IHN0cm9rZS1kYXNoYXJyYXk6IG5vbmU7IHN0cm9rZS1saW5lY2FwOiBidXR0OyBzdHJva2UtZGFzaG9mZnNldDogMDsgc3Ryb2tlLWxpbmVqb2luOiBtaXRlcjsgc3Ryb2tlLW1pdGVybGltaXQ6IDQ7IGZpbGw6IHJnYigxMDEsMTAxLDEwMSk7IGZpbGwtcnVsZTogbm9uemVybzsgb3BhY2l0eTogMC4yMjsiIHZlY3Rvci1lZmZlY3Q9Im5vbi1zY2FsaW5nLXN0cm9rZSIgIGN4PSIwIiBjeT0iMCIgcj0iMzUiIC8+CjwvZz4KPGcgdHJhbnNmb3JtPSJtYXRyaXgoMy4xNiAwIDAgMy4xNiA0NDYuOTkgMzY0LjA2KSIgaWQ9IjY1MTIyN2YwLWEwNjAtNDYzOS1iNTZiLWQ2ZTJhNzYwYmEzZiIgID4KPGNpcmNsZSBzdHlsZT0ic3Ryb2tlOiByZ2IoMCwwLDApOyBzdHJva2Utd2lkdGg6IDA7IHN0cm9rZS1kYXNoYXJyYXk6IG5vbmU7IHN0cm9rZS1saW5lY2FwOiBidXR0OyBzdHJva2UtZGFzaG9mZnNldDogMDsgc3Ryb2tlLWxpbmVqb2luOiBtaXRlcjsgc3Ryb2tlLW1pdGVybGltaXQ6IDQ7IGZpbGw6IHJnYigxMDEsMTAxLDEwMSk7IGZpbGwtcnVsZTogbm9uemVybzsgb3BhY2l0eTogMC4xODsiIHZlY3Rvci1lZmZlY3Q9Im5vbi1zY2FsaW5nLXN0cm9rZSIgIGN4PSIwIiBjeT0iMCIgcj0iMzUiIC8+CjwvZz4KPGcgdHJhbnNmb3JtPSJtYXRyaXgoMy4xNiAwIDAgMy4xNiA1ODMuODQgMzQzLjI1KSIgaWQ9IjY1MTIyN2YwLWEwNjAtNDYzOS1iNTZiLWQ2ZTJhNzYwYmEzZiIgID4KPGNpcmNsZSBzdHlsZT0ic3Ryb2tlOiByZ2IoMCwwLDApOyBzdHJva2Utd2lkdGg6IDA7IHN0cm9rZS1kYXNoYXJyYXk6IG5vbmU7IHN0cm9rZS1saW5lY2FwOiBidXR0OyBzdHJva2UtZGFzaG9mZnNldDogMDsgc3Ryb2tlLWxpbmVqb2luOiBtaXRlcjsgc3Ryb2tlLW1pdGVybGltaXQ6IDQ7IGZpbGw6IHJnYigxMDEsMTAxLDEwMSk7IGZpbGwtcnVsZTogbm9uemVybzsgb3BhY2l0eTogMC4yMTsiIHZlY3Rvci1lZmZlY3Q9Im5vbi1zY2FsaW5nLXN0cm9rZSIgIGN4PSIwIiBjeT0iMCIgcj0iMzUiIC8+CjwvZz4KPGcgdHJhbnNmb3JtPSJtYXRyaXgoMy4xNiAwIDAgMy4xNiA3MzguODEgMzI0LjI2KSIgaWQ9IjY1MTIyN2YwLWEwNjAtNDYzOS1iNTZiLWQ2ZTJhNzYwYmEzZiIgID4KPGNpcmNsZSBzdHlsZT0ic3Ryb2tlOiByZ2IoMCwwLDApOyBzdHJva2Utd2lkdGg6IDA7IHN0cm9rZS1kYXNoYXJyYXk6IG5vbmU7IHN0cm9rZS1saW5lY2FwOiBidXR0OyBzdHJva2UtZGFzaG9mZnNldDogMDsgc3Ryb2tlLWxpbmVqb2luOiBtaXRlcjsgc3Ryb2tlLW1pdGVybGltaXQ6IDQ7IGZpbGw6IHJnYigxMDEsMTAxLDEwMSk7IGZpbGwtcnVsZTogbm9uemVybzsgb3BhY2l0eTogMC4xOTsiIHZlY3Rvci1lZmZlY3Q9Im5vbi1zY2FsaW5nLXN0cm9rZSIgIGN4PSIwIiBjeT0iMCIgcj0iMzUiIC8+CjwvZz4KPGcgdHJhbnNmb3JtPSJtYXRyaXgoLTAuODIgMy4wMiAtMC45NyAtMC4yNiA2NzAuMyAxODIuOTIpIiBpZD0iNWEyYWY5NzEtMTQ3My00NWZhLWE1NzctZDgxYjVlMzFlNzUzIiAgPgo8cGF0aCBzdHlsZT0ic3Ryb2tlOiByZ2IoMCwwLDApOyBzdHJva2Utd2lkdGg6IDA7IHN0cm9rZS1kYXNoYXJyYXk6IG5vbmU7IHN0cm9rZS1saW5lY2FwOiBidXR0OyBzdHJva2UtZGFzaG9mZnNldDogMDsgc3Ryb2tlLWxpbmVqb2luOiBtaXRlcjsgc3Ryb2tlLW1pdGVybGltaXQ6IDQ7IGZpbGw6IHJnYigxMDEsMTAxLDEwMSk7IGZpbGwtcnVsZTogbm9uemVybzsgb3BhY2l0eTogMC4xNzsiIHZlY3Rvci1lZmZlY3Q9Im5vbi1zY2FsaW5nLXN0cm9rZSIgIHRyYW5zZm9ybT0iIHRyYW5zbGF0ZSgtNTAsIC01MCkiIGQ9Ik0gOTQuNzUgNTAgQyA5NC43NSA1Ni4yMTMgODkuNTE0IDYxLjI1IDgzLjA1NCA2MS4yNSBMIDE2Ljk0NiA2MS4yNSBDIDEwLjQ4NiA2MS4yNSA1LjI1IDU2LjIxMyA1LjI1IDUwIEwgNS4yNSA1MCBDIDUuMjUgNDMuNzg3IDEwLjQ4NiAzOC43NSAxNi45NDU5OTk5OTk5OTk5OTggMzguNzUgTCA4My4wNTMgMzguNzUgQyA4OS41MTQgMzguNzUgOTQuNzUgNDMuNzg3IDk0Ljc1IDUwIEwgOTQuNzUgNTAgeiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiAvPgo8L2c+CjxnIHRyYW5zZm9ybT0ibWF0cml4KDEuMzYgMS4zNiAtMC4zNSAwLjM1IDYxNS43IDE2NC4wNSkiIGlkPSJlMTNlY2NkNi05NGY2LTRmNjAtOTEwZS01YmU5OGE0YmY3MmYiICA+CjxjaXJjbGUgc3R5bGU9InN0cm9rZTogcmdiKDAsMCwwKTsgc3Ryb2tlLXdpZHRoOiAwOyBzdHJva2UtZGFzaGFycmF5OiBub25lOyBzdHJva2UtbGluZWNhcDogYnV0dDsgc3Ryb2tlLWRhc2hvZmZzZXQ6IDA7IHN0cm9rZS1saW5lam9pbjogbWl0ZXI7IHN0cm9rZS1taXRlcmxpbWl0OiA0OyBmaWxsOiByZ2IoMTAxLDEwMSwxMDEpOyBmaWxsLXJ1bGU6IG5vbnplcm87IG9wYWNpdHk6IDAuMTk7IiB2ZWN0b3ItZWZmZWN0PSJub24tc2NhbGluZy1zdHJva2UiICBjeD0iMCIgY3k9IjAiIHI9IjM1IiAvPgo8L2c+CjxnIHRyYW5zZm9ybT0ibWF0cml4KC0xLjQ2IDEuMjcgLTAuMzMgLTAuMzggNzEwLjkxIDE4NS4xKSIgaWQ9ImUxM2VjY2Q2LTk0ZjYtNGY2MC05MTBlLTViZTk4YTRiZjcyZiIgID4KPGNpcmNsZSBzdHlsZT0ic3Ryb2tlOiByZ2IoMCwwLDApOyBzdHJva2Utd2lkdGg6IDA7IHN0cm9rZS1kYXNoYXJyYXk6IG5vbmU7IHN0cm9rZS1saW5lY2FwOiBidXR0OyBzdHJva2UtZGFzaG9mZnNldDogMDsgc3Ryb2tlLWxpbmVqb2luOiBtaXRlcjsgc3Ryb2tlLW1pdGVybGltaXQ6IDQ7IGZpbGw6IHJnYigxMDEsMTAxLDEwMSk7IGZpbGwtcnVsZTogbm9uemVybzsgb3BhY2l0eTogMC4xOTsiIHZlY3Rvci1lZmZlY3Q9Im5vbi1zY2FsaW5nLXN0cm9rZSIgIGN4PSIwIiBjeT0iMCIgcj0iMzUiIC8+CjwvZz4KPGcgdHJhbnNmb3JtPSJtYXRyaXgoMS44OCAwLjQ1IC0wLjEyIDAuNDkgNTk1Ljg4IDIxMS40MSkiIGlkPSJlMTNlY2NkNi05NGY2LTRmNjAtOTEwZS01YmU5OGE0YmY3MmYiICA+CjxjaXJjbGUgc3R5bGU9InN0cm9rZTogcmdiKDAsMCwwKTsgc3Ryb2tlLXdpZHRoOiAwOyBzdHJva2UtZGFzaGFycmF5OiBub25lOyBzdHJva2UtbGluZWNhcDogYnV0dDsgc3Ryb2tlLWRhc2hvZmZzZXQ6IDA7IHN0cm9rZS1saW5lam9pbjogbWl0ZXI7IHN0cm9rZS1taXRlcmxpbWl0OiA0OyBmaWxsOiByZ2IoMTAxLDEwMSwxMDEpOyBmaWxsLXJ1bGU6IG5vbnplcm87IG9wYWNpdHk6IDAuMjI7IiB2ZWN0b3ItZWZmZWN0PSJub24tc2NhbGluZy1zdHJva2UiICBjeD0iMCIgY3k9IjAiIHI9IjM1IiAvPgo8L2c+Cjwvc3ZnPg==');
-  background-size: 700px 700px;
-  background-repeat: repeat;
-  background-position: center;
-  background-attachment: fixed;
+  min-height: 100vh;
 }
 
-/* App Container */
+/* ------------------------------------------------------------
+   4. TYPOGRAPHY
+   ------------------------------------------------------------ */
+h1, h2, h3 {
+  font-family: 'Cormorant Garamond', serif;
+  color: var(--color-heading);
+  font-weight: 500;
+  margin-bottom: 1rem;
+  letter-spacing: 0.03em;
+}
+
+h1 { font-size: 1.75rem; font-weight: 400; }
+h2 { font-size: 1.35rem; font-weight: 500; }
+h3 { font-size: 1.15rem; }
+
+/* Accent divider under headings in cards */
+.glass-card h2::after {
+  content: '';
+  display: block;
+  width: 32px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--color-accent), transparent);
+  margin-top: 6px;
+  margin-bottom: 4px;
+}
+
+/* ------------------------------------------------------------
+   5. APP CONTAINER
+   ------------------------------------------------------------ */
 .App {
   min-height: 100vh;
   display: flex;
@@ -34,51 +186,42 @@ body {
   width: 100%;
 }
 
-/* Headings */
-h1, h2, h3 {
-  color: #496580;
-  font-weight: 600;
-  margin-bottom: 1rem;
-}
-
-h1 {
-  font-size: 1.75rem;
-}
-
-h2 {
-  font-size: 1.5rem;
-}
-
-h3 {
-  font-size: 1.25rem;
-}
-
-/* Glass Header */
+/* ------------------------------------------------------------
+   6. HEADER
+   ------------------------------------------------------------ */
 .glass-header {
-  background: rgba(41, 80, 118, 0.85);
-  backdrop-filter: blur(14px);
-  box-shadow: 0 6px 16px rgba(73, 101, 128, 0.2);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  background: var(--color-header-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 4px 24px var(--color-glass-shadow);
+  border-bottom: 1px solid var(--color-header-border);
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0.75rem;
+  padding: 0.75rem 1.5rem;
   border-radius: 0 0 12px 12px;
   position: sticky;
   top: 0;
   z-index: 100;
   width: 100%;
-  margin: 0;
   height: 60px;
 }
 
-
 .header-title {
+  font-family: 'Cormorant Garamond', serif;
   text-align: center;
   position: relative;
-  color:#ffffff;
+  color: var(--color-text-primary);
   margin: 0;
   line-height: 1.2;
+  font-size: 1.5rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+}
+
+/* Dünne Goldlinie unter dem Header-Titel */
+.header-title::after {
+  display: none; /* Nur im Hauptheader, nicht in Cards */
 }
 
 .header-back {
@@ -87,17 +230,29 @@ h3 {
   top: 50%;
   transform: translateY(-50%);
   cursor: pointer;
-  color:#ffffff;
+  color: var(--color-accent);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  opacity: 0.85;
+  transition: opacity 0.2s;
 }
 
-/* Glass Card */
+.header-back:hover {
+  opacity: 1;
+}
+
+/* ------------------------------------------------------------
+   7. GLASS CARDS
+   ------------------------------------------------------------ */
 .glass-card {
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--color-glass-bg);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 2px solid rgba(255, 255, 255, 0.7);
-  box-shadow: 0 4px 16px rgba(73, 101, 128, 0.1);
-  border-radius: 16px;
+  border: 1px solid var(--color-glass-border);
+  box-shadow: 0 4px 24px var(--color-glass-shadow);
+  border-radius: 6px;
   padding: 1.5rem;
   max-width: 600px;
   width: 100%;
@@ -115,65 +270,44 @@ h3 {
   padding: 1.5rem;
 }
 
-/* Wine DB Edit and View Icons */
-.edit-icon, .view-icon {
-  position: absolute;
-  right: 1rem;
-  cursor: pointer;
-  transition: transform 0.2s ease, opacity 0.2s ease;
-}
-
-.edit-icon {
-  top: 1rem;
-}
-
-.view-icon {
-  top: 3rem; /* Abstand von 0.5rem unter edit-icon (1rem + 1.5rem + 0.5rem) */
-}
-
-.edit-icon:hover, .view-icon:hover {
-  transform: scale(1.2);
-  opacity: 0.8;
-}
-
-.list-disc {
-  list-style-type: disc;
-  padding-left: 1.5rem;
-}
-
-/* Glass Alert */
+/* ------------------------------------------------------------
+   8. GLASS ALERT
+   ------------------------------------------------------------ */
 .glass-alert {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--color-glass-bg);
   backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px); /* Für iOS Safari */
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--color-glass-border);
+  border-radius: 6px;
   padding: 6px 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--color-glass-shadow);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #496580;
+  color: var(--color-text-primary);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   animation: fadeIn 0.3s ease-in-out;
 }
 
 @keyframes fadeIn {
-  0% { opacity: 0; transform: translateY(80px); }
+  0%   { opacity: 0; transform: translateY(80px); }
   100% { opacity: 1; transform: translateY(0); }
 }
 
-/* Buttons */
+/* ------------------------------------------------------------
+   9. BUTTONS
+   ------------------------------------------------------------ */
 button {
-  font-family: 'Inter', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: 12px;
-  font-size: 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
   font-weight: 500;
+  letter-spacing: 0.08em;
   cursor: pointer;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.25s ease, color 0.25s ease, opacity 0.25s ease;
   width: 100%;
   max-width: 200px;
   margin-bottom: 1rem;
@@ -183,90 +317,391 @@ button:last-child {
   margin-bottom: 0;
 }
 
-.btn-primary {
-  background-color: #496580;
-  color: #ffffff;
-  display: flex;
-flex-direction: column;
-gap: 20px;
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
-.btn-primary:hover {
-  background-color: #baddff;
-  color: #496580;
+.btn-primary {
+  background-color: var(--color-btn-primary-bg);
+  color: var(--color-btn-primary-text);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-btn-primary-hover);
 }
 
 .btn-secondary {
-  background-color: #baddff;
-  color: #496580;
-  display: flex;
-flex-direction: column;
-gap: 20px;
+  background-color: var(--color-btn-secondary-bg);
+  color: var(--color-btn-secondary-text);
+  border: 1px solid var(--color-glass-border);
 }
 
-.btn-secondary:hover {
-  background-color: #496580;
-  color: #ffffff;
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--color-accent-dim);
+  border-color: var(--color-accent);
 }
 
 .btn-outline {
   background-color: transparent;
-  border: 1px solid #496580;
-  color: #496580;
-  display: flex;
-flex-direction: column;
-gap: 20px;
+  border: 1px solid var(--color-glass-border);
+  color: var(--color-text-primary);
 }
 
-.btn-outline:hover {
-  background-color: #496580;
-  color: #ffffff;
+.btn-outline:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 
 .footer-btn {
-  background-color: #baddff;
-  color: #496580;
+  background-color: var(--color-btn-primary-bg);
+  color: var(--color-btn-primary-text);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
 }
 
-.footer-btn:hover {
-  background-color: #ffffff;
-  color: #496580;
+.footer-btn:hover:not(:disabled) {
+  background-color: var(--color-btn-primary-hover);
 }
 
-/* Inputs */
-input, select, textarea {
-  font-family: 'Inter', sans-serif;
+.footer-btn.danger {
+  background-color: var(--color-btn-danger-bg);
+  color: var(--color-text-primary);
+}
+
+.footer-btn.danger:hover:not(:disabled) {
+  background-color: var(--color-btn-danger-hover);
+}
+
+/* ------------------------------------------------------------
+   10. INPUTS & FORM ELEMENTS
+   ------------------------------------------------------------ */
+input,
+select,
+textarea {
+  font-family: 'DM Sans', sans-serif;
   padding: 0.75rem;
-  border: 1px solid #496580;
-  border-radius: 8px;
-  background-color: transparent;
-  color: #496580;
+  border: 1px solid var(--color-input-border);
+  border-radius: 4px;
+  background-color: var(--color-input-bg);
+  color: var(--color-text-primary);
   font-size: 1rem;
   width: 100%;
   max-width: 500px;
-  transition: border-color 0.3s ease;
+  transition: border-color 0.25s ease;
 }
 
-input:focus, select:focus, textarea:focus {
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* Select option text needs explicit dark color for some browsers */
+select option {
+  background-color: var(--color-bg-mid);
+  color: var(--color-text-primary);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
   outline: none;
-  border-color: #baddff;
+  border-color: var(--color-input-focus);
 }
 
-/* Slider */
+/* Form labels */
+.form-label {
+  display: block;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: 0.4rem;
+}
+
+.required-star {
+  color: var(--color-accent);
+  margin-left: 2px;
+}
+
+/* Inline Tailwind overrides — used in TSX files */
+.text-accent-label {
+  color: var(--color-accent);
+}
+
+/* ------------------------------------------------------------
+   11. RANGE SLIDER
+   ------------------------------------------------------------ */
 input[type="range"] {
-  accent-color: #baddff;
+  accent-color: var(--color-accent);
   margin: 1rem 0;
   height: 0.5rem;
-  border-radius: 8px;
+  border-radius: 4px;
+  border: none;
+  background: linear-gradient(
+    to right,
+    var(--color-accent-dim) 0%,
+    var(--color-accent) 100%
+  );
 }
 
-/* Footer */
-.footer {
-  background-color: #496580;
-  text-align: center;
-  padding: 1rem;
+/* ------------------------------------------------------------
+   12. CATEGORY TILES
+   ------------------------------------------------------------ */
+.category-tile {
+  background-color: var(--color-glass-bg);
+  border: 1px solid var(--color-glass-border);
+  color: var(--color-text-secondary);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 4 / 1;
+  min-width: fit-content;
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+}
+
+.category-tile.selected {
+  background-color: var(--color-accent-dim);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.category-tile:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* ------------------------------------------------------------
+   13. STAR RATING
+   ------------------------------------------------------------ */
+.bewertung-card .flex {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 0.6rem;
+}
+
+.bewertung-card svg {
+  transition: fill 0.2s ease, stroke 0.2s ease;
+  width: 28px;
+  height: 28px;
+}
+
+/* ------------------------------------------------------------
+   14. WINE ENTRY LIST ITEMS
+   ------------------------------------------------------------ */
+.wine-entry {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.2s ease;
+}
+
+.wine-entry:hover {
+  border-color: rgba(201, 169, 110, 0.4);
+}
+
+/* Color accent stripe (used inline in WineDBScreen) */
+.wine-color-stripe {
+  width: 3px;
+  align-self: stretch;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* Edit / View Icons */
+.edit-icon,
+.view-icon {
+  position: absolute;
+  right: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  opacity: 0.55;
+}
+
+.edit-icon   { top: 1rem; }
+.view-icon   { top: 3rem; }
+
+.edit-icon:hover,
+.view-icon:hover {
+  transform: scale(1.2);
+  opacity: 1;
+}
+
+/* ------------------------------------------------------------
+   15. UPLOAD AREA
+   ------------------------------------------------------------ */
+.upload-plus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 96px;
+  cursor: pointer;
+  border: 1px dashed var(--color-glass-border);
+  border-radius: 6px;
+  transition: border-color 0.2s, background 0.2s;
+  margin: 0 auto 1rem auto;
+  background: var(--color-glass-bg);
+}
+
+.upload-plus:hover {
+  border-color: var(--color-accent);
+  background: var(--color-accent-dim);
+}
+
+.plus-symbol {
+  font-size: 2.5rem;
+  color: var(--color-accent);
+  user-select: none;
+  font-weight: 300;
+  line-height: 1;
+  opacity: 0.8;
+}
+
+.hidden-input { display: none; }
+
+/* ------------------------------------------------------------
+   16. IMAGE DISPLAY
+   ------------------------------------------------------------ */
+.image-upload img,
+.image-preview {
+  max-width: 200px;
+  width: 100%;
+  margin: 0 auto;
+  display: block;
+  border-radius: 6px;
+  object-fit: contain;
+  margin-top: 1rem;
+  box-shadow: 0 4px 16px var(--color-glass-shadow);
+}
+
+.image-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: var(--color-overlay-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.image-overlay img {
+  max-width: 90vw;
+  max-height: 80vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.close-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(201, 169, 110, 0.15);
+  border: 1px solid var(--color-glass-border);
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--color-accent);
+  font-size: 1.25rem;
+  font-weight: 400;
+  transition: background-color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.close-button:hover {
+  background-color: var(--color-accent-dim);
+}
+
+/* ------------------------------------------------------------
+   17. LOADER
+   ------------------------------------------------------------ */
+.loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--color-accent-dim);
+  border-top: 2px solid var(--color-accent);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+  margin: 1rem auto;
+}
+
+@keyframes spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ------------------------------------------------------------
+   18. SNACKBARS
+   ------------------------------------------------------------ */
+.snackbar {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 14px 28px;
+  border-radius: 6px;
   font-size: 0.9rem;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.05em;
+  color: var(--color-text-primary);
+  z-index: 9999;
+  opacity: 0;
+  animation: fadeInOut 2.5s ease-in-out forwards;
+  text-align: center;
+  max-width: 80%;
+  box-shadow: 0 4px 20px var(--color-glass-shadow);
+  backdrop-filter: blur(12px);
+}
+
+.snackbar.success {
+  background: var(--color-success);
+  border: 1px solid rgba(168, 208, 144, 0.35);
+  color: var(--color-success-text);
+}
+
+.snackbar.error {
+  background: var(--color-error);
+  border: 1px solid rgba(200, 80, 80, 0.4);
+}
+
+@keyframes fadeInOut {
+  0%   { opacity: 0; transform: translate(-50%, -40%); }
+  10%  { opacity: 1; transform: translate(-50%, -50%); }
+  90%  { opacity: 1; transform: translate(-50%, -50%); }
+  100% { opacity: 0; transform: translate(-50%, -60%); }
+}
+
+/* ------------------------------------------------------------
+   19. FOOTER
+   ------------------------------------------------------------ */
+.footer {
+  background: var(--color-header-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  text-align: center;
+  padding: 1rem 1.5rem;
+  font-size: 0.75rem;
   border-radius: 12px 12px 0 0;
+  border-top: 1px solid var(--color-header-border);
   position: sticky;
   bottom: 0;
   z-index: 10;
@@ -274,183 +709,24 @@ input[type="range"] {
 }
 
 .footer p {
-  color: #ffffff;
+  color: var(--color-text-muted);
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.12em;
 }
 
-  .footer .version-text {
-  color: #9ca3af !important;
-  font-size: 0.75rem;
+.footer .version-text {
+  color: var(--color-text-muted);
+  font-size: 0.65rem;
+  opacity: 0.5;
 }
 
-/* Utilities */
-
-.upload-plus .absolute {
-  left: 0;
-}
-
-.error-message {
-  background-color: #ffcccc;
-}
-
-.text-muted {
-  color: #ad9c8e;
-}
-
-.text-accent {
-  color: #bafff5;
-}
-
-/* Bildvorschau */
-.image-upload img,
-.image-preview {
-  max-width: 200px; /* Reduziere die maximale Breite */
-  width: 100%;
-  margin: 0 auto;
-  display: block;
-  border-radius: 1rem;
-  object-fit: contain;
-  margin-top: 1rem;
-  box-shadow: 0 2px 10px rgba(73,101,128,0.12);
-}
-
-.image-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000; /* Niedriger als 999999, aber höher als Footer (z-index: 20) */
-  -webkit-tap-highlight-color: transparent; /* iOS Safari Optimierung */
-}
-
-.image-overlay img {
-  max-width: 90vw; /* 90% des Viewport-Breite */
-  max-height: 80vh; /* 80% des Viewport-Höhe */
-  width: auto;
-  height: auto;
-  object-fit: contain;
-  border-radius: 1rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-}
-
-.close-button {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  cursor: pointer;
-  color: #ffffff;
-  font-size: 1.5rem;
-  font-weight: 700;
-  transition: background-color 0.2s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.close-button:hover {
-  background-color: rgba(255, 255, 255, 0.3);
-}
-
-/* WineDBScreen spezifische Anpassung */
-.wine-entry .bg-gray-200 {
-  width: 12rem; /* Standardgröße auf 192px */
-  height: 12rem;
-}
-
-.wine-entry .bg-gray-200 img {
-  object-fit: contain; /* Sicherstellen, dass das Bild nicht gestreckt wird */
-  max-width: 100%; /* Begrenzt die Bildgröße */
-  max-height: 100%; /* Begrenzt die Höhe */
-}
-
-/* Upload-Button zentral, groß, klickbar */
-.upload-plus {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 96px;     /* h-24 (24*4=96px) */
-  cursor: pointer;
-  border: 2px dashed #baddff;
-  border-radius: 1rem;
-  transition: border-color 0.2s, background 0.2s;
-  margin: 0 auto 1rem auto;
-  background: rgba(255,255,255,0.20);
-}
-.upload-plus:hover {
-  border-color: #496580;
-  background: rgba(186,221,255,0.25);
-}
-
-.plus-symbol {
-  font-size: 3rem;     /* deutlich größer als vorher */
-  color: #496580;
-  user-select: none;
-  font-weight: 700;
-  line-height: 1;
-}
-
-/* Animierter Ladekreis */
-.loader {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border: 4px solid rgba(186, 221, 255, 0.3); /* #baddff mit Transparenz */
-  border-top: 4px solid #baddff;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 1rem auto;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Das echte Upload-Feld verstecken */
-.hidden-input {
-  display: none;
-}
-
-/* Category Tiles */
-.category-tile {
-  background-color: #496580;
-  color: #ffffff;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  aspect-ratio: 4 / 1;
-  min-width: fit-content;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.category-tile.selected {
-  background-color: #baddff;
-  color: #496580;
-}
-
-.category-tile:hover {
-  background-color: #baddff;
-  color: #496580;
-}
-
-/* Grid */
+/* ------------------------------------------------------------
+   20. GRID & LAYOUT UTILITIES
+   ------------------------------------------------------------ */
 .grid-cols-auto-fit {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 0.25rem;
+  gap: 0.5rem;
   margin-bottom: 1rem;
 }
 
@@ -460,64 +736,25 @@ input[type="range"] {
   gap: 1rem;
 }
 
-.snackbar {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  padding: 16px 32px;
-  border-radius: 10px;
-  font-size: 1rem;
-  font-weight: 500;
-  color: white;
-  z-index: 9999;
-  background-color: #333;
-  opacity: 0;
-  animation: fadeInOut 2.5s ease-in-out forwards;
-  text-align: center;
-  max-width: 80%;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+.list-disc {
+  list-style-type: disc;
+  padding-left: 1.5rem;
 }
 
-/*Snackbars */
-.snackbar.success {
-  background-color: #BAFFF5;
-  color:#496580;
-}
-
-.snackbar.error {
-  background-color: #f44336;
-}
-
-@keyframes fadeInOut {
-  0% { opacity: 0; transform: translate(-50%, -40%); }
-  10% { opacity: 1; transform: translate(-50%, -50%); }
-  90% { opacity: 1; transform: translate(-50%, -50%); }
-  100% { opacity: 0; transform: translate(-50%, -60%); }
-}
-
-
-/* Unterkategorie Label */
+/* Unterkategorie Label (radio/checkbox rows) */
 .unterkategorie-label {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 0.5rem;
+  gap: 0.6rem;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
 }
 
-/* Star Rating */
-.bewertung-card .flex {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  gap: 0.5rem;
-}
-
-.bewertung-card svg {
-  transition: fill 0.3s ease, stroke 0.3s ease;
-}
-
+/* ------------------------------------------------------------
+   21. FILTER / SORT DROPDOWNS
+   ------------------------------------------------------------ */
 .filter-toggle {
   cursor: pointer;
   user-select: none;
@@ -530,51 +767,95 @@ input[type="range"] {
 }
 
 .filter-section.open {
-  max-height: 300px; /* Adjust based on content */
+  max-height: 300px;
 }
 
-.wine-entry {
-  touch-action: manipulation; /* Prevent accidental clicks on mobile */
-  -webkit-tap-highlight-color: transparent;
+/* Sort button pill style (used inline, defined here for reference) */
+.sort-btn {
+  padding: 0.45rem 1rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  border: 1px solid var(--color-glass-border);
+  background: var(--color-glass-bg);
+  color: var(--color-text-secondary);
+  transition: all 0.2s ease;
+  width: auto;
+  max-width: none;
+  margin-bottom: 0;
 }
 
-/* Mobile Responsiveness */
+.sort-btn.active {
+  background: var(--color-accent-dim);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* ------------------------------------------------------------
+   22. MISC UTILITIES
+   ------------------------------------------------------------ */
+.text-muted  { color: var(--color-text-muted); }
+.text-accent { color: var(--color-accent); }
+.error-message { background-color: var(--color-error); }
+
+/* WineDB image container */
+.wine-entry .bg-gray-200 {
+  width: 12rem;
+  height: 12rem;
+  background: var(--color-glass-bg);
+  border: 1px solid var(--color-glass-border);
+  border-radius: 4px;
+}
+
+/* ------------------------------------------------------------
+   23. MOBILE RESPONSIVENESS
+   ------------------------------------------------------------ */
 @media (max-width: 640px) {
-  h1 {
-    font-size: 1.5rem;
-  }
-
-  h2 {
-    font-size: 1.25rem;
-  }
+  h1 { font-size: 1.4rem; }
+  h2 { font-size: 1.2rem; }
 
   button {
-    padding: 0.6rem 1.2rem;
-    font-size: 0.95rem;
+    padding: 0.7rem 1.2rem;
+    font-size: 0.85rem;
     max-width: 100%;
+    min-height: 48px; /* Touch target */
   }
 
   input, select, textarea {
     max-width: 100%;
+    font-size: 1rem; /* Prevents iOS zoom */
+    min-height: 48px;
   }
 
   .glass-card {
-    padding: 1rem;
+    padding: 1.1rem;
     margin-bottom: 0.75rem;
+    border-radius: 6px;
   }
 
-  .glass-card.image-upload {
-    padding: 1rem;
-  }
+  .glass-card.image-upload { padding: 1rem; }
 
   main {
     padding: 1rem;
-    gap: 2rem;
+    gap: 1.5rem;
     overflow-y: auto;
   }
 
   .wine-entry .bg-gray-200 {
-    width: 10rem; /* Mittelgroße Bildschirme (z. B. Tablets) */
+    width: 10rem;
     height: 10rem;
+  }
+
+  .bewertung-card svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .sort-btn {
+    min-height: 44px;
+    padding: 0.5rem 1rem;
   }
 }

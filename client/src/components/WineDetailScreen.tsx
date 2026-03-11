@@ -12,39 +12,42 @@ interface WineDetailScreenProps {
 }
 
 const WineDetailScreen: React.FC<WineDetailScreenProps> = ({ wineId, onBack, apiUrl }) => {
-  const [wine, setWine] = useState<Wine | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [wine, setWine]           = useState<Wine | null>(null);
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
-    const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
-
-    if (useMockData) {
-      const mockWine = mockWines.find((w: Wine) => w._id.$oid === wineId);
-      if (mockWine) {
-        setWine(mockWine);
-      } else {
-        setError('Wein nicht gefunden');
-      }
+    if (process.env.REACT_APP_USE_MOCK_DATA === 'true') {
+      const found = mockWines.find((w: Wine) => w._id.$oid === wineId);
+      setWine(found || null);
+      if (!found) setError('Wein nicht gefunden');
       setLoading(false);
     } else {
       axios.get(`${apiUrl}/wine/${wineId}`)
-        .then(res => {
-          const wineData = res.data as Wine;
-          setWine(wineData);
-          setLoading(false);
-        })
-        .catch(err => {
-          setError('Fehler beim Laden der Weindaten');
-          setLoading(false);
-        });
+        .then(res => { setWine(res.data as Wine); setLoading(false); })
+        .catch(() => { setError('Fehler beim Laden der Weindaten'); setLoading(false); });
     }
   }, [wineId, apiUrl]);
 
-  if (loading) return <div className="loader"></div>;
-  if (error) return <div className="snackbar error">{error}</div>;
-  if (!wine) return <div className="snackbar error">Wein nicht gefunden</div>;
+  if (loading) return <div className="loader" style={{ marginTop:'4rem' }} />;
+  if (error)   return <div className="snackbar error">{error}</div>;
+  if (!wine)   return <div className="snackbar error">Wein nicht gefunden</div>;
+
+  /* Detail row helper */
+  const Row = ({ label, value }: { label: string; value?: string }) => (
+    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline',
+                  borderBottom:'1px solid var(--color-glass-border)', paddingBottom:'0.5rem',
+                  marginBottom:'0.5rem' }}>
+      <span style={{ fontSize:'0.7rem', letterSpacing:'0.18em', textTransform:'uppercase',
+                     color:'var(--color-accent)', fontFamily:'DM Sans, sans-serif', fontWeight:500 }}>
+        {label}
+      </span>
+      <span style={{ color:'var(--color-text-primary)', fontFamily:'DM Sans, sans-serif', fontSize:'0.9rem' }}>
+        {value || 'N/A'}
+      </span>
+    </div>
+  );
 
   return (
     <div className="App">
@@ -52,90 +55,116 @@ const WineDetailScreen: React.FC<WineDetailScreenProps> = ({ wineId, onBack, api
         <h1 className="header-title">Wein Details</h1>
         <span className="header-back" onClick={onBack}>Zurück</span>
       </header>
+
       <main className="flex-1 p-6 flex flex-col items-center gap-6">
+
+        {/* ── Bild ── */}
         <section className="glass-card image-upload">
-          <h2 className="text-lg md:text-xl font-semibold mb-4">Bild</h2>
+          <h2>Bild</h2>
           {wine.imageUrl ? (
-            <img
-              src={wine.imageUrl}
-              alt={wine.name}
-              className="image-preview"
-              onClick={() => setSelectedImage(wine.imageUrl || null)}
-            />
+            <img src={wine.imageUrl} alt={wine.name} className="image-preview"
+              style={{ cursor:'pointer' }}
+              onClick={() => setSelectedImage(wine.imageUrl || null)} />
           ) : (
-            <div className="w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center">
-              <span className="text-muted">Kein Bild verfügbar</span>
+            <div style={{
+              width:'100%', height:120, background:'var(--color-glass-bg)',
+              border:'1px dashed var(--color-glass-border)', borderRadius:6,
+              display:'flex', alignItems:'center', justifyContent:'center',
+            }}>
+              <span style={{ color:'var(--color-text-muted)', fontFamily:'DM Sans,sans-serif', fontSize:'0.85rem' }}>
+                Kein Bild verfügbar
+              </span>
             </div>
           )}
         </section>
+
+        {/* ── Wein Details ── */}
         <section className="glass-card">
-          <h2 className="text-lg md:text-xl font-semibold mb-4">Wein Details</h2>
-          <div className="flex flex-col gap-2">
-            <p><strong>Name:</strong> {wine.name || 'N/A'}</p>
-            <p><strong>Sorte:</strong> {wine.rebsorte || 'N/A'}</p>
-            <p><strong>Farbe:</strong> {wine.farbe || 'N/A'}</p>
-            <p><strong>Preis:</strong> {wine.preis || 'N/A'}</p>
-            <p><strong>Gekauft bei:</strong> {wine.kauforte?.join(', ') || 'N/A'}</p>
-          </div>
+          <h2>Wein Details</h2>
+          <Row label="Name"       value={wine.name} />
+          <Row label="Sorte"      value={wine.rebsorte} />
+          <Row label="Farbe"      value={wine.farbe} />
+          <Row label="Preis"      value={wine.preis} />
+          <Row label="Gekauft bei" value={wine.kauforte?.join(', ')} />
         </section>
+
+        {/* ── Kategorie ── */}
         <section className="glass-card">
-          <h2 className="text-lg md:text-xl font-semibold mb-4">Kategorie</h2>
-          <div className="flex flex-col gap-2">
-            <p><strong>Kategorie:</strong> {wine.kategorie || 'N/A'}</p>
-            <p><strong>Unterkategorie:</strong> {wine.unterkategorie || 'N/A'}</p>
-          </div>
+          <h2>Kategorie</h2>
+          <Row label="Kategorie"      value={wine.kategorie} />
+          <Row label="Unterkategorie" value={wine.unterkategorie} />
         </section>
+
+        {/* ── Saison ── */}
         {wine.saison && (
           <section className="glass-card">
-            <h2 className="text-lg md:text-xl font-semibold mb-4">Saison</h2>
-            <p>{wine.saison}</p>
+            <h2>Saison</h2>
+            <p style={{ color:'var(--color-text-secondary)', fontFamily:'DM Sans,sans-serif' }}>
+              {wine.saison}
+            </p>
           </section>
         )}
+
+        {/* ── Geschmack ── */}
         <section className="glass-card">
-          <h2 className="text-lg md:text-xl font-semibold mb-4">Geschmack</h2>
+          <h2>Geschmack</h2>
           {wine.geschmack?.length ? (
-            <ul className="list-disc list-inside gap-2 text-[#496580]">
-              {wine.geschmack.map((g) => (
-                <li key={g} className="text-sm">{g}</li>
+            <div style={{ display:'flex', flexWrap:'wrap', gap:'0.5rem', marginTop:'0.25rem' }}>
+              {wine.geschmack.map(g => (
+                <span key={g} style={{
+                  fontFamily:'DM Sans,sans-serif', fontSize:'0.78rem', letterSpacing:'0.08em',
+                  border:'1px solid var(--color-glass-border)',
+                  background:'var(--color-accent-dim)',
+                  color:'var(--color-accent)',
+                  padding:'3px 12px', borderRadius:3,
+                }}>{g}</span>
               ))}
-            </ul>
+            </div>
           ) : (
-            <span className="text-muted">Keine Geschmacksmerkmale</span>
+            <span style={{ color:'var(--color-text-muted)', fontFamily:'DM Sans,sans-serif', fontSize:'0.85rem' }}>
+              Keine Geschmacksmerkmale
+            </span>
           )}
         </section>
+
+        {/* ── Bewertung ── */}
         <section className="glass-card bewertung-card">
-          <h2 className="text-lg md:text-xl font-semibold mb-4">Bewertung</h2>
+          <h2>Bewertung</h2>
           <div className="flex flex-row gap-2 flex-nowrap">
-            {[1, 2, 3, 4, 5].map(star => (
-              <svg
-                key={star}
-                className="w-4 h-4 flex-shrink-0"
-                style={{ fill: star <= (wine.bewertung || 0) ? '#baddff' : 'none', stroke: star <= (wine.bewertung || 0) ? '#baddff' : '#496580', strokeWidth: 2 }}
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
+            {[1,2,3,4,5].map(star => (
+              <svg key={star} style={{
+                width:32, height:32, flexShrink:0,
+                fill:   star <= (wine.bewertung || 0) ? 'var(--color-star-active)' : 'none',
+                stroke: star <= (wine.bewertung || 0) ? 'var(--color-star-active)' : 'var(--color-star-inactive)',
+                strokeWidth: 1.5,
+              }} viewBox="0 0 24 24">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
               </svg>
             ))}
           </div>
         </section>
+
+        {/* ── Notizen ── */}
         <section className="glass-card">
-          <h2 className="text-lg md:text-xl font-semibold mb-4">Notizen</h2>
-          <p>{wine.notizen || 'Keine Notizen'}</p>
+          <h2>Notizen</h2>
+          <p style={{ color: wine.notizen ? 'var(--color-text-secondary)' : 'var(--color-text-muted)',
+                      fontFamily:'DM Sans,sans-serif', fontSize:'0.9rem', lineHeight:1.7 }}>
+            {wine.notizen || 'Keine Notizen'}
+          </p>
         </section>
       </main>
+
       <footer className="footer">
-        <p className="text-sm">Entwickelt mit Liebe zum Wein</p>
+        <p>Entwickelt mit Liebe zum Wein</p>
       </footer>
-      {selectedImage &&
-        ReactDOM.createPortal(
-          <div className="image-overlay" onClick={() => setSelectedImage(null)}>
-            <img src={selectedImage} alt="Vergrößerte Ansicht" onClick={(e) => e.stopPropagation()} />
-            <span className="close-button" onClick={() => setSelectedImage(null)}>×</span>
-          </div>,
-          document.getElementById('image-portal-root') as HTMLElement
-        )}
-      {error && <div className="snackbar error">{error}</div>}
+
+      {selectedImage && ReactDOM.createPortal(
+        <div className="image-overlay" onClick={() => setSelectedImage(null)}>
+          <img src={selectedImage} alt="Vergrößerte Ansicht" onClick={e => e.stopPropagation()} />
+          <span className="close-button" onClick={() => setSelectedImage(null)}>×</span>
+        </div>,
+        document.getElementById('image-portal-root') as HTMLElement
+      )}
     </div>
   );
 };

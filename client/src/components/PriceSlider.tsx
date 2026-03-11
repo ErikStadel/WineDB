@@ -1,5 +1,3 @@
-// Speichere diese Komponente als: client/src/components/PriceSlider.tsx
-
 import React, { useState, useEffect } from 'react';
 
 interface PriceSliderProps {
@@ -9,206 +7,101 @@ interface PriceSliderProps {
 
 const PriceSlider: React.FC<PriceSliderProps> = ({ value, onChange }) => {
   const priceOptions = [
-    'unter 5 €',
-    '5 €',
-    '6 €',
-    '7 €',
-    '8 €',
-    '9 €',
-    '10 €',
-    '11 €',
-    '12 €',
-    'ueber 12 €'
+    'unter 5 €','5 €','6 €','7 €','8 €','9 €','10 €','11 €','12 €','ueber 12 €'
   ];
-
   const displayLabels = [
-    '<5 €',
-    '5 €',
-    '6 €',
-    '7 €',
-    '8 €',
-    '9 €',
-    '10 €',
-    '11 €',
-    '12 €',
-    '>12 €'
+    '<5 €','5 €','6 €','7 €','8 €','9 €','10 €','11 €','12 €','>12 €'
   ];
 
-  // Konvertiert alte Preiswerte zu neuem Format
-  const convertLegacyPrice = (oldPrice: string): string => {
-    const legacyMap: { [key: string]: string } = {
-      '5-8 €': '6 €',      // Mittelpunkt von 5-8
-      '8-12 €': '10 €',    // Mittelpunkt von 8-12
-      '12-15 €': '12 €',   // Am oberen Ende
-      'ueber 15 €': 'ueber 12 €',
-      // Bereits neue Werte bleiben unverändert
-      'unter 5 €': 'unter 5 €',
-      '5 €': '5 €',
-      '6 €': '6 €',
-      '7 €': '7 €',
-      '8 €': '8 €',
-      '9 €': '9 €',
-      '10 €': '10 €',
-      '11 €': '11 €',
-      '12 €': '12 €',
-      'ueber 12 €': 'ueber 12 €'
+  const convertLegacyPrice = (old: string): string => {
+    const map: { [k: string]: string } = {
+      '5-8 €':'6 €','8-12 €':'10 €','12-15 €':'12 €','ueber 15 €':'ueber 12 €',
+      'unter 5 €':'unter 5 €','5 €':'5 €','6 €':'6 €','7 €':'7 €','8 €':'8 €',
+      '9 €':'9 €','10 €':'10 €','11 €':'11 €','12 €':'12 €','ueber 12 €':'ueber 12 €',
     };
-    
-    return legacyMap[oldPrice] || 'unter 5 €';
+    return map[old] || 'unter 5 €';
   };
 
-  // Finde den Index des aktuellen Werts (mit Legacy-Support)
   const getCurrentIndex = () => {
-    const convertedValue = convertLegacyPrice(value);
-    const index = priceOptions.findIndex(p => p === convertedValue);
-    return index !== -1 ? index : 0;
+    const idx = priceOptions.findIndex(p => p === convertLegacyPrice(value));
+    return idx !== -1 ? idx : 0;
   };
 
   const [sliderValue, setSliderValue] = useState(getCurrentIndex());
 
-  // Update slider wenn value sich ändert (z.B. beim Laden eines Weins)
-  useEffect(() => {
-    const newIndex = getCurrentIndex();
-    setSliderValue(newIndex);
-  }, [value]);
+  useEffect(() => { setSliderValue(getCurrentIndex()); }, [value]);
 
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newIndex = parseInt(e.target.value);
-    setSliderValue(newIndex);
-    onChange(priceOptions[newIndex]);
+    const idx = parseInt(e.target.value);
+    setSliderValue(idx);
+    onChange(priceOptions[idx]);
   };
 
   return (
-    <div className="price-slider-container">
-      <div className="price-slider-display">
-        <span className="price-slider-label">{displayLabels[sliderValue]}</span>
+    <div style={{ width:'100%', padding:'0.5rem 0' }}>
+      {/* Display */}
+      <div style={{
+        textAlign:'center', marginBottom:'1rem', padding:'0.75rem',
+        background:'var(--color-accent-dim)',
+        borderRadius:6,
+        border:'1px solid var(--color-glass-border)',
+      }}>
+        <span style={{
+          fontSize:'1.25rem', fontWeight:600,
+          fontFamily:'DM Sans, sans-serif',
+          color:'var(--color-accent)',
+        }}>
+          {displayLabels[sliderValue]}
+        </span>
       </div>
-      <input
-        type="range"
-        min="0"
-        max={priceOptions.length - 1}
-        value={sliderValue}
-        onChange={handleSliderChange}
-        className="price-slider"
-        step="1"
+
+      {/* Slider */}
+      <input type="range" min="0" max={priceOptions.length - 1}
+        value={sliderValue} onChange={handleSliderChange} step="1"
+        style={{ width:'100%', maxWidth:'100%', border:'none' }}
       />
-      <div className="price-slider-marks">
-        <span className="price-mark">{displayLabels[0]}</span>
-        <span className="price-mark">{displayLabels[Math.floor(priceOptions.length / 2)]}</span>
-        <span className="price-mark">{displayLabels[priceOptions.length - 1]}</span>
+
+      {/* Marks */}
+      <div style={{ display:'flex', justifyContent:'space-between', marginTop:'0.4rem', padding:'0 0.25rem' }}>
+        {[displayLabels[0], displayLabels[Math.floor(priceOptions.length / 2)], displayLabels[priceOptions.length - 1]].map((m, i) => (
+          <span key={i} style={{
+            fontSize:'0.72rem', color:'var(--color-text-muted)',
+            fontFamily:'DM Sans, sans-serif', fontWeight:500,
+          }}>{m}</span>
+        ))}
       </div>
-      
+
       <style>{`
-        .price-slider-container {
-          width: 100%;
-          padding: 0.5rem 0;
-        }
-
-        .price-slider-display {
-          text-align: center;
-          margin-bottom: 1rem;
-          padding: 0.75rem;
-          background: rgba(186, 221, 255, 0.2);
-          border-radius: 12px;
-          border: 2px solid rgba(186, 221, 255, 0.4);
-        }
-
-        .price-slider-label {
-          font-size: 1.25rem;
-          font-weight: 600;
-          color: #496580;
-        }
-
-        .price-slider {
-          width: 100%;
-          height: 8px;
-          border-radius: 8px;
-          background: linear-gradient(
-            to right,
-            rgba(186, 221, 255, 0.3) 0%,
-            rgba(186, 221, 255, 0.6) 50%,
-            #baddff 100%
-          );
-          outline: none;
-          -webkit-appearance: none;
-          appearance: none;
-          cursor: pointer;
-          margin: 1rem 0;
-        }
-
-        .price-slider::-webkit-slider-thumb {
+        /* Slider thumb — uses CSS vars where possible */
+        input[type="range"]::-webkit-slider-thumb {
           -webkit-appearance: none;
           appearance: none;
           width: 28px;
           height: 28px;
           border-radius: 50%;
-          background: #496580;
+          background: var(--color-accent);
           cursor: pointer;
-          border: 3px solid #baddff;
-          box-shadow: 0 2px 8px rgba(73, 101, 128, 0.3);
-          transition: all 0.2s ease;
+          border: 2px solid var(--color-bg-mid);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+          transition: transform 0.15s ease;
         }
-
-        .price-slider::-webkit-slider-thumb:active {
-          transform: scale(1.2);
-          box-shadow: 0 3px 12px rgba(73, 101, 128, 0.4);
+        input[type="range"]::-webkit-slider-thumb:active {
+          transform: scale(1.15);
         }
-
-        .price-slider::-moz-range-thumb {
+        input[type="range"]::-moz-range-thumb {
           width: 28px;
           height: 28px;
           border-radius: 50%;
-          background: #496580;
+          background: var(--color-accent);
           cursor: pointer;
-          border: 3px solid #baddff;
-          box-shadow: 0 2px 8px rgba(73, 101, 128, 0.3);
-          transition: all 0.2s ease;
+          border: 2px solid var(--color-bg-mid);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.35);
         }
-
-        .price-slider::-moz-range-thumb:active {
-          transform: scale(1.2);
-          box-shadow: 0 3px 12px rgba(73, 101, 128, 0.4);
-        }
-
-        .price-slider-marks {
-          display: flex;
-          justify-content: space-between;
-          margin-top: 0.5rem;
-          padding: 0 0.25rem;
-        }
-
-        .price-mark {
-          font-size: 0.75rem;
-          color: #496580;
-          opacity: 0.7;
-          font-weight: 500;
-        }
-
-        /* Touch-optimiert für Mobile */
         @media (hover: none) and (pointer: coarse) {
-          .price-slider::-webkit-slider-thumb {
-            width: 32px;
-            height: 32px;
-          }
-
-          .price-slider::-moz-range-thumb {
-            width: 32px;
-            height: 32px;
-          }
-
-          .price-slider {
-            height: 10px;
-            margin: 1.5rem 0;
-          }
-        }
-
-        @media (max-width: 640px) {
-          .price-slider-label {
-            font-size: 1.1rem;
-          }
-
-          .price-mark {
-            font-size: 0.7rem;
+          input[type="range"]::-webkit-slider-thumb,
+          input[type="range"]::-moz-range-thumb {
+            width: 34px;
+            height: 34px;
           }
         }
       `}</style>
