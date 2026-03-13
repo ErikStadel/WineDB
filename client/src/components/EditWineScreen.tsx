@@ -136,7 +136,26 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
     }
     setLoading(true);
     try {
-      await axios.put(`${apiUrl}/wine/${wineId}`, { ...form, _id: { $oid: wineId } });
+      // Sende NUR die bearbeitbaren Felder, ohne timestamp
+      // Das Backend fügt automatisch updatedAt hinzu
+      const updateData = {
+        name: form.name,
+        rebsorte: form.rebsorte,
+        farbe: form.farbe,
+        preis: form.preis,
+        kauforte: form.kauforte,
+        geschmack: form.geschmack,
+        kategorie: form.kategorie,
+        unterkategorie: form.unterkategorie,
+        saison: form.saison,
+        notizen: form.notizen,
+        bewertung: form.bewertung,
+        imageUrl: form.imageUrl
+        // timestamp wird NICHT mitgesendet, damit es erhalten bleibt
+        // updatedAt wird vom Backend hinzugefügt
+      };
+
+      await axios.put(`${apiUrl}/wine/${wineId}`, updateData);
       setSuccessMessage('Änderungen erfolgreich gespeichert!');
       setTimeout(() => { setSuccessMessage(''); onBack(true); }, 1500);
     } catch (err: any) {

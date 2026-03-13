@@ -212,7 +212,8 @@ app.put('/wine/:id', async (req, res) => {
     const collection = db.collection('wines');
     const wineData = {
       ...req.body,
-      timestamp: new Date(),
+      updatedAt: new Date(), // nur das Bearbeitungsdatum aktualisieren
+      // timestamp bleibt unberührt durch $set
     };
     delete wineData._id;
     const result = await collection.updateOne(
