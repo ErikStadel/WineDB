@@ -185,7 +185,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
     Kochwein:        ['auch trinkbar','Tafelwein','Fail'],
     'Seltene Weine': ['Geschenk','Geheimtipp','Anlass'],
   };
-  const geschmackOptions = ['spritzig','fruchtig','dünn','extraordinär','kräftig','intensiv','gefällig'];
+  const geschmackOptions = ['spritzig','fruchtig','dünn','weich','extraordinär','kräftig','intensiv','gefällig'];
 
   if (loading && !form.name) return <div style={{ padding:'2rem', color:'var(--color-text-secondary)' }}>Laden…</div>;
 
