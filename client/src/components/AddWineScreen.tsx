@@ -133,7 +133,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
     'Seltene Weine': ['Geschenk','Geheimtipp','Anlass'],
   };
 
-  const geschmackOptions = ['spritzig','fruchtig','dünn','weich','extraordinär','kräftig','intensiv','gefällig'];
+  const geschmackOptions = ['spritzig','fruchtig','dünn','extraordinär','kräftig','intensiv','gefällig','weich'];
 
   /* Shared label style */
   const labelStyle: React.CSSProperties = {
