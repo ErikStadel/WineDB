@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "ES2017",          // statt "es5"
     "lib": [
       "dom",
       "dom.iterable",
@@ -14,14 +14,14 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler", // statt "node"
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx"
   },
   "include": [
-  "src",
-  "types"
-]
+    "src",
+    "types"
+  ]
 }

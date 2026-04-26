@@ -32,28 +32,28 @@ type SortField = 'timestamp' | 'bewertung' | null;
 type SortDirection = 'asc' | 'desc';
 
 const wineStripeColor = (farbe?: string) => {
-  if (farbe === 'Rot')  return 'var(--color-wine-red)';
+  if (farbe === 'Rot') return 'var(--color-wine-red)';
   if (farbe === 'Rosé') return 'var(--color-wine-rose)';
   return 'var(--color-wine-white)';
 };
 
 const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosition }) => {
-  const [wines, setWines]                   = useState<Wine[]>([]);
-  const [filterOpen, setFilterOpen]         = useState(false);
-  const [sortOpen, setSortOpen]             = useState(false);
-  const [filters, setFilters]               = useState({ search: '', farbe: '', kauforte: '', kategorie: '' });
-  const [sortField, setSortField]           = useState<SortField>('timestamp');
-  const [sortDirection, setSortDirection]   = useState<SortDirection>('desc');
-  const [selectedImage, setSelectedImage]   = useState<string | null>(null);
-  const [editingWineId, setEditingWineId]   = useState<string | null>(null);
+  const [wines, setWines] = useState<Wine[]>([]);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [sortOpen, setSortOpen] = useState(false);
+  const [filters, setFilters] = useState({ search: '', farbe: '', kauforte: '', kategorie: '' });
+  const [sortField, setSortField] = useState<SortField>('timestamp');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [editingWineId, setEditingWineId] = useState<string | null>(null);
   const [selectedWineId, setSelectedWineId] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [error, setError]                   = useState<string | null>(null);
-  const [isSearching, setIsSearching]       = useState(false);
-  const [hasMore, setHasMore]               = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
 
-  const hasRestoredRef   = useRef<boolean>(false);
-  const isMainScreenRef  = useRef<boolean>(true);
+  const hasRestoredRef = useRef<boolean>(false);
+  const isMainScreenRef = useRef<boolean>(true);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   /* ── Scroll ─────────────────────────────────────────────── */
@@ -101,10 +101,10 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
         const matchesSearch = !searchParams.search ||
           wine.name.toLowerCase().includes(sl) ||
           (wine.rebsorte && wine.rebsorte.toLowerCase().includes(sl)) ||
-          (wine.notizen  && wine.notizen.toLowerCase().includes(sl));
+          (wine.notizen && wine.notizen.toLowerCase().includes(sl));
         return matchesSearch &&
-          (!searchParams.farbe     || wine.farbe === searchParams.farbe) &&
-          (!searchParams.kauforte  || (wine.kauforte && wine.kauforte.includes(searchParams.kauforte))) &&
+          (!searchParams.farbe || wine.farbe === searchParams.farbe) &&
+          (!searchParams.kauforte || (wine.kauforte && wine.kauforte.includes(searchParams.kauforte))) &&
           (!searchParams.kategorie || wine.kategorie === searchParams.kategorie);
       }));
       setHasMore(false);
@@ -116,16 +116,16 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
     setError(null);
     try {
       const params = new URLSearchParams();
-      if (searchParams.search)    params.append('q', searchParams.search);
-      if (searchParams.farbe)     params.append('farbe', searchParams.farbe);
-      if (searchParams.kauforte)  params.append('kauforte', searchParams.kauforte);
+      if (searchParams.search) params.append('q', searchParams.search);
+      if (searchParams.farbe) params.append('farbe', searchParams.farbe);
+      if (searchParams.kauforte) params.append('kauforte', searchParams.kauforte);
       if (searchParams.kategorie) params.append('kategorie', searchParams.kategorie);
       params.append('limit', '50');
 
       const { data } = await axios.get(`${apiUrl}/wines/search?${params}`, { timeout: 10000 });
       const fmt = (w: any) => ({
         ...w,
-        _id:       typeof w._id       === 'string' ? { $oid: w._id }       : w._id,
+        _id: typeof w._id === 'string' ? { $oid: w._id } : w._id,
         timestamp: typeof w.timestamp === 'string' ? { $date: w.timestamp } : w.timestamp,
       });
       const formattedWines = data.wines.map(fmt);
@@ -142,7 +142,7 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
         const { data } = await axios.get(`${apiUrl}/wines/search-fallback`, { params: searchParams, timeout: 15000 });
         setWines(data.wines.map((w: any) => ({
           ...w,
-          _id:       typeof w._id       === 'string' ? { $oid: w._id }       : w._id,
+          _id: typeof w._id === 'string' ? { $oid: w._id } : w._id,
           timestamp: typeof w.timestamp === 'string' ? { $date: w.timestamp } : w.timestamp,
         })));
         setHasMore(false);
@@ -175,9 +175,9 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
 
   useEffect(() => () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); }, []);
 
-  const handleEdit        = (id: Wine['_id']) => { saveScrollPosition(); setEditingWineId(id.$oid); };
+  const handleEdit = (id: Wine['_id']) => { saveScrollPosition(); setEditingWineId(id.$oid); };
   const handleViewDetails = (id: Wine['_id']) => { saveScrollPosition(); setSelectedWineId(id.$oid); };
-  const handleEditBack    = (refresh = false) => {
+  const handleEditBack = (refresh = false) => {
     setEditingWineId(null); hasRestoredRef.current = false;
     if (refresh) setRefreshTrigger(p => p + 1);
     else setTimeout(restoreScrollPosition, 50);
@@ -196,8 +196,8 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
   const sortLabel = sortField === 'timestamp'
     ? `Datum ${sortDirection === 'desc' ? '↓' : '↑'}`
     : sortField === 'bewertung'
-    ? `Bewertung ${sortDirection === 'desc' ? '↓' : '↑'}`
-    : null;
+      ? `Bewertung ${sortDirection === 'desc' ? '↓' : '↑'}`
+      : null;
 
   /* Reusable inline styles */
   const inputStyle: React.CSSProperties = {
@@ -208,7 +208,7 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
     background: 'var(--color-input-bg)',
     color: 'var(--color-text-primary)',
     fontFamily: 'DM Sans, sans-serif',
-    fontSize: '0.9rem',
+    fontSize: '16px',
   };
   const sectionLabelStyle: React.CSSProperties = {
     fontFamily: 'DM Sans, sans-serif',
@@ -232,15 +232,42 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
 
         {/* ── Filter ── */}
         <section className="glass-card w-full max-w-3xl" style={{ marginBottom: 0 }}>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', cursor:'pointer' }}
-               onClick={() => setFilterOpen(!filterOpen)}>
-            <span style={sectionLabelStyle}>Filter & Suche</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+            onClick={() => setFilterOpen(!filterOpen)}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={sectionLabelStyle}>Filter & Suche</span>
+              {(filters.search || filters.farbe || filters.kauforte || filters.kategorie) && (
+                <span
+                  onClick={e => {
+                    e.stopPropagation();
+                    setFilters({ search: '', farbe: '', kauforte: '', kategorie: '' });
+                  }}
+                  style={{
+                    fontSize: '0.6rem',
+                    letterSpacing: '0.15em',
+                    textTransform: 'uppercase',
+                    color: 'var(--color-accent)',
+                    opacity: 0.6,
+                    fontFamily: 'DM Sans, sans-serif',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    borderBottom: '1px solid rgba(201, 169, 110, 0.3)',
+                    paddingBottom: '1px',
+                    transition: 'opacity 0.2s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+                  onMouseLeave={e => (e.currentTarget.style.opacity = '0.6')}
+                >
+                  zurücksetzen
+                </span>
+              )}
+            </div>
             <span style={chevron}>{filterOpen ? '▲' : '▼'}</span>
           </div>
 
           {filterOpen && (
-            <div style={{ marginTop: '1rem', display:'flex', flexDirection:'column', gap:'0.6rem' }}>
-              <div style={{ position:'relative' }}>
+            <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              <div style={{ position: 'relative' }}>
                 <input
                   value={filters.search}
                   onChange={e => handleFilterChange('search', e.target.value)}
@@ -248,15 +275,15 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
                   style={{ ...inputStyle, paddingRight: '2.2rem' }}
                 />
                 {isSearching && (
-                  <div style={{ position:'absolute', right:'0.6rem', top:'50%', transform:'translateY(-50%)' }}>
-                    <div className="loader" style={{ width:16, height:16, margin:0, borderWidth:2 }} />
+                  <div style={{ position: 'absolute', right: '0.6rem', top: '50%', transform: 'translateY(-50%)' }}>
+                    <div className="loader" style={{ width: 16, height: 16, margin: 0, borderWidth: 2 }} />
                   </div>
                 )}
               </div>
               {([
-                { key:'farbe',     label:'Alle Farben',     opts:['Rot','Weiß','Rosé'] },
-                { key:'kauforte',  label:'Alle Kauforte',   opts:['Rewe','Kaufland','Hit','Aldi','Lidl','Edeka','Henkell','Wo anders'] },
-                { key:'kategorie', label:'Alle Kategorien', opts:['Evergreen','Kochwein','Seltene Weine','Weinstand'] },
+                { key: 'farbe', label: 'Alle Farben', opts: ['Rot', 'Weiß', 'Rosé'] },
+                { key: 'kauforte', label: 'Alle Kauforte', opts: ['Rewe', 'Kaufland', 'Hit', 'Aldi', 'Lidl', 'Edeka', 'Henkell', 'Wo anders'] },
+                { key: 'kategorie', label: 'Alle Kategorien', opts: ['Evergreen', 'Kochwein', 'Seltene Weine', 'Weinstand'] },
               ]).map(({ key, label, opts }) => (
                 <select key={key}
                   value={filters[key as keyof typeof filters]}
@@ -273,13 +300,13 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
 
         {/* ── Sort ── */}
         <section className="glass-card w-full max-w-3xl"
-                 style={{ marginBottom:0, padding:'0.75rem 1.5rem' }}>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', cursor:'pointer' }}
-               onClick={() => setSortOpen(!sortOpen)}>
-            <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+          style={{ marginBottom: 0, padding: '0.75rem 1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+            onClick={() => setSortOpen(!sortOpen)}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
               <span style={sectionLabelStyle}>Sortierung</span>
               {sortLabel && (
-                <span style={{ fontFamily:'DM Sans,sans-serif', fontSize:'0.72rem', color:'var(--color-text-muted)' }}>
+                <span style={{ fontFamily: 'DM Sans,sans-serif', fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>
                   – {sortLabel}
                 </span>
               )}
@@ -288,8 +315,8 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
           </div>
 
           {sortOpen && (
-            <div style={{ marginTop:'0.85rem', display:'flex', gap:'0.6rem', flexWrap:'wrap' }}>
-              {([['timestamp','Datum'],['bewertung','Bewertung']] as [SortField, string][]).map(([field, label]) => (
+            <div style={{ marginTop: '0.85rem', display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+              {([['timestamp', 'Datum'], ['bewertung', 'Bewertung']] as [SortField, string][]).map(([field, label]) => (
                 <button key={field}
                   onClick={() => handleSortToggle(field)}
                   className={`sort-btn${sortField === field ? ' active' : ''}`}
@@ -304,8 +331,8 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
         {/* ── Wine List ── */}
         <section className="flex flex-col gap-4 w-full max-w-3xl">
           {displayedWines.length === 0 && !isSearching && (
-            <div className="glass-card" style={{ padding:'1rem', textAlign:'center' }}>
-              <p style={{ color:'var(--color-text-secondary)', fontFamily:'DM Sans,sans-serif', fontSize:'0.9rem' }}>
+            <div className="glass-card" style={{ padding: '1rem', textAlign: 'center' }}>
+              <p style={{ color: 'var(--color-text-secondary)', fontFamily: 'DM Sans,sans-serif', fontSize: '0.9rem' }}>
                 {filters.search ? 'Keine Ergebnisse gefunden.' : 'Keine Weine in der Datenbank.'}
               </p>
             </div>
@@ -313,71 +340,85 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
 
           {displayedWines.map(wine => (
             <div key={wine._id.$oid}
-                 className="glass-card wine-entry"
-                 style={{ padding:'1.1rem 1.1rem 1.1rem 0', display:'flex',
-                          gap:0, alignItems:'stretch', overflow:'hidden' }}>
+              className="glass-card wine-entry"
+              style={{
+                padding: '1.1rem 1.1rem 1.1rem 0', display: 'flex',
+                gap: 0, alignItems: 'stretch', overflow: 'hidden'
+              }}>
 
               {/* ① Colour stripe */}
-              <div style={{ width:4, flexShrink:0, borderRadius:'6px 0 0 6px',
-                            background: wineStripeColor(wine.farbe),
-                            marginRight:'0.9rem' }} />
+              <div style={{
+                width: 4, flexShrink: 0, borderRadius: '6px 0 0 6px',
+                background: wineStripeColor(wine.farbe),
+                marginRight: '0.9rem'
+              }} />
 
               {/* ② Thumbnail */}
-              <div style={{ width:64, height:64, flexShrink:0, alignSelf:'flex-start', marginTop:2,
-                            background:'var(--color-glass-bg)',
-                            border:'1px solid var(--color-glass-border)',
-                            borderRadius:4, overflow:'hidden',
-                            display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <div style={{
+                width: 64, height: 64, flexShrink: 0, alignSelf: 'flex-start', marginTop: 2,
+                background: 'var(--color-glass-bg)',
+                border: '1px solid var(--color-glass-border)',
+                borderRadius: 4, overflow: 'hidden',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}>
                 {wine.imageUrl && (
                   <img src={wine.imageUrl} alt={wine.name}
-                    style={{ width:'100%', height:'100%', objectFit:'contain', cursor:'pointer' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain', cursor: 'pointer' }}
                     onClick={() => setSelectedImage(prev => prev === wine.imageUrl ? null : wine.imageUrl || null)}
                   />
                 )}
               </div>
 
               {/* ③ Main info — fills remaining space */}
-              <div style={{ flex:1, minWidth:0, paddingLeft:'0.85rem', display:'flex', flexDirection:'column', gap:'0.3rem' }}>
+              <div style={{ flex: 1, minWidth: 0, paddingLeft: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
 
                 {/* Row 1: Name */}
-                <h3 style={{ fontFamily:'Cormorant Garamond,serif', fontSize:'1.15rem', fontWeight:500,
-                             color:'var(--color-text-primary)', margin:0, lineHeight:1.25 }}>
+                <h3 style={{
+                  fontFamily: 'Cormorant Garamond,serif', fontSize: '1.15rem', fontWeight: 500,
+                  color: 'var(--color-text-primary)', margin: 0, lineHeight: 1.25
+                }}>
                   {wine.name}
                   {wine.score && (
-                    <span style={{ fontSize:'0.65rem', color:'var(--color-accent)', marginLeft:6, opacity:0.6 }}>
+                    <span style={{ fontSize: '0.65rem', color: 'var(--color-accent)', marginLeft: 6, opacity: 0.6 }}>
                       ({Math.round(wine.score * 100) / 100})
                     </span>
                   )}
                 </h3>
 
                 {/* Row 2: Rebsorte · Farbe */}
-                <p style={{ fontSize:'0.72rem', color:'var(--color-accent)',
-                            letterSpacing:'0.06em', margin:0 }}>
+                <p style={{
+                  fontSize: '0.72rem', color: 'var(--color-accent)',
+                  letterSpacing: '0.06em', margin: 0
+                }}>
                   {wine.rebsorte || 'N/A'} · {wine.farbe || 'N/A'}
                 </p>
 
                 {/* Row 3: Kategorie + Unterkategorie */}
-                <p style={{ fontSize:'0.78rem', color:'var(--color-text-secondary)', margin:0 }}>
+                <p style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)', margin: 0 }}>
                   {wine.kategorie || 'N/A'}
                   {wine.unterkategorie && (
-                    <span style={{ color:'var(--color-text-muted)', marginLeft:6 }}>
+                    <span style={{ color: 'var(--color-text-muted)', marginLeft: 6 }}>
                       · {wine.unterkategorie}
                     </span>
                   )}
                 </p>
 
                 {/* Row 4: Preis + Sterne */}
-                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center',
-                              marginTop:'0.2rem' }}>
-                  <span style={{ fontSize:'0.85rem', color:'var(--color-text-primary)',
-                                 fontFamily:'DM Sans,sans-serif' }}>
+                <div style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  marginTop: '0.2rem'
+                }}>
+                  <span style={{
+                    fontSize: '0.85rem', color: 'var(--color-text-primary)',
+                    fontFamily: 'DM Sans,sans-serif'
+                  }}>
                     {wine.preis || 'N/A'}
                   </span>
-                  <span style={{ fontSize:'1rem', letterSpacing:2 }}>
-                    <span style={{ color:'var(--color-star-active)' }}>
+                  <span style={{ fontSize: '1rem', letterSpacing: 2 }}>
+                    <span style={{ color: 'var(--color-star-active)' }}>
                       {'★'.repeat(wine.bewertung || 0)}
                     </span>
-                    <span style={{ color:'var(--color-star-inactive)' }}>
+                    <span style={{ color: 'var(--color-star-inactive)' }}>
                       {'★'.repeat(5 - (wine.bewertung || 0))}
                     </span>
                   </span>
@@ -385,24 +426,26 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
               </div>
 
               {/* ④ Icon column — fixed width, never overlaps content */}
-              <div style={{ display:'flex', flexDirection:'column', justifyContent:'space-between',
-                            alignItems:'center', paddingLeft:'0.75rem',
-                            flexShrink:0, width:28 }}>
+              <div style={{
+                display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                alignItems: 'center', paddingLeft: '0.75rem',
+                flexShrink: 0, width: 28
+              }}>
                 <svg onClick={() => handleEdit(wine._id)}
-                     style={{ cursor:'pointer', opacity:0.55, transition:'opacity 0.2s' }}
-                     width="18" height="18" viewBox="0 0 24 24" fill="none"
-                     stroke="var(--color-accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-                     onMouseEnter={e => (e.currentTarget.style.opacity='1')}
-                     onMouseLeave={e => (e.currentTarget.style.opacity='0.55')}>
+                  style={{ cursor: 'pointer', opacity: 0.55, transition: 'opacity 0.2s' }}
+                  width="18" height="18" viewBox="0 0 24 24" fill="none"
+                  stroke="var(--color-accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+                  onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+                  onMouseLeave={e => (e.currentTarget.style.opacity = '0.55')}>
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                 </svg>
                 <svg onClick={() => handleViewDetails(wine._id)}
-                     style={{ cursor:'pointer', opacity:0.55, transition:'opacity 0.2s' }}
-                     width="18" height="18" viewBox="0 0 24 24" fill="none"
-                     stroke="var(--color-accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-                     onMouseEnter={e => (e.currentTarget.style.opacity='1')}
-                     onMouseLeave={e => (e.currentTarget.style.opacity='0.55')}>
+                  style={{ cursor: 'pointer', opacity: 0.55, transition: 'opacity 0.2s' }}
+                  width="18" height="18" viewBox="0 0 24 24" fill="none"
+                  stroke="var(--color-accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+                  onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+                  onMouseLeave={e => (e.currentTarget.style.opacity = '0.55')}>
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                   <circle cx="12" cy="12" r="3" />
                 </svg>
@@ -412,8 +455,8 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
           ))}
 
           {hasMore && (
-            <div className="glass-card" style={{ padding:'1rem', textAlign:'center' }}>
-              <p style={{ fontSize:'0.78rem', color:'var(--color-text-muted)', fontFamily:'DM Sans,sans-serif' }}>
+            <div className="glass-card" style={{ padding: '1rem', textAlign: 'center' }}>
+              <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', fontFamily: 'DM Sans,sans-serif' }}>
                 Weitere Ergebnisse verfügbar. Verfeinere deine Suche für präzisere Ergebnisse.
               </p>
             </div>
