@@ -252,63 +252,63 @@ app.delete('/wine/:id', async (req, res) => {
 
 app.get('/wines/search', async (req, res) => {
   try {
-    const { q, farbe, kauforte, kategorie, limit = 20, skip = 0 } = req.query;
+    const { q, farbe, kauforte, kategorie, limit = '50', skip = '0' } = req.query;
     const db = await connectDB();
     const collection = db.collection('wines');
     const pipeline = [];
     const searchTerm = q.trim();
-    const fuzzyConfig = searchTerm.length <= 3 
-  ? {}  // kein fuzzy bei sehr kurzen Begriffen
-  : searchTerm.length <= 5 
-    ? { maxEdits: 1 } 
-    : { maxEdits: 2 };
+    const fuzzyConfig = searchTerm.length <= 3
+      ? {}  // kein fuzzy bei sehr kurzen Begriffen
+      : searchTerm.length <= 5
+        ? { maxEdits: 1 }
+        : { maxEdits: 2 };
 
     if (q && q.trim() !== '') {
-  pipeline.push({
-    $search: {
-      index: 'WineSearch',
-      compound: {
-        should: [
-          {
-            text: {
-              query: q.trim(),
-              path: ['name', 'notizen', 'ocrRawText'],
-              fuzzy: fuzzyConfig
-            },
+      pipeline.push({
+        $search: {
+          index: 'WineSearch',
+          compound: {
+            should: [
+              {
+                text: {
+                  query: q.trim(),
+                  path: ['name', 'notizen', 'ocrRawText'],
+                  fuzzy: fuzzyConfig
+                },
+              },
+              {
+                text: {
+                  query: q.trim(),
+                  path: 'rebsorte',
+                  synonyms: 'Rebsorten'
+                },
+              },
+              {
+                autocomplete: {
+                  query: q.trim(),
+                  path: 'name_autocomplete',
+                  fuzzy: { maxEdits: 2 }
+                },
+              },
+              {
+                autocomplete: {
+                  query: q.trim(),
+                  path: 'rebsorte_autocomplete',
+                  fuzzy: { maxEdits: 2 }
+                },
+              },
+              {
+                autocomplete: {
+                  query: q.trim(),
+                  path: 'ocrRawText_autocomplete',
+                  fuzzy: { maxEdits: 2 }
+                },
+              },
+            ],
+            minimumShouldMatch: 1,
           },
-          {
-            text: {
-              query: q.trim(),
-              path: 'rebsorte',
-              synonyms: 'Rebsorten'
-            },
-          },
-          {
-            autocomplete: {
-              query: q.trim(),
-              path: 'name_autocomplete',
-              fuzzy: { maxEdits: 2 }
-            },
-          },
-          {
-            autocomplete: {
-              query: q.trim(),
-              path: 'rebsorte_autocomplete',
-              fuzzy: { maxEdits: 2 }
-            },
-          },
-          {
-            autocomplete: {
-              query: q.trim(),
-              path: 'ocrRawText_autocomplete',
-              fuzzy: { maxEdits: 2 }
-            },
-          },
-        ],
-        minimumShouldMatch: 1,
-      },
-    },
-  });
+        },
+      });
       pipeline.push({
         $addFields: {
           score: { $meta: 'searchScore' },
@@ -333,8 +333,8 @@ app.get('/wines/search', async (req, res) => {
     pipeline.push({
       $sort: q && q.trim() !== '' ? { score: -1, timestamp: -1 } : { timestamp: -1 },
     });
-    pipeline.push({ $skip: parseInt(skip) });
-    pipeline.push({ $limit: parseInt(limit) });
+    pipeline.push({ $skip: parseInt(skip) || 0 });
+    pipeline.push({ $limit: parseInt(limit) || 50 });
 
     console.log('Search Query:', { q, farbe, kauforte, kategorie, limit, skip });
     console.log('Search Pipeline:', JSON.stringify(pipeline, null, 2));
