@@ -256,6 +256,12 @@ app.get('/wines/search', async (req, res) => {
     const db = await connectDB();
     const collection = db.collection('wines');
     const pipeline = [];
+    const searchTerm = q.trim();
+    const fuzzyConfig = searchTerm.length <= 3 
+  ? {}  // kein fuzzy bei sehr kurzen Begriffen
+  : searchTerm.length <= 5 
+    ? { maxEdits: 1 } 
+    : { maxEdits: 2 };
 
     if (q && q.trim() !== '') {
   pipeline.push({
@@ -267,7 +273,7 @@ app.get('/wines/search', async (req, res) => {
             text: {
               query: q.trim(),
               path: ['name', 'notizen', 'ocrRawText'],
-              fuzzy: { maxEdits: 2 }
+              fuzzy: fuzzyConfig
             },
           },
           {
