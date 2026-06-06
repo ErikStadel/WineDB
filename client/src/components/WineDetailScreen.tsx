@@ -84,7 +84,43 @@ const WineDetailScreen: React.FC<WineDetailScreenProps> = ({ wineId, onBack, api
           <Row label="Name"       value={wine.name} />
           <Row label="Sorte"      value={wine.rebsorte} />
           <Row label="Farbe"      value={wine.farbe} />
-          <Row label="Preis"      value={wine.preis} />
+
+          {/* Preis + Angebot-Badge in einer Zeile */}
+          <div style={{
+            display:'flex', justifyContent:'space-between', alignItems:'center',
+            borderBottom:'1px solid var(--color-glass-border)', paddingBottom:'0.5rem',
+            marginBottom:'0.5rem',
+          }}>
+            <span style={{
+              fontSize:'0.7rem', letterSpacing:'0.18em', textTransform:'uppercase',
+              color:'var(--color-accent)', fontFamily:'DM Sans, sans-serif', fontWeight:500,
+            }}>
+              Preis
+            </span>
+            <div style={{ display:'flex', alignItems:'center', gap:'0.5rem' }}>
+              <span style={{ color:'var(--color-text-primary)', fontFamily:'DM Sans, sans-serif', fontSize:'0.9rem' }}>
+                {wine.preis || 'N/A'}
+              </span>
+              {(wine as any).angebot && (
+                <span style={{
+                  display:'inline-flex', alignItems:'center', gap:'0.3rem',
+                  background:'var(--color-accent-dim)',
+                  border:'1px solid var(--color-glass-border)',
+                  borderRadius:3,
+                  padding:'1px 7px',
+                  fontSize:'0.65rem',
+                  letterSpacing:'0.12em',
+                  textTransform:'uppercase',
+                  color:'var(--color-accent)',
+                  fontFamily:'DM Sans, sans-serif',
+                  fontWeight:500,
+                }}>
+                  🏷️ Angebot
+                </span>
+              )}
+            </div>
+          </div>
+
           <Row label="Gekauft bei" value={wine.kauforte?.join(', ')} />
         </section>
 

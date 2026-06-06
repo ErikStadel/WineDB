@@ -158,6 +158,7 @@ app.post('/wine', async (req, res) => {
       rebsorte: req.body.rebsorte || '',
       farbe: req.body.farbe || '',
       preis: req.body.preis || '',
+      angebot: req.body.angebot === true || req.body.angebot === 'true' ? true : false,
       kauforte: req.body.kauforte || [],
       geschmack: req.body.geschmack || [],
       kategorie: req.body.kategorie || '',
@@ -212,6 +213,8 @@ app.put('/wine/:id', async (req, res) => {
     const collection = db.collection('wines');
     const wineData = {
       ...req.body,
+      // angebot explizit als Boolean normalisieren
+      angebot: req.body.angebot === true || req.body.angebot === 'true' ? true : false,
       updatedAt: new Date(), // nur das Bearbeitungsdatum aktualisieren
       // timestamp bleibt unberührt durch $set
     };

@@ -12,11 +12,13 @@ interface AddWineScreenProps {
 const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
   const [form, setForm] = useState<{
     name: string; rebsorte: string; farbe: string; preis: string;
+    angebot: boolean;
     kauforte: string[]; geschmack: string[]; kategorie: string;
     unterkategorie: string; saison: string; notizen: string;
     bewertung: number; imageFile: File | null; imageUrl: string;
   }>({
-    name: '', rebsorte: '', farbe: '', preis: '', kauforte: [], geschmack: [],
+    name: '', rebsorte: '', farbe: '', preis: '', angebot: false,
+    kauforte: [], geschmack: [],
     kategorie: '', unterkategorie: '', saison: '', notizen: '',
     bewertung: 0, imageFile: null, imageUrl: '',
   });
@@ -108,6 +110,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
       }
       await axios.post(`${apiUrl}/wine`, {
         name: form.name, rebsorte: form.rebsorte, farbe: form.farbe, preis: form.preis,
+        angebot: form.angebot,
         kauforte: form.kauforte, geschmack: form.geschmack, kategorie: form.kategorie,
         unterkategorie: form.unterkategorie, saison: form.saison, notizen: form.notizen,
         bewertung: form.bewertung, imageUrl,
@@ -115,7 +118,8 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
       setSuccessMessage(true);
       setTimeout(() => {
         setSuccessMessage(false);
-        setForm({ name:'', rebsorte:'', farbe:'', preis:'', kauforte:[], geschmack:[],
+        setForm({ name:'', rebsorte:'', farbe:'', preis:'', angebot: false,
+                  kauforte:[], geschmack:[],
                   kategorie:'', unterkategorie:'', saison:'', notizen:'', bewertung:0,
                   imageFile:null, imageUrl:'' });
         onBack();
@@ -238,6 +242,31 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
             value={form.preis}
             onChange={newPrice => setForm(prev => ({ ...prev, preis: newPrice }))}
           />
+
+          {/* ── Angebot ── */}
+          <label style={{
+            display: 'flex', alignItems: 'center', gap: '0.65rem',
+            marginTop: '0.75rem', cursor: 'pointer',
+            width: 'fit-content',
+          }}>
+            <input
+              type="checkbox"
+              checked={form.angebot}
+              onChange={e => setForm(prev => ({ ...prev, angebot: e.target.checked }))}
+              style={{ width: 18, height: 18, accentColor: 'var(--color-accent)', cursor: 'pointer' }}
+            />
+            <span style={{
+              fontFamily: 'DM Sans, sans-serif',
+              fontSize: '0.95rem',
+              color: form.angebot ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+              transition: 'color 0.2s',
+            }}>
+              Angebot
+            </span>
+            {form.angebot && (
+              <span style={{ fontSize: '0.9rem' }} title="Angebotspreis">🏷️</span>
+            )}
+          </label>
         </section>
 
         {/* ── Geschmack ── */}

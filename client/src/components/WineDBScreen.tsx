@@ -11,6 +11,7 @@ interface Wine {
   rebsorte?: string;
   farbe?: string;
   preis?: string;
+  angebot?: boolean;
   kauforte?: string[];
   geschmack?: string[];
   kategorie?: string;
@@ -403,17 +404,31 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
                   )}
                 </p>
 
-                {/* Row 4: Preis + Sterne */}
+                {/* Row 4: Preis + Angebot-Icon + Sterne */}
                 <div style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   marginTop: '0.2rem'
                 }}>
-                  <span style={{
-                    fontSize: '0.85rem', color: 'var(--color-text-primary)',
-                    fontFamily: 'DM Sans,sans-serif'
-                  }}>
-                    {wine.preis || 'N/A'}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span style={{
+                      fontSize: '0.85rem', color: 'var(--color-text-primary)',
+                      fontFamily: 'DM Sans,sans-serif'
+                    }}>
+                      {wine.preis || 'N/A'}
+                    </span>
+                    {wine.angebot && (
+                      <span
+                        title="Angebotspreis"
+                        style={{
+                          fontSize: '0.75rem',
+                          lineHeight: 1,
+                          opacity: 0.85,
+                        }}
+                      >
+                        🏷️
+                      </span>
+                    )}
+                  </div>
                   <span style={{ fontSize: '1rem', letterSpacing: 2 }}>
                     <span style={{ color: 'var(--color-star-active)' }}>
                       {'★'.repeat(wine.bewertung || 0)}

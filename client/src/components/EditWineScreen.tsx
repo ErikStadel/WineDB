@@ -12,6 +12,7 @@ interface EditWineScreenProps {
 
 interface FormWine {
   name: string; rebsorte: string; farbe: string; preis: string;
+  angebot: boolean;
   kauforte: string[]; geschmack: string[]; kategorie: string;
   unterkategorie: string; saison: string; notizen: string;
   bewertung: number; imageUrl: string;
@@ -19,7 +20,8 @@ interface FormWine {
 
 const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl }) => {
   const [form, setForm] = useState<FormWine>({
-    name:'', rebsorte:'', farbe:'', preis:'', kauforte:[], geschmack:[],
+    name:'', rebsorte:'', farbe:'', preis:'', angebot: false,
+    kauforte:[], geschmack:[],
     kategorie:'', unterkategorie:'', saison:'', notizen:'', bewertung:0, imageUrl:'',
   });
   const [loading,    setLoading]    = useState(true);
@@ -51,7 +53,8 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
         const d = res.data;
         setForm({
           name: d.name || '', rebsorte: d.rebsorte || '', farbe: d.farbe || '',
-          preis: d.preis || '', kauforte: d.kauforte || [], geschmack: d.geschmack || [],
+          preis: d.preis || '', angebot: d.angebot ?? false,
+          kauforte: d.kauforte || [], geschmack: d.geschmack || [],
           kategorie: d.kategorie || '', unterkategorie: d.unterkategorie || '',
           saison: d.saison || '', notizen: d.notizen || '',
           bewertung: d.bewertung || 0, imageUrl: d.imageUrl || '',
@@ -136,13 +139,12 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
     }
     setLoading(true);
     try {
-      // Sende NUR die bearbeitbaren Felder, ohne timestamp
-      // Das Backend fügt automatisch updatedAt hinzu
       const updateData = {
         name: form.name,
         rebsorte: form.rebsorte,
         farbe: form.farbe,
         preis: form.preis,
+        angebot: form.angebot,
         kauforte: form.kauforte,
         geschmack: form.geschmack,
         kategorie: form.kategorie,
@@ -150,9 +152,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
         saison: form.saison,
         notizen: form.notizen,
         bewertung: form.bewertung,
-        imageUrl: form.imageUrl
-        // timestamp wird NICHT mitgesendet, damit es erhalten bleibt
-        // updatedAt wird vom Backend hinzugefügt
+        imageUrl: form.imageUrl,
       };
 
       await axios.put(`${apiUrl}/wine/${wineId}`, updateData);
@@ -275,6 +275,31 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
 
           <span style={labelStyle}>Preis <span style={{ color:'var(--color-accent)' }}>*</span></span>
           <PriceSlider value={form.preis} onChange={newPrice => setForm(prev => ({ ...prev, preis: newPrice }))} />
+
+          {/* ── Angebot ── */}
+          <label style={{
+            display: 'flex', alignItems: 'center', gap: '0.65rem',
+            marginTop: '0.75rem', cursor: 'pointer',
+            width: 'fit-content',
+          }}>
+            <input
+              type="checkbox"
+              checked={form.angebot}
+              onChange={e => setForm(prev => ({ ...prev, angebot: e.target.checked }))}
+              style={{ width: 18, height: 18, accentColor: 'var(--color-accent)', cursor: 'pointer' }}
+            />
+            <span style={{
+              fontFamily: 'DM Sans, sans-serif',
+              fontSize: '0.95rem',
+              color: form.angebot ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+              transition: 'color 0.2s',
+            }}>
+              Angebot
+            </span>
+            {form.angebot && (
+              <span style={{ fontSize: '0.9rem' }} title="Angebotspreis">🏷️</span>
+            )}
+          </label>
         </section>
 
         {/* ── Geschmack ── */}
