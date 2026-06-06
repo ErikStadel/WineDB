@@ -208,7 +208,7 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
               ...prev, kauforte: Array.from(e.target.selectedOptions, o => o.value)
             }))}
             style={{ ...inputStyle, minHeight:120 }}>
-            {['Rewe','Kaufland','Hit','Aldi','Lidl','Edeka','Henkell','Tegut','Wo anders'].map(o =>
+            {['Rewe','Kaufland','Hit','Aldi','Lidl','Edeka','Henkell','Tegut','Wo anders','Im Glas'].map(o =>
               <option key={o} value={o}>{o}</option>
             )}
           </select>

@@ -282,7 +282,7 @@ const WineDBScreen: React.FC<WineDBScreenProps> = ({ onBack, apiUrl, scrollPosit
               </div>
               {([
                 { key: 'farbe', label: 'Alle Farben', opts: ['Rot', 'Weiß', 'Rosé'] },
-                { key: 'kauforte', label: 'Alle Kauforte', opts: ['Rewe', 'Kaufland', 'Hit', 'Aldi', 'Lidl', 'Edeka', 'Henkell', 'Wo anders'] },
+                { key: 'kauforte', label: 'Alle Kauforte', opts: ['Rewe', 'Kaufland', 'Hit', 'Aldi', 'Lidl', 'Edeka', 'Henkell', 'Wo anders','Im Glas'] },
                 { key: 'kategorie', label: 'Alle Kategorien', opts: ['Evergreen', 'Kochwein', 'Seltene Weine', 'Weinstand'] },
               ]).map(({ key, label, opts }) => (
                 <select key={key}
