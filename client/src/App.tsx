@@ -6,12 +6,14 @@ import AddWineScreen from './components/AddWineScreen';
 import InspirationScreen from './components/InspirationScreen';
 import WineDBScreen from './components/WineDBScreen';
 import ScanWineScreen from './components/ScanWineScreen';
+import StatsScreen from './components/StatsScreen';
 
 const App: React.FC = () => {
   const [showAddWine, setShowAddWine] = useState(false);
   const [showInspiration, setShowInspiration] = useState(false);
   const [showWineDB, setShowWineDB] = useState(false);
   const [showScanWine, setShowScanWine] = useState(false);
+  const [showStats, setShowStats] = useState(false);
   const [serverReady, setServerReady] = useState(false);
   const [cloudFunctionReady, setCloudFunctionReady] = useState(false);
   const [isWakingUp, setIsWakingUp] = useState(false);
@@ -83,6 +85,7 @@ const App: React.FC = () => {
 
   if (showAddWine)    return <AddWineScreen    onBack={() => setShowAddWine(false)}    apiUrl={apiUrl} />;
   if (showScanWine)   return <ScanWineScreen   onBack={() => setShowScanWine(false)}   apiUrl={apiUrl} />;
+  if (showStats)      return <StatsScreen      onBack={() => setShowStats(false)}      apiUrl={apiUrl} />;
   if (showInspiration) return <InspirationScreen onBack={() => setShowInspiration(false)} />;
   if (showWineDB)     return (
     <WineDBScreen
@@ -135,6 +138,14 @@ const App: React.FC = () => {
                 {!cloudFunctionReady && !isWakingUp && (
                   <span style={{ fontSize: '0.75rem', opacity: 0.65 }}> (KI lädt…)</span>
                 )}
+              </button>
+              <button
+                className="btn-outline text-base font-medium w-full"
+                style={{ maxWidth: '100%' }}
+                onClick={() => setShowStats(true)}
+                disabled={isWakingUp}
+              >
+                Statistik
               </button>
             </div>
           </section>

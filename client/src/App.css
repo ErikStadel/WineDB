@@ -872,3 +872,193 @@ input[type="range"] {
     padding: 0.5rem 1rem;
   }
 }
+
+/* ============================================================
+   STATISTIK DASHBOARD STYLES
+   ============================================================ */
+.stats-container {
+  width: 100%;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.stat-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.85rem;
+  width: 100%;
+}
+
+@media (min-width: 600px) {
+  .stat-kpi-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.stat-kpi-card {
+  background: var(--color-glass-bg);
+  border: 1px solid var(--color-glass-border);
+  border-radius: 8px;
+  padding: 0.9rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 4px 16px var(--color-glass-shadow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.stat-kpi-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: 0.25rem;
+}
+
+.stat-kpi-value {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: var(--color-heading);
+  line-height: 1.1;
+}
+
+.stat-kpi-sub {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+  margin-top: 0.2rem;
+}
+
+.stat-row-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.85rem;
+}
+
+.stat-row-item:last-child {
+  margin-bottom: 0;
+}
+
+.stat-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+}
+
+.stat-row-name {
+  color: var(--color-text-primary);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stat-row-meta {
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.stat-bar-track {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.stat-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.taste-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+@media (min-width: 520px) {
+  .taste-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.taste-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(201, 169, 110, 0.18);
+  border-radius: 6px;
+  padding: 0.75rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.taste-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.taste-name {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-heading);
+  text-transform: capitalize;
+}
+
+.taste-rating {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-star-active);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.taste-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.72rem;
+}
+
+.badge-pill {
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.badge-high {
+  background: rgba(72, 187, 120, 0.15);
+  color: #68d391;
+  border: 1px solid rgba(72, 187, 120, 0.3);
+}
+
+.badge-low {
+  background: rgba(229, 62, 62, 0.15);
+  color: #fc8181;
+  border: 1px solid rgba(229, 62, 62, 0.3);
+}
+
+.badge-neutral {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-secondary);
+}
