@@ -453,7 +453,7 @@ const StatsScreen: React.FC<StatsScreenProps> = ({ onBack, apiUrl }) => {
 
       <footer className="footer">
         <p>❤ We Love Wein ❤</p>
-        <p className="version-text">v 3.0 · Statistik</p>
+        <p className="version-text">v 4.0 · Statistik</p>
       </footer>
     </div>
   );
