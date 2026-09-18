@@ -89,7 +89,7 @@ async function processOCRForWines() {
     // Gleiche Bedingungen wie beim Embedding
     const wines = await collection.find({
       imageUrl: { $exists: true },
-      kategorie: { $ne: "Weinstand" }, // Korrigierte Schreibweise
+      kategorie: { $nin: ["Weinstand", "Alte Bekannte"] },
       $or: [
         { ocrText: { $exists: false } },
         { ocrText: "" },

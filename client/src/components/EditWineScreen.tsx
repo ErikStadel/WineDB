@@ -180,10 +180,10 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
   };
 
   const unterkategorieOptions: { [key: string]: string[] } = {
-    Evergreen:       ['schwer','leicht','Anlass'],
-    Weinstand:       ['schwer','leicht','Anlass'],
-    Kochwein:        ['auch trinkbar','Tafelwein','Fail'],
-    'Seltene Weine': ['Geschenk','Geheimtipp','Anlass'],
+    Evergreen:        ['schwer','leicht','Anlass'],
+    'Alte Bekannte':  ['Saisonale Weine','Gastro','Winzer'],
+    Kochwein:         ['auch trinkbar','Tafelwein','Fail'],
+    'Seltene Weine':  ['Geschenk','Geheimtipp','Anlass'],
   };
   const geschmackOptions = ['spritzig','fruchtig','dünn','extraordinär','kräftig','intensiv','gefällig','weich'];
 
@@ -332,7 +332,7 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
         <section className="glass-card">
           <h2>Kategorie <span style={{ color:'var(--color-accent)', fontSize:'0.9em' }}>*</span></h2>
           <div className="grid-cols-auto-fit">
-            {['Evergreen','Weinstand','Kochwein','Seltene Weine'].map(k => (
+            {['Evergreen','Alte Bekannte','Kochwein','Seltene Weine'].map(k => (
               <div key={k}
                 className={`category-tile${form.kategorie === k ? ' selected' : ''}`}
                 onClick={() => setForm(prev => ({ ...prev, kategorie: k, unterkategorie: '' }))}
