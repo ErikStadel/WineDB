@@ -13,9 +13,9 @@ const DEFAULT_OPTIONS = [
   'Hit',
   'Aldi',
   'Lidl',
-  'Edeka',
+  'Globus',
   'Henkell',
-  'Tegut',
+  'Weinfreunde',
   'Wo anders',
   'Im Glas',
 ];
