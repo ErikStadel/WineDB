@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ImageKit from 'imagekit-javascript';
 import PriceSlider from './PriceSlider';
+import KauforteDropdown from './KauforteDropdown';
 import '../App.css';
 
 interface EditWineScreenProps {
@@ -185,10 +186,6 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
     Kochwein:         ['auch trinkbar','Tafelwein','Fail'],
     'Seltene Weine':  ['Geschenk','Geheimtipp','Anlass'],
   };
-  const kauforteOptions = Array.from(new Set([
-    'Rewe','Kaufland','Hit','Aldi','Lidl','Edeka','Henkell','Tegut','Wo anders','Im Glas',
-    ...form.kauforte,
-  ]));
   const geschmackOptions = ['spritzig','fruchtig','dünn','extraordinär','kräftig','intensiv','gefällig','weich'];
 
   if (loading && !form.name) return <div style={{ padding:'2rem', color:'var(--color-text-secondary)' }}>Laden…</div>;
@@ -246,41 +243,13 @@ const EditWineScreen: React.FC<EditWineScreenProps> = ({ wineId, onBack, apiUrl 
         <section className="glass-card">
           <h2>Wein Details</h2>
 
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline', marginBottom:'0.4rem' }}>
-            <span style={{ ...labelStyle, marginTop:0, marginBottom:0 }}>
-              Gekauft bei <span style={{ color:'var(--color-accent)' }}>*</span>
-            </span>
-            {form.kauforte.length > 0 && (
-              <span style={{
-                fontFamily:'DM Sans, sans-serif', fontSize:'0.75rem',
-                color:'var(--color-accent)',
-              }}>
-                {form.kauforte.join(', ')}
-              </span>
-            )}
-          </div>
-          <div className="kaufort-grid" role="group" aria-label="Gekauft bei">
-            {kauforteOptions.map(o => {
-              const isSelected = form.kauforte.includes(o);
-              return (
-                <button
-                  key={o}
-                  type="button"
-                  aria-pressed={isSelected}
-                  className={`kaufort-chip${isSelected ? ' selected' : ''}`}
-                  onClick={() => setForm(prev => ({
-                    ...prev,
-                    kauforte: prev.kauforte.includes(o)
-                      ? prev.kauforte.filter(k => k !== o)
-                      : [...prev.kauforte, o],
-                  }))}
-                >
-                  {isSelected && <span style={{ fontSize:'0.75rem', lineHeight:1 }}>✓</span>}
-                  <span>{o}</span>
-                </button>
-              );
-            })}
-          </div>
+          <span style={{ ...labelStyle, marginTop:0 }}>
+            Gekauft bei <span style={{ color:'var(--color-accent)' }}>*</span>
+          </span>
+          <KauforteDropdown
+            value={form.kauforte}
+            onChange={newKauforte => setForm(prev => ({ ...prev, kauforte: newKauforte }))}
+          />
 
           <span style={labelStyle}>Name <span style={{ color:'var(--color-accent)' }}>*</span></span>
           <input value={form.name}
