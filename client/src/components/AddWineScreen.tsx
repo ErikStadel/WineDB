@@ -216,12 +216,14 @@ const AddWineScreen: React.FC<AddWineScreenProps> = ({ onBack, apiUrl }) => {
           <span style={labelStyle}>Name <span style={{ color:'var(--color-accent)' }}>*</span></span>
           <input value={form.name}
             onChange={e => setForm(prev => ({ ...prev, name: e.target.value }))}
-            placeholder="z.B. Merlot 2020" style={inputStyle} />
+            placeholder="z.B. Merlot 2020" style={inputStyle}
+            autoComplete="off" autoCorrect="off" spellCheck={false} />
 
           <span style={labelStyle}>Sorte <span style={{ color:'var(--color-accent)' }}>*</span></span>
           <input value={form.rebsorte}
             onChange={e => setForm(prev => ({ ...prev, rebsorte: e.target.value }))}
-            placeholder="z.B. Cabernet Sauvignon" style={inputStyle} />
+            placeholder="z.B. Cabernet Sauvignon" style={inputStyle}
+            autoComplete="off" autoCorrect="off" spellCheck={false} />
 
           <span style={labelStyle}>Farbe <span style={{ color:'var(--color-accent)' }}>*</span></span>
           <select value={form.farbe}
